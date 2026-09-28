@@ -4,6 +4,7 @@ import 'dart:async';
 import 'dart:ui' as ui;
 
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 
 import '../theme.dart';
@@ -11,6 +12,7 @@ import '../../model/preferences.dart';
 import '../../model/places.dart';
 import '../../controllers/explore_controller.dart';
 import 'place_sheet.dart';
+import 'map_filter_chip.dart';
 
 class ExploreScreen extends StatefulWidget {
   const ExploreScreen({
@@ -39,10 +41,16 @@ class _ExploreScreenState extends State<ExploreScreen> {
   MapViewport viewport = MapViewport.seoul;
   Timer? debounce;
   bool searchMode = false;
+
+  /// On iOS, Flutter widgets above the map platform view are painted into a
+  /// separate overlay, so the sheet's BackdropFilter blurs only the map
+  /// natively. Controls under the sheet blur themselves instead.
+  bool placeOpen = false;
   bool get locating => controller?.model.locating ?? false;
   String category = '전체';
   int markerGeneration = 0;
   int searchGeneration = 0;
+  int seenPublishedRevision = 0;
   Set<Marker> markers = {};
   List<Place>? markerPlaces;
   static const categories = {
@@ -75,6 +83,23 @@ class _ExploreScreenState extends State<ExploreScreen> {
 
   void changed() {
     if (!mounted) return;
+    if (controller!.publishedRevision != seenPublishedRevision) {
+      seenPublishedRevision = controller!.publishedRevision;
+      searchGeneration++;
+      debounce?.cancel();
+      query.clear();
+      searchMode = false;
+      category = '전체';
+      viewport = controller!.viewport;
+      map
+          ?.animateCamera(
+            CameraUpdate.newLatLngZoom(
+              LatLng(viewport.latitude, viewport.longitude),
+              14,
+            ),
+          )
+          .catchError((_) {});
+    }
     setState(() {});
     if (markerPlaces != controller!.places) {
       markerPlaces = controller!.places;
@@ -278,17 +303,18 @@ class _ExploreScreenState extends State<ExploreScreen> {
     }
   }
 
-  void showPlace(Place place) {
-    showModalBottomSheet<void>(
+  Future<void> showPlace(Place place) async {
+    final detail = controller!.details(place, widget.preferences);
+    setState(() => placeOpen = true);
+    await showModalBottomSheet<void>(
       context: context,
       isScrollControlled: true,
       useSafeArea: true,
       backgroundColor: Colors.transparent,
       barrierColor: Colors.black.withValues(alpha: .04),
-      builder: (_) => PlaceSheet(
-        controller: controller!.details(place, widget.preferences),
-      ),
+      builder: (_) => PlaceSheet(controller: detail),
     );
+    if (mounted) setState(() => placeOpen = false);
   }
 
   void showResults() {
@@ -352,12 +378,115 @@ class _ExploreScreenState extends State<ExploreScreen> {
     );
   }
 
+  // Figma 524:28096. Keep the exported icons at their original dimensions.
+  Widget searchBar() {
+    const height = 45.4636;
+    final radius = BorderRadius.circular(height / 2);
+    const textStyle = TextStyle(
+      fontSize: 14.4667,
+      fontWeight: FontWeight.w400,
+      letterSpacing: 0,
+      height: 1.5,
+    );
+    return SizedBox(
+      height: height,
+      child: DecoratedBox(
+        decoration: BoxDecoration(
+          borderRadius: radius,
+          boxShadow: const [
+            BoxShadow(
+              color: Color.fromRGBO(0, 0, 0, .05),
+              offset: Offset(0, 1),
+              blurRadius: 1,
+            ),
+            BoxShadow(
+              color: Color.fromRGBO(0, 0, 0, .05),
+              offset: Offset(0, 6),
+              blurRadius: 8,
+            ),
+          ],
+        ),
+        child: ClipRRect(
+          borderRadius: radius,
+          child: BackdropFilter(
+            filter: ui.ImageFilter.blur(sigmaX: 12, sigmaY: 12),
+            child: CustomPaint(
+              foregroundPainter: const _SearchBarHighlights(),
+              child: DecoratedBox(
+                decoration: BoxDecoration(
+                  color: const Color.fromRGBO(251, 251, 253, .72),
+                  borderRadius: radius,
+                  border: Border.all(color: PindTheme.border),
+                ),
+                child: Material(
+                  type: MaterialType.transparency,
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      SizedBox(
+                        width: 41.2927,
+                        child: IconButton(
+                          tooltip: '검색',
+                          padding: const EdgeInsets.only(left: 9.2667),
+                          icon: SvgPicture.asset(
+                            'assets/figma/explore_search.svg',
+                            width: 15.4927,
+                            height: 15.4927,
+                          ),
+                          onPressed: controller == null ? null : search,
+                        ),
+                      ),
+                      Expanded(
+                        child: TextField(
+                          controller: query,
+                          onSubmitted: (_) => search(),
+                          textInputAction: TextInputAction.search,
+                          textAlignVertical: TextAlignVertical.center,
+                          style: textStyle.copyWith(color: PindTheme.ink),
+                          decoration: InputDecoration(
+                            isDense: true,
+                            hintText: '장소, 메뉴, 분위기 검색',
+                            hintStyle: textStyle.copyWith(
+                              color: const Color(0xFFABABAB),
+                            ),
+                            border: InputBorder.none,
+                            contentPadding: const EdgeInsets.symmetric(
+                              vertical: (height - 14.4667 * 1.5) / 2,
+                            ),
+                          ),
+                        ),
+                      ),
+                      SizedBox(
+                        width: 40.2569,
+                        child: IconButton(
+                          tooltip: '취향 수정',
+                          padding: const EdgeInsets.only(right: 9.2667),
+                          icon: SvgPicture.asset(
+                            'assets/figma/explore_filter.svg',
+                            width: 14.457,
+                            height: 14.457,
+                          ),
+                          onPressed: widget.onEditPreferences,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) => Scaffold(
     body: Stack(
       children: [
         if (widget.mapsEnabled)
           GoogleMap(
+            style: '[{"featureType":"poi.business","stylers":[{"visibility":"off"}]}]',
             initialCameraPosition: const CameraPosition(
               target: LatLng(37.5665, 126.978),
               zoom: 13,
@@ -393,34 +522,10 @@ class _ExploreScreenState extends State<ExploreScreen> {
           ),
         SafeArea(
           child: Padding(
-            padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
+            padding: const EdgeInsets.fromLTRB(16.5333, 12.4001, 16.5333, 0),
             child: Column(
               children: [
-                Material(
-                  color: Colors.white.withValues(alpha: .95),
-                  elevation: 2,
-                  borderRadius: BorderRadius.circular(28),
-                  child: TextField(
-                    controller: query,
-                    onSubmitted: (_) => search(),
-                    textInputAction: TextInputAction.search,
-                    decoration: InputDecoration(
-                      hintText: '장소, 메뉴, 분위기 검색',
-                      border: InputBorder.none,
-                      prefixIcon: IconButton(
-                        tooltip: '검색',
-                        icon: const Icon(Icons.search),
-                        onPressed: controller == null ? null : search,
-                      ),
-                      suffixIcon: IconButton(
-                        tooltip: '취향 수정',
-                        onPressed: widget.onEditPreferences,
-                        icon: const Icon(Icons.tune),
-                      ),
-                      contentPadding: const EdgeInsets.symmetric(vertical: 15),
-                    ),
-                  ),
-                ),
+                searchBar(),
                 if (searchMode)
                   Align(
                     alignment: Alignment.centerLeft,
@@ -475,86 +580,152 @@ class _ExploreScreenState extends State<ExploreScreen> {
             ),
           ),
         ),
-        Positioned(
-          right: 16,
-          bottom: 116 + widget.bottomClearance,
-          child: Column(
-            children: [
-              if (widget.mapsEnabled) ...[
-                FloatingActionButton.small(
-                  heroTag: 'zoomIn',
-                  tooltip: '확대',
-                  onPressed: () => map?.animateCamera(CameraUpdate.zoomIn()),
-                  child: const Icon(Icons.add),
+        Positioned.fill(
+          child: TweenAnimationBuilder<double>(
+            tween: Tween(end: placeOpen ? 20 : 0),
+            duration: const Duration(milliseconds: 250),
+            builder: (_, sigma, child) => ImageFiltered(
+              enabled: sigma > 0,
+              imageFilter: ui.ImageFilter.blur(sigmaX: sigma, sigmaY: sigma),
+              child: child,
+            ),
+            child: Stack(
+              children: [
+                Positioned(
+                  right: 16,
+                  bottom: 116 + widget.bottomClearance,
+                  child: Column(
+                    children: [
+                      if (widget.mapsEnabled) ...[
+                        FloatingActionButton.small(
+                          heroTag: 'zoomIn',
+                          tooltip: '확대',
+                          onPressed: () =>
+                              map?.animateCamera(CameraUpdate.zoomIn()),
+                          child: const Icon(Icons.add),
+                        ),
+                        const SizedBox(height: 8),
+                        FloatingActionButton.small(
+                          heroTag: 'zoomOut',
+                          tooltip: '축소',
+                          onPressed: () =>
+                              map?.animateCamera(CameraUpdate.zoomOut()),
+                          child: const Icon(Icons.remove),
+                        ),
+                        const SizedBox(height: 8),
+                      ],
+                      FloatingActionButton.small(
+                        heroTag: 'locate',
+                        tooltip: '현재 위치',
+                        onPressed: locating ? null : locate,
+                        child: locating
+                            ? const SizedBox(
+                                width: 18,
+                                height: 18,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                ),
+                              )
+                            : const Icon(Icons.my_location),
+                      ),
+                    ],
+                  ),
                 ),
-                const SizedBox(height: 8),
-                FloatingActionButton.small(
-                  heroTag: 'zoomOut',
-                  tooltip: '축소',
-                  onPressed: () => map?.animateCamera(CameraUpdate.zoomOut()),
-                  child: const Icon(Icons.remove),
-                ),
-                const SizedBox(height: 8),
-              ],
-              FloatingActionButton.small(
-                heroTag: 'locate',
-                tooltip: '현재 위치',
-                onPressed: locating ? null : locate,
-                child: locating
-                    ? const SizedBox(
-                        width: 18,
-                        height: 18,
-                        child: CircularProgressIndicator(strokeWidth: 2),
-                      )
-                    : const Icon(Icons.my_location),
-              ),
-            ],
-          ),
-        ),
-        Positioned(
-          left: 0,
-          right: 0,
-          bottom: widget.bottomClearance,
-          child: SafeArea(
-            top: false,
-            child: Padding(
-              padding: const EdgeInsets.only(bottom: 12),
-              child: Column(
-                children: [
-                  SingleChildScrollView(
-                    scrollDirection: Axis.horizontal,
-                    padding: const EdgeInsets.symmetric(horizontal: 16),
-                    child: Row(
-                      children: [
-                        for (final label in categories.keys)
-                          Padding(
-                            padding: const EdgeInsets.only(right: 8),
-                            child: ChoiceChip(
-                              label: Text(label),
-                              selected: category == label,
-                              onSelected: (_) {
-                                setState(() => category = label);
-                                updateMarkers();
-                              },
+                Positioned(
+                  left: 0,
+                  right: 0,
+                  bottom: widget.bottomClearance,
+                  child: SafeArea(
+                    top: false,
+                    child: Padding(
+                      padding: const EdgeInsets.only(bottom: 12),
+                      child: Column(
+                        children: [
+                          SingleChildScrollView(
+                            scrollDirection: Axis.horizontal,
+                            padding: const EdgeInsets.symmetric(horizontal: 16),
+                            child: Row(
+                              children: [
+                                for (final label in categories.keys)
+                                  Padding(
+                                    padding: const EdgeInsets.only(right: 8),
+                                    child: MapFilterChip(
+                                      label: label,
+                                      selected: category == label,
+                                      onTap: () {
+                                        setState(() => category = label);
+                                        updateMarkers();
+                                      },
+                                    ),
+                                  ),
+                              ],
                             ),
                           ),
-                      ],
+                          if (controller != null &&
+                              !controller!.loading &&
+                              controller!.error == null &&
+                              visiblePlaces.isEmpty)
+                            const Text(
+                              '게시물이 있는 식당이 지도에 표시돼요.',
+                              style: TextStyle(fontSize: 12),
+                            ),
+                        ],
+                      ),
                     ),
                   ),
-                  if (controller != null &&
-                      !controller!.loading &&
-                      controller!.error == null &&
-                      visiblePlaces.isEmpty)
-                    const Text(
-                      '다른 지역이나 검색어로 찾아보세요.',
-                      style: TextStyle(fontSize: 12),
-                    ),
-                ],
-              ),
+                ),
+              ],
             ),
           ),
         ),
       ],
     ),
   );
+}
+
+/// The inset highlights sit inside the border of the Figma glass surface.
+class _SearchBarHighlights extends CustomPainter {
+  const _SearchBarHighlights();
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final bounds = (Offset.zero & size).deflate(1);
+    final shape = RRect.fromRectAndRadius(
+      bounds,
+      Radius.circular(bounds.height / 2),
+    );
+    canvas.save();
+    canvas.clipRRect(shape);
+    for (final shadow in const [
+      BoxShadow(
+        color: Color.fromRGBO(138, 140, 150, .03),
+        offset: Offset(0, -1),
+        blurRadius: 2.5,
+      ),
+      BoxShadow(
+        color: Color.fromRGBO(255, 255, 255, .9),
+        offset: Offset(0, 2),
+        blurRadius: 2,
+      ),
+      BoxShadow(color: Color.fromRGBO(255, 255, 255, .95), blurRadius: 1.5),
+    ]) {
+      final outside = Path()
+        ..fillType = PathFillType.evenOdd
+        ..addRect(bounds.inflate(16))
+        ..addRRect(shape.shift(shadow.offset));
+      canvas.drawPath(
+        outside,
+        Paint()
+          ..color = shadow.color
+          ..maskFilter = MaskFilter.blur(
+            BlurStyle.normal,
+            shadow.blurRadius / 2,
+          ),
+      );
+    }
+    canvas.restore();
+  }
+
+  @override
+  bool shouldRepaint(_SearchBarHighlights oldDelegate) => false;
 }

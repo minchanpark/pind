@@ -7,7 +7,7 @@ type Payload = Record<string, unknown>;
 export async function catalogRequest(
   body: Payload,
   query: (args: Payload) => Promise<Payload>,
-  photoUrl: (path: string) => string,
+  photoUrl: (path: string, bucket: string) => string | null | Promise<string | null>,
   googleEnabled: boolean,
 ): Promise<Payload> {
   const args: Payload = {};
@@ -33,16 +33,19 @@ export async function catalogRequest(
   }
   // Errors stay errors. This function has no Google/network fallback dependency.
   const result = await query(args);
-  const places = ((result.places ?? []) as Payload[]).map(p => {
+  const places = await Promise.all(((result.places ?? []) as Payload[])
+    .filter(p => body.action !== 'nearby' || (typeof p.pindPostCount === 'number' && p.pindPostCount > 0))
+    .map(async p => {
     const place: Payload = {...p, googleSearchEnabled:googleEnabled};
     if (!place.heroImageUrl && typeof place.pindPhotoPath === 'string') {
-      place.heroImageUrl = photoUrl(place.pindPhotoPath);
+      place.heroImageUrl = await photoUrl(place.pindPhotoPath, typeof place.pindPhotoBucket === 'string' ? place.pindPhotoBucket : 'post-media');
       place.photoAttributions = [{displayName:place.pindPhotoAuthor ?? 'Pind 사용자'}];
     }
     delete place.pindPhotoPath;
     delete place.pindPhotoAuthor;
+    delete place.pindPhotoBucket;
     return place;
-  });
+  }));
   if (body.action === 'catalog_detail') {
     if (!places.length) throw new CatalogError(404,'PLACE_NOT_FOUND','공개된 장소를 찾지 못했어요.');
     return {place:places[0],googleSearchEnabled:googleEnabled};

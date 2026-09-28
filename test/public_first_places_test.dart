@@ -24,7 +24,17 @@ void main() {
         final place = Place.fromJson(catalog(provider));
         expect(place.id, 93);
         expect(place.isCatalog, isTrue);
-        expect(place.canShowOnMap, isTrue);
+        expect(place.canShowOnMap, isFalse);
+        expect(
+          Place.fromJson({...catalog(provider), 'pindPostCount': 1})
+              .canShowOnMap,
+          isTrue,
+        );
+        expect(
+          Place.fromJson({...catalog(provider), 'pindPostCount': 0})
+              .canShowOnMap,
+          isFalse,
+        );
         expect(place.imageUrl, isNull);
         expect(place.summary, isNull);
         expect(place.hours, isEmpty);

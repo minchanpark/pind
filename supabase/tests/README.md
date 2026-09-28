@@ -1,17 +1,17 @@
-# Place detail local SQL verification
+# Local SQL verification
 
-`detail_bootstrap.sql` is an **isolated vanilla PostgreSQL harness**, not an Auth/Storage installation or remote seed. Do not run it against a Supabase project. The scenario creates local fake user IDs inside a transaction and rolls them back.
-
-Run in a fresh, unexposed development container (no host port, no production keys):
+Run the current catalog, social and post suites in disposable Supabase PostgreSQL:
 
 ```sh
-docker run -d --name pind-detail-sql -e POSTGRES_HOST_AUTH_METHOD=trust postgres:17-alpine
-docker exec -i pind-detail-sql psql -U postgres -v ON_ERROR_STOP=1 < supabase/tests/detail_bootstrap.sql
-for migration in supabase/migrations/*.sql; do
-  docker exec -i pind-detail-sql psql -U postgres -v ON_ERROR_STOP=1 < "$migration" || exit 1
-done
-docker exec -i pind-detail-sql psql -U postgres -v ON_ERROR_STOP=1 < supabase/tests/place_detail_context.sql
-docker stop pind-detail-sql
+python3 scripts/test_post_sql.py
 ```
 
-Wait for `docker exec pind-detail-sql pg_isready -U postgres` before setup. Use a fresh container/database for each full migration run. The assertions can be repeated because fixture writes roll back. Covers accepted/pending/removed relations, private posts/ratings, owner isolation, saved state and RPC grants. No actual email/password accounts are created.
+Docker is required. The script creates a unique container without a host port, applies every migration in order, runs three transaction-based suites, then removes its own container. It uses `public.ecr.aws/supabase/postgres:17.6.1.132`, matching the PostgreSQL 17.6 backend baseline. It never connects to the linked project or reads production credentials.
+
+`post_storage_bootstrap.sql` supplies minimal Storage tables and JWT claims for SQL policy checks. The older `detail_bootstrap.sql` is retained for historical vanilla PostgreSQL tests and does not support the newer post migration. Neither bootstrap is a production installation.
+
+- `public_first_places.sql`: catalog IDs, public visibility, RPC privileges and Google budgets.
+- `place_detail_context.sql`: accepted/pending/removed friendships, private visits/ratings, owner isolation and save idempotency.
+- `published_posts_map.sql`: unposted restaurants remain searchable; published-only filtering precedes the nearby limit; hide/delete removes the last pin; uploaded media belongs to the author; anonymous writes are rejected; ratings/photos/posts are atomic; v3 ratings accept exactly three allowlisted priority criteria with integer 1–5 scores; retry creates one post/visit. Media RLS allows published readers and rejects another author's upload/attachment.
+
+SQL fixtures roll back. These checks do not validate the Storage HTTP service, physical photo picker, OAuth login, or Google map rendering.

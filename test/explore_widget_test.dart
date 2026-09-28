@@ -114,7 +114,7 @@ void main() {
     await tester.pumpAndSettle();
     expect(attempts, 2);
     expect(find.text('테스트 연결 오류'), findsNothing);
-    expect(find.text('다른 지역이나 검색어로 찾아보세요.'), findsOneWidget);
+    expect(find.text('게시물이 있는 식당이 지도에 표시돼요.'), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
 

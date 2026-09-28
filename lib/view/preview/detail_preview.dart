@@ -31,14 +31,18 @@ class _DetailPreviewState extends State<DetailPreview> {
     }
   }
 
-  void open(BuildContext context) => showModalBottomSheet<void>(
-    context: context,
-    isScrollControlled: true,
-    useSafeArea: true,
-    backgroundColor: Colors.transparent,
-    barrierColor: Colors.black.withValues(alpha: .04),
-    builder: (_) => PlaceSheet(controller: controller.details()),
-  );
+  void open(BuildContext context) {
+    final detail = controller.details();
+    showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      useSafeArea: true,
+      backgroundColor: Colors.transparent,
+      barrierColor: Colors.black.withValues(alpha: .04),
+      builder: (_) => PlaceSheet(controller: detail),
+    );
+  }
+
   @override
   Widget build(BuildContext context) => MaterialApp(
     navigatorKey: navigator,

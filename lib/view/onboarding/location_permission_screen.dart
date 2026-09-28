@@ -1,0 +1,247 @@
+import 'package:flutter/material.dart';
+
+import '../../controllers/registration_controller.dart';
+import '../theme.dart';
+import 'registration_components.dart';
+
+class LocationPermissionScreen extends StatelessWidget {
+  const LocationPermissionScreen({super.key, required this.controller});
+  final RegistrationController controller;
+
+  @override
+  Widget build(BuildContext context) => SetupPage(
+    background: const Color(0xFFFAFAFA),
+    footer: Column(
+      children: [
+        SetupError(controller.model.error),
+        if (controller.model.permissionBlocked)
+          TextButton(
+            onPressed: controller.model.busy
+                ? null
+                : controller.showLocationSettings,
+            child: const Text('설정에서 위치 권한 확인'),
+          ),
+        SetupButton(
+          '위치 허용하고 시작하기',
+          busy: controller.model.busy,
+          onPressed: controller.allowLocation,
+        ),
+        const SizedBox(height: 6),
+        TextButton(
+          key: const ValueKey('skip-location'),
+          onPressed: controller.model.busy ? null : controller.skipLocation,
+          child: const Text(
+            '나중에 할게요',
+            style: TextStyle(fontSize: 13, color: PindTheme.muted),
+          ),
+        ),
+      ],
+    ),
+    children: [
+      const _LocationIllustration(),
+      const SizedBox(height: 30),
+      const SetupTitle(
+        '지금 있는 곳 주변부터\n보여드릴게요',
+        '위치를 허용하면 내 주변 맛집과 취향을 탐색할 수 있어요.',
+        large: true,
+      ),
+      const SizedBox(height: 24),
+      _benefit('🍜', '내 주변 맛집', '반경 안에서만 추천해요', 'dce83.svg'),
+      _benefit('👫', '친구들 맛집', '친구들이 간 맛집을 볼 수 있어요', '457fb.svg'),
+      _benefit('🏡', '동네 랭킹', '#1 in 성수동 같은 지역 순위', '457fb.svg'),
+    ],
+  );
+
+  Widget _benefit(
+    String emoji,
+    String title,
+    String subtitle,
+    String asset,
+  ) => Padding(
+    padding: const EdgeInsets.symmetric(vertical: 9),
+    child: Row(
+      children: [
+        SizedBox(
+          width: 40,
+          height: 40,
+          child: Stack(
+            clipBehavior: Clip.none,
+            children: [
+              Positioned(left: -16, top: -10, child: setupAsset(asset, 72, 72)),
+              Center(
+                child: Text(
+                  emoji,
+                  style: const TextStyle(fontSize: 24, height: 1),
+                ),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(width: 12),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                title,
+                style: const TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+              Text(
+                subtitle,
+                style: const TextStyle(fontSize: 12, color: PindTheme.muted),
+              ),
+            ],
+          ),
+        ),
+      ],
+    ),
+  );
+}
+
+class _LocationIllustration extends StatelessWidget {
+  const _LocationIllustration();
+  @override
+  Widget build(BuildContext context) => DecoratedBox(
+    decoration: BoxDecoration(
+      borderRadius: BorderRadius.circular(24),
+      boxShadow: const [
+        BoxShadow(
+          color: Color(0x0F000000),
+          blurRadius: 20,
+          offset: Offset(0, 6),
+        ),
+      ],
+    ),
+    child: ClipRRect(
+      borderRadius: BorderRadius.circular(24),
+      child: AspectRatio(
+        aspectRatio: 354 / 230,
+        child: FittedBox(
+          fit: BoxFit.fill,
+          child: SizedBox(
+            width: 354,
+            height: 230,
+            child: ColoredBox(
+              color: const Color(0xFFEEF0EA),
+              child: ExcludeSemantics(
+                child: Stack(
+                  clipBehavior: Clip.none,
+                  children: [
+                    Positioned(
+                      left: -31,
+                      top: 119,
+                      child: setupAsset('d43d2.svg', 170, 140),
+                    ),
+                    Positioned(
+                      left: 249,
+                      top: -31,
+                      child: setupAsset('9d337.svg', 150, 120),
+                    ),
+                    const Positioned(
+                      left: -11,
+                      top: 109,
+                      width: 400,
+                      height: 5,
+                      child: ColoredBox(color: Colors.white),
+                    ),
+                    const Positioned(
+                      left: 129,
+                      top: -11,
+                      width: 5,
+                      height: 260,
+                      child: ColoredBox(color: Colors.white),
+                    ),
+                    const Positioned(
+                      left: 269,
+                      top: -11,
+                      width: 5,
+                      height: 260,
+                      child: ColoredBox(color: Colors.white),
+                    ),
+                    Positioned(
+                      left: 160,
+                      top: 100,
+                      child: setupAsset('ae7d9.svg', 32, 32),
+                    ),
+                    Positioned(
+                      left: 116,
+                      top: 57,
+                      child: setupAsset('33c00.svg', 120, 120),
+                    ),
+                    Positioned(
+                      left: 132,
+                      top: 79,
+                      child: setupAsset('e7fea.svg', 88, 88),
+                    ),
+                    const Positioned(
+                      left: 156,
+                      top: 106,
+                      width: 40,
+                      child: Text(
+                        '☕',
+                        textAlign: TextAlign.center,
+                        textScaler: TextScaler.noScaling,
+                        style: TextStyle(fontSize: 30, height: 1),
+                      ),
+                    ),
+                    Positioned(
+                      left: 43,
+                      top: 29,
+                      child: setupAsset('f61aa.svg', 72, 72),
+                    ),
+                    const Positioned(
+                      left: 59,
+                      top: 47.8,
+                      width: 40,
+                      child: Text(
+                        '🍜',
+                        textAlign: TextAlign.center,
+                        textScaler: TextScaler.noScaling,
+                        style: TextStyle(fontSize: 20, height: 1),
+                      ),
+                    ),
+                    Positioned(
+                      left: 233,
+                      top: 129,
+                      child: setupAsset('f61aa.svg', 72, 72),
+                    ),
+                    const Positioned(
+                      left: 249,
+                      top: 147.8,
+                      width: 40,
+                      child: Text(
+                        '🥩',
+                        textAlign: TextAlign.center,
+                        textScaler: TextScaler.noScaling,
+                        style: TextStyle(fontSize: 20, height: 1),
+                      ),
+                    ),
+                    Positioned(
+                      left: 263,
+                      top: 39,
+                      child: setupAsset('fe8cf.svg', 68, 68),
+                    ),
+                    const Positioned(
+                      left: 279,
+                      top: 56.92,
+                      width: 36,
+                      child: Text(
+                        '🍰',
+                        textAlign: TextAlign.center,
+                        textScaler: TextScaler.noScaling,
+                        style: TextStyle(fontSize: 18, height: 1),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ),
+      ),
+    ),
+  );
+}

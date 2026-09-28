@@ -182,9 +182,10 @@ void main() {
         warnIfMissed: false,
       );
       await tester.pumpAndSettle();
-      expect(find.text('장소 선택과 사진·평가 작성은 다음 단계에서 구현합니다.'), findsOneWidget);
+      expect(find.text('게시물 작성'), findsOneWidget);
+      expect(find.text('사진 추가'), findsOneWidget);
       expect(find.byType(PindNavigationBar), findsNothing);
-      await tester.tap(find.byType(CloseButton));
+      await tester.tap(find.byTooltip('닫기'));
       await tester.pumpAndSettle();
       expect(
         tester

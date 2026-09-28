@@ -2,5 +2,6 @@
   "SUPABASE_URL": "https://YOUR_PROJECT.supabase.co",
   "SUPABASE_PUBLISHABLE_KEY": "YOUR_PUBLISHABLE_KEY",
   "GOOGLE_MAPS_API_KEY": "",
-  "ALLOW_ANONYMOUS_AUTH": "false"
+  "ALLOW_ANONYMOUS_AUTH": "false",
+  "AUTH_REDIRECT_URL": "com.pind.app://login-callback"
 }

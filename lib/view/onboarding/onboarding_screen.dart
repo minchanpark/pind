@@ -11,10 +11,12 @@ class OnboardingScreen extends StatefulWidget {
     this.initial,
     required this.onComplete,
     this.onCancel,
+    this.onChanged,
   });
   final TastePreferences? initial;
   final Future<void> Function(TastePreferences) onComplete;
   final VoidCallback? onCancel;
+  final ValueChanged<TastePreferences>? onChanged;
 
   @override
   State<OnboardingScreen> createState() => _OnboardingScreenState();
@@ -37,7 +39,10 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     controller.model.addListener(changed);
   }
 
-  void changed() => setState(() {});
+  void changed() {
+    widget.onChanged?.call(preferences);
+    setState(() {});
+  }
 
   @override
   void dispose() {
@@ -75,9 +80,15 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
               : '${preferences.priorities.map((p) => p.label).join(' › ')} 순으로 반영됩니다')
         : '${step == 1 ? preferences.occasions.length : preferences.cuisines.length}개 선택됨';
     return PopScope(
-      canPop: step == 0 && !saving,
+      canPop: step == 0 && !saving && widget.onCancel == null,
       onPopInvokedWithResult: (didPop, _) {
-        if (!didPop && step > 0 && !saving) move(step - 1);
+        if (!didPop && !saving) {
+          if (step > 0) {
+            move(step - 1);
+          } else {
+            widget.onCancel?.call();
+          }
+        }
       },
       child: Scaffold(
         body: SafeArea(
@@ -101,18 +112,18 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                         ),
                         Expanded(
                           child: Semantics(
-                            label: '취향 설정 ${step + 2} / 4 단계',
+                            label: '취향 설정 ${step + 1} / 3 단계',
                             child: Row(
                               children: [
-                                for (var i = 0; i < 4; i++)
+                                for (var i = 0; i < 3; i++)
                                   Expanded(
                                     child: Container(
                                       height: 4,
                                       margin: EdgeInsets.only(
-                                        right: i == 3 ? 0 : 6,
+                                        right: i == 2 ? 0 : 6,
                                       ),
                                       decoration: BoxDecoration(
-                                        color: i <= step + 1
+                                        color: i <= step
                                             ? PindTheme.purple
                                             : PindTheme.border,
                                         borderRadius: BorderRadius.circular(4),
@@ -125,7 +136,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                         ),
                         const SizedBox(width: 12),
                         Text(
-                          '${step + 2}/4',
+                          '${step + 1}/3',
                           style: const TextStyle(
                             fontSize: 12,
                             fontWeight: FontWeight.bold,

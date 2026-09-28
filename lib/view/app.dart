@@ -5,6 +5,7 @@ import '../model/preferences.dart';
 import 'theme.dart';
 import 'navigation/main_shell.dart';
 import 'onboarding/onboarding_screen.dart';
+import 'onboarding/registration_screen.dart';
 
 class PindApp extends StatefulWidget {
   const PindApp({
@@ -27,6 +28,7 @@ class _PindAppState extends State<PindApp> {
   void initState() {
     super.initState();
     widget.controller.model.addListener(changed);
+    widget.controller.registration?.model.addListener(changed);
   }
 
   void changed() {
@@ -38,14 +40,17 @@ class _PindAppState extends State<PindApp> {
     super.didUpdateWidget(oldWidget);
     if (oldWidget.controller != widget.controller) {
       oldWidget.controller.model.removeListener(changed);
+      oldWidget.controller.registration?.model.removeListener(changed);
       oldWidget.controller.dispose();
       widget.controller.model.addListener(changed);
+      widget.controller.registration?.model.addListener(changed);
     }
   }
 
   @override
   void dispose() {
     widget.controller.model.removeListener(changed);
+    widget.controller.registration?.model.removeListener(changed);
     widget.controller.dispose();
     super.dispose();
   }
@@ -73,13 +78,22 @@ class _PindAppState extends State<PindApp> {
     navigatorKey: navigator,
     debugShowCheckedModeBanner: false,
     theme: PindTheme.data,
-    home: preferences?.isComplete != true
+    home:
+        widget.controller.registration != null &&
+            !widget.controller.registration!.model.completed
+        ? RegistrationScreen(
+            controller: widget.controller.registration!,
+            preferences: preferences,
+          )
+        : widget.controller.registration == null &&
+              preferences?.isComplete != true
         ? OnboardingScreen(
             initial: preferences,
             onComplete: widget.controller.savePreferences,
           )
         : MainShell(
             controller: widget.controller.explore,
+            posts: widget.controller.posts,
             preferences: preferences,
             mapsEnabled: widget.mapsEnabled,
             onEditPreferences: editPreferences,

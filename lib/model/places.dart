@@ -104,7 +104,7 @@ class Place {
   bool get isCatalog =>
       provider == PlaceProvider.sbiz || provider == PlaceProvider.pind;
   bool get hasRichContent => isGoogle || isCatalog;
-  bool get canShowOnMap => isGoogle || isCatalog;
+  bool get canShowOnMap => (isGoogle || isCatalog) && (pindPostCount ?? 0) > 0;
   String get key => '${provider.wireName}:$externalId';
   String get sourceLabel => provider.label;
   String get sourceAction => switch (provider) {

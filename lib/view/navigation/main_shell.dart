@@ -9,16 +9,23 @@ import '../../model/navigation_model.dart';
 import '../../model/preferences.dart';
 import '../explore/explore_screen.dart';
 import 'pind_navigation_bar.dart';
+import '../../controllers/post_controller.dart';
+import '../../model/post_model.dart';
+import '../../services/post_service.dart';
+import '../../services/post_photo_service.dart';
+import '../posts/post_composer.dart';
 
 class MainShell extends StatefulWidget {
   const MainShell({
     super.key,
     this.controller,
+    this.posts,
     required this.mapsEnabled,
     required this.onEditPreferences,
     this.preferences,
   });
   final ExploreController? controller;
+  final PostService? posts;
   final TastePreferences? preferences;
   final bool mapsEnabled;
   final VoidCallback onEditPreferences;
@@ -56,16 +63,27 @@ class _MainShellState extends State<MainShell> {
     if (!navigation.beginCompose()) return;
     FocusManager.instance.primaryFocus?.unfocus();
     try {
-      await Navigator.of(context).push<void>(
+      final saved = await Navigator.of(context).push<PublishedPost>(
         MaterialPageRoute(
           fullscreenDialog: true,
-          builder: (_) => const _NextStepScreen(
-            title: '작성',
-            message: '장소 선택과 사진·평가 작성은 다음 단계에서 구현합니다.',
-            isDialog: true,
+          builder: (_) => PostComposer(
+            controller: PostController(
+              posts: widget.posts ?? UnavailablePostService(),
+              photos: DevicePostPhotoService(),
+              places: widget.controller?.repository,
+              criteria: widget.preferences?.priorities,
+            ),
           ),
         ),
       );
+      if (saved != null && mounted) {
+        navigation.select(PindTab.map);
+        await widget.controller?.showPublishedPlace(saved.placeId);
+        if (mounted) {
+          ScaffoldMessenger.of(context)
+              .showSnackBar(const SnackBar(content: Text('게시물을 등록했어요.')));
+        }
+      }
     } finally {
       navigation.endCompose();
     }
@@ -148,22 +166,14 @@ class _NextStepScreen extends StatelessWidget {
     required this.message,
     this.action,
     this.bottomClearance = 0,
-    this.isDialog = false,
   });
   final String title, message;
   final Widget? action;
   final double bottomClearance;
-  final bool isDialog;
 
   @override
   Widget build(BuildContext context) => Scaffold(
-    appBar: AppBar(
-      title: Text(title),
-      leading: isDialog
-          ? CloseButton(onPressed: () => Navigator.pop(context))
-          : null,
-      automaticallyImplyLeading: false,
-    ),
+    appBar: AppBar(title: Text(title), automaticallyImplyLeading: false),
     body: SafeArea(
       top: false,
       child: Padding(

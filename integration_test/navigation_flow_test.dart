@@ -51,7 +51,7 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.byType(PindNavigationBar), findsNothing);
     await binding.takeScreenshot('navigation-qa-compose');
-    await tester.tap(find.byType(CloseButton));
+    await tester.tap(find.byTooltip('닫기'));
     await tester.pumpAndSettle();
     expect(
       tester.widget<PindNavigationBar>(find.byType(PindNavigationBar)).selected,

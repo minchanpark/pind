@@ -49,13 +49,16 @@ class DetailGlass extends StatelessWidget {
                     ? const Color(0xB33A0088)
                     : const Color(0xF2FFFFFF),
               ),
-              gradient: LinearGradient(
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-                colors: purple
-                    ? [const Color(0xCCA05CEE), const Color(0xB36300DB)]
-                    : [const Color(0xADFDFDFF), const Color(0x99FAFAFC)],
-              ),
+              color: topOnly ? const Color(0x99FAFAFC) : null,
+              gradient: topOnly
+                  ? null
+                  : LinearGradient(
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                      colors: purple
+                          ? [const Color(0xCCA05CEE), const Color(0xB36300DB)]
+                          : [const Color(0xADFDFDFF), const Color(0x99FAFAFC)],
+                    ),
             ),
             child: child,
           ),
@@ -641,12 +644,13 @@ class _PlaceSheetState extends State<PlaceSheet> {
           ),
         );
         if (!mounted || selected == null) return;
+        final detail = controller.forPlace(selected);
         await showModalBottomSheet<void>(
           context: context,
           isScrollControlled: true,
           useSafeArea: true,
           backgroundColor: Colors.transparent,
-          builder: (_) => PlaceSheet(controller: controller.forPlace(selected)),
+          builder: (_) => PlaceSheet(controller: detail),
         );
       },
     );

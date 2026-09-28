@@ -2,6 +2,17 @@
 
 클라이언트는 저장소 루트의 Flutter 앱 하나다. React Native/Expo 설정은 제거했다.
 
+## 2026-09-28 Google Cloud Pind 프로젝트 연결
+
+Google 지도·Places의 프로젝트는 `pind` (`inductive-time-509809-p4`, project number `1079540377803`)다. API 주소는 공통 Google 엔드포인트를 사용하고 키의 소속 프로젝트로 요청이 연결된다.
+
+- 앱: 사용자가 변경한 `config/local.json`의 `GOOGLE_MAPS_API_KEY`가 Pind 소속임을 확인했고 iOS 앱을 재빌드했다. 설치 산출물에도 같은 새 키가 들어 있는지 값 노출 없이 비교했다.
+- 서버: Pind에 `Pind Places Server` 키를 생성하고 API 사용 범위를 `places.googleapis.com`으로 제한했다. `supabase/functions/.env`와 연결된 Supabase 프로젝트 `mkfgqobwededpzdekvxg`의 `GOOGLE_PLACES_API_KEY`에 적용했다. 로컬 서버 env는 Git 제외·파일 권한 600이며 앱에는 서버 키를 넣지 않는다.
+- 활성화: Places API (New), Maps SDK for iOS, Maps SDK for Android. 프로젝트 billing 활성 상태를 확인했다.
+- 검증: 새 서버 키로 `places:searchText`에 ID 필드만 요청하여 HTTP 200과 장소 1개를 확인했다. 원격 secret digest가 새 서버 키와 일치하며 변경된 secret이 `GOOGLE_PLACES_API_KEY` 하나뿐인 것도 확인했다. iPhone 17 Pro / iOS 26.5의 지도 SDK 단독 화면에서 포항 지도 타일 표시를 [캡처](../artifacts/ios/google-cloud-pind-map.png)했다. 검증 후 일반 앱 진입점으로 재실행했다. Android는 SDK 활성화를 확인했으며 기기 렌더링은 이번에 검증하지 않았다.
+
+서버 키 분리는 [Google API 키 보안 안내](https://developers.google.com/maps/api-security-best-practices)를 따른다. [Supabase Edge Functions secrets 안내](https://supabase.com/docs/guides/functions/secrets)에 따라 secret 변경은 재배포 없이 기존 함수에 적용된다.
+
 ## 앱 실행
 
 ```sh

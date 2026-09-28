@@ -29,7 +29,7 @@ do $$ declare data jsonb; begin
   assert (data->'places'->0->>'pindPostCount')::int=0;
   assert jsonb_array_length(public.get_catalog_places(p_query=>'%_')->'places')=0,'LIKE wildcards literal';
   assert jsonb_array_length(public.get_catalog_places(p_lat=>33.5,p_lng=>126.5,p_radius=>1000)->'places')=0;
-  assert jsonb_array_length(public.get_catalog_places(p_lat=>37.57,p_lng=>126.98,p_radius=>1000)->'places')=1;
+  assert jsonb_array_length(public.get_catalog_places(p_lat=>37.57,p_lng=>126.98,p_radius=>1000)->'places')=0, 'private posts do not create map pins';
 end $$;
 do $$ begin
   begin

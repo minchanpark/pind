@@ -41,7 +41,8 @@ dependencies:
   geolocator: ^14.0.3
   url_launcher: ^6.3.2
   share_plus: ^13.3.0
-
+  image_picker: 1.2.3
+  uuid: ^4.5.3
 dev_dependencies:
   flutter_test:
     sdk: flutter
@@ -67,6 +68,13 @@ flutter:
   uses-material-design: true
   assets:
     - assets/figma/
+  fonts:
+    - family: BraahOne
+      fonts:
+        - asset: assets/fonts/BraahOne-Regular.ttf
+    - family: Bayon
+      fonts:
+        - asset: assets/fonts/Bayon-Regular.ttf
 
   # To add assets to your application, add an assets section, like this:
   # assets:

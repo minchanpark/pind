@@ -17,9 +17,10 @@ flutter pub get
 cp config/example.json config/local.json
 # local.json에 프로젝트의 공개 클라이언트 설정을 입력
 flutter run -t lib/main.dart --dart-define-from-file=config/local.json
+# 같은 실행을 키 확인과 함께: scripts/run.sh [ios | device-id] [flutter run 옵션]
 ```
 
-현재 소셜 로그인은 미구현이다. 개발 프로젝트에서 익명 인증을 사용할 때만 `ALLOW_ANONYMOUS_AUTH`를 `"true"`로 설정한다. 앱에 service_role 또는 서버용 Places 키를 넣지 않는다.
+첫 진입은 로그인부터 취향 선택까지 8단계 온보딩으로 진행한다. 소셜 로그인 호출·세션 연결을 구현했으며, 실제 공급자 콘솔/redirect 설정과 서버 프로필 저장은 [온보딩 안내](doc/onboarding.md)를 따른다. 개발 프로젝트에서 익명 체험을 사용할 때만 `ALLOW_ANONYMOUS_AUTH`를 `"true"`로 설정한다. 앱에 service_role 또는 서버용 Places 키를 넣지 않는다.
 
 네이티브 지도 키, 별도 bundle ID, 테스트 명령은 [지도 설정](doc/google-maps-setup.md) 및 [검증 상태](doc/implementation-status.md)를 따른다.
 
@@ -29,6 +30,7 @@ flutter run -t lib/main.dart --dart-define-from-file=config/local.json
 - [Figma 화면·요구사항 대응](doc/figma-screen-map.md)
 - [기존 프로젝트 전환 및 구현 설계](doc/implementation-design.md)
 - [MVC 아키텍처](doc/architecture.md)
+- [온보딩 화면·로그인 설정·검증 범위](doc/onboarding.md)
 - [구현·검증·남은 작업](doc/implementation-status.md)
 - [이전 PRD v2 보관본](doc/archive/prd-v2.md)
 - [지도·장소 공급자 설정](doc/google-maps-setup.md)

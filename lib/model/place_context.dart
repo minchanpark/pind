@@ -92,7 +92,7 @@ String formatDistance(double meters) => meters < 1000
     ? '${meters.round()}m'
     : '${(meters / 1000).toStringAsFixed(1)}km';
 
-Uri directionsUri(Place place) => place.canShowOnMap
+Uri directionsUri(Place place) => (place.isGoogle || place.isCatalog)
     ? Uri.https('www.google.com', '/maps/dir/', {
         'api': '1',
         'destination': '${place.latitude},${place.longitude}',

@@ -1,16 +1,17 @@
 enum PreferenceCriterion {
-  taste('맛', '재료와 조리 완성도'),
-  ambience('분위기·공간', '인테리어와 좌석'),
-  value('가성비', '가격 대비 만족'),
-  portion('양', '한 끼에 충분한 양'),
-  service('청결·서비스', '응대와 위생'),
-  photogenic('사진 잘 나옴', '찍을 맛 나는 곳'),
-  quiet('조용함', '대화하기 좋은'),
-  parking('주차', '차 대기 편한');
+  taste('맛', '재료와 조리 완성도', '😋'),
+  ambience('분위기·공간', '인테리어와 좌석', '🕯️'),
+  value('가성비', '가격 대비 만족', '💰'),
+  portion('양', '한 끼에 충분한 양', '🍚'),
+  service('청결·서비스', '응대와 위생', '🧼'),
+  photogenic('사진 잘 나옴', '찍을 맛 나는 곳', '📸'),
+  quiet('조용함', '대화하기 좋은', '🤫'),
+  parking('주차', '차 대기 편한', '🅿️');
 
-  const PreferenceCriterion(this.label, this.description);
+  const PreferenceCriterion(this.label, this.description, this.emoji);
   final String label;
   final String description;
+  final String emoji;
 }
 
 enum DiningOccasion {

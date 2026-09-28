@@ -4,16 +4,18 @@
 
 ## 화면 → 구현 단위
 
+2026-09-28에는 아래 온보딩 8단계를 Flutter 일반 앱에 연결하고 iOS 시뮬레이터에서 전체 진행을 검증했다. 최신 구현과 실제 인증/서버 연결의 남은 범위는 [온보딩 안내](onboarding.md)를 따른다.
+
 ID는 모두 531: 접두사. [원본 Figma](https://www.figma.com/design/AepN5S4XiejtlWS52Q7Arg/Pind?node-id=468-15492).
 
 | ID | 화면/상태 | 구현 |
 | --- | --- | --- |
-| 18341 | 랜딩 | AuthScreen |
-| 18621 | 국가 | AccountSetup country |
-| 20155 | 기본 정보/동의 | AccountSetup private |
-| 18681 | 닉네임·아이디 | AccountSetup public |
-| 18369 | 위치/나중에 | Onboarding permission |
-| 18555 | 기준 2개 순위 | Onboarding priorities |
+| 18341 | 랜딩 | LoginScreen |
+| 18621 | 국가 | RegistrationScreen country |
+| 20155 | 기본 정보/동의 | RegistrationScreen basic |
+| 18681 | 닉네임·아이디 | RegistrationScreen handle |
+| 18369 | 위치/나중에 | LocationPermissionScreen |
+| 18555 | 기준 3개 순위 (사용자 지정) | Onboarding priorities |
 | 18505 | 상황 최대 3개 | Onboarding occasions |
 | 18416 | 음식 최소 3개 | Onboarding cuisines |
 | 19003 | Discover 커뮤니티 | Discover community |

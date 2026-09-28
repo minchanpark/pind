@@ -40,6 +40,12 @@
 
 ## 3. 기존 API 계약
 
+### 2026-09-28 온보딩 — 구현 단위 O1
+
+일반 앱을 로그인 → 국가 → 기본 정보 → 닉네임/아이디 → 위치 → 우선순위 → 외식 선호도 → 음식 선택으로 연결한다. 앞의 다섯 화면은 Figma `531:18341`, `531:18621`, `531:20155`, `531:18681`, `531:18369`를 기준으로 하고 기존 취향 세 화면을 재사용한다.
+
+`RegistrationModel`이 draft/단계/검증 상태를 정의하고 `RegistrationController`가 `AuthService`, `RegistrationService`, `LocationService`를 연결한다. Supabase OAuth 호출과 인증 상태 구독을 구현하되, OAuth 실행 자체를 로그인 성공으로 판단하지 않는다. 가입 정보와 완료 표시는 계정별 기기 draft이며 현재 서버 계약을 대체하지 않는다. 서버 프로필/아이디 중복/동의와 공급자 콘솔 설정의 남은 연결, 검증 방법은 [온보딩 안내](onboarding.md)를 따른다.
+
 ### 2026-09-26 내비게이션 재설계 — 구현 단위 N1
 
 1. `view/navigation/pind_navigation_bar.dart`: Figma `531:17799`(지도), `531:19123`(Discover), `531:20050`(마이페이지) 상태를 공통 위젯으로 구현. 원본 SVG 12개를 로컬 에셋으로 보존하며 아이콘을 Material 아이콘으로 대체하거나 재색칠하지 않는다. 273×58 / radius 29 / blur 12 / rgba(244,245,248,.62) / 흰 테두리 .95 / shadow 0,4,18,.06. 아이콘 프레임은 30.0458, 좌측 좌표 35 / 87.0458 / 145.9541 / 209, 상단 14. 터치 영역만 44로 확장한다.
@@ -98,7 +104,7 @@ Edge Function은 JWT 필요. P0은 명시적으로 허용한 개발 익명 세�
 | user_consents | user_id, purpose, document_version, accepted/revoked_at | 본인 읽기, 서버가 버전/시각 확인 |
 | user_taste_preferences | user_id PK, priorities[2], occasions[0..3], cuisines[3..], version | 본인 CRUD, allowlist/중복/개수 검사 |
 | saved_places | (user_id, place_id) PK, created_at | 본인 select/insert/delete |
-| posts 확장 | taste/portion/ambience_score nullable 1..5, client_request_id, status | 기존 NULL 보존, 신규 API 3개 필수 |
+| posts 확장 | ratings jsonb(작성자 우선순위 3개 → 1..5), 구형 taste/portion/ambience_score, client_request_id, status | 기존 NULL 보존, 신규 API 평점 3개 필수 |
 | post_media | id, post_id, position 0..9, bucket/path/mime/bytes | 부모 글 권한, 소유자 쓰기, 순서 unique |
 | collections/collection_places | 제목/설명/출처, 장소 순서 | 게시된 모음만 공개, 운영자 쓰기 |
 | friendships 기존 | pending→accepted/declined/removed | 참여자 읽기, 검증 RPC 변경 |
@@ -110,7 +116,7 @@ Edge Function은 JWT 필요. P0은 명시적으로 허용한 개발 익명 세�
 
 complete_onboarding_v1은 handle/동의/선택 개수를 검증해 한 트랜잭션으로 계정 설정과 취향을 저장하고 완료 처리한다. P0 기기 draft를 서버 완료로 취급하지 않는다.
 
-publish_post_v2(client_request_id, place_id, ratings, body, media[])는 사용자·장소·사진 소유 경로/실제 객체 존재·개수·평점 범위를 검증한다. 업로드→DB 원자 저장→성공 순서. 중복 키는 기존 결과 반환, 실패 시 이번 업로드만 정리, 기존 사진은 DB 성공 후 정리. v1 RPC는 구형 Expo 때문에 유지한다. 본문 200자 규칙은 v2에 적용하고 기존 글은 자르지 않는다.
+publish_post_v3(client_request_id, place_id, ratings, body, media[])는 온보딩에서 고른 우선순위 3개 기준의 평점(`{criterion: 1..5}`)을 받아 `posts.ratings`와 `place_ratings`에 원자 저장한다. 우선순위가 없는 계정은 맛·양·분위기로 평가한다. v2는 맛·양·분위기를 v3로 넘기는 호환 래퍼다. 두 RPC 모두 사용자·장소·사진 소유 경로/실제 객체 존재·개수·평점 범위를 검증한다. 업로드→DB 원자 저장→성공 순서. 중복 키는 기존 결과 반환, 실패 시 이번 업로드만 정리, 기존 사진은 DB 성공 후 정리. v1 RPC는 구형 Expo 때문에 유지한다. 본문 200자 규칙은 v2에 적용하고 기존 글은 자르지 않는다.
 
 신규 미디어 목표는 private post-media-v2 + 정책 검사 후 짧은 signed URL. 기존 public post-media는 즉시 비공개로 바꾸지 않는다. 복사→검증→DB 참조 전환→구형 앱 종료→기존 공개 객체 정리. 숨김 직후도 signed URL 만료까지 접근 가능함을 반영한다.
 

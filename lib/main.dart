@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
@@ -8,12 +9,18 @@ import 'services/config.dart';
 import 'services/place_service.dart';
 import 'services/place_context_service.dart';
 import 'services/preference_service.dart';
+import 'services/auth_service.dart';
+import 'services/registration_service.dart';
+import 'services/post_service.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  final preferences = PreferenceService(await SharedPreferences.getInstance());
+  final storage = await SharedPreferences.getInstance();
+  final preferences = PreferenceService(storage);
+  AuthService auth = UnavailableAuthService();
   PlaceService? places;
   PlaceContextService? placeContext;
+  PostService? posts;
   if (AppConfig.hasBackend) {
     await Supabase.initialize(
       url: AppConfig.supabaseUrl,
@@ -25,6 +32,12 @@ Future<void> main() async {
     );
     places = PlaceService(gateway.call);
     placeContext = SupabasePlaceContextService(Supabase.instance.client);
+    posts = SupabasePostService(Supabase.instance.client);
+    auth = SupabaseAuthService(
+      Supabase.instance.client,
+      redirectTo: AppConfig.authRedirectUrl,
+      allowAnonymous: AppConfig.allowAnonymous,
+    );
   }
   runApp(
     PindApp(
@@ -32,6 +45,11 @@ Future<void> main() async {
         preferences,
         places: places,
         placeContext: placeContext,
+        posts: posts,
+        auth: auth,
+        registrationService: RegistrationService(storage),
+        allowPreview:
+            kDebugMode && (!AppConfig.hasBackend || AppConfig.allowAnonymous),
       ),
       mapsEnabled: AppConfig.hasMap,
     ),

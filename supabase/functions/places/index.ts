@@ -27,7 +27,12 @@ Deno.serve(async request => {
       const {data,error} = await client.rpc('get_catalog_places',args);
       if (error) throw new CatalogError(503,'CATALOG_UNAVAILABLE','장소 DB에 연결하지 못했어요. 잠시 후 다시 시도해 주세요.');
       return data;
-    },path => client.storage.from('post-media').getPublicUrl(path).data.publicUrl,
+    },async (path,bucket) => {
+      if(bucket==='post-media')return client.storage.from(bucket).getPublicUrl(path).data.publicUrl;
+      if(bucket!=='post-media-v2')return null;
+      const {data,error}=await client.storage.from(bucket).createSignedUrl(path,300);
+      return error ? null : data.signedUrl;
+    },
     Deno.env.get('GOOGLE_FALLBACK_ENABLED') !== 'false'));
   } catch(error) {
     if (error instanceof CatalogError) return json({error:{code:error.code,message:error.message}},error.status);

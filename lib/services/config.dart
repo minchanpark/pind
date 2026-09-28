@@ -1,4 +1,8 @@
 class AppConfig {
+  static const authRedirectUrl = String.fromEnvironment(
+    'AUTH_REDIRECT_URL',
+    defaultValue: 'com.pind.app://login-callback',
+  );
   static const supabaseUrl = String.fromEnvironment('SUPABASE_URL');
   static const publishableKey = String.fromEnvironment(
     'SUPABASE_PUBLISHABLE_KEY',

@@ -38,10 +38,14 @@ class ExploreController {
 
   String? _searchQuery;
   int _request = 0;
+  MapViewport _viewport = MapViewport.seoul;
+  MapViewport get viewport => _viewport;
+  int publishedRevision = 0;
   bool _disposed = false;
   String? _lastKey;
 
   Future<void> load(MapViewport viewport, {bool force = false}) async {
+    _viewport = viewport;
     if (!force && viewport.queryKey == _lastKey) return;
     _lastKey = viewport.queryKey;
     _searchQuery = null;
@@ -54,6 +58,25 @@ class ExploreController {
     _lastKey = null;
     _searchQuery = query.trim();
     await _run(() => repository.searchResults(query));
+  }
+
+  Future<void> showPublishedPlace(int placeId) async {
+    _lastKey = null;
+    _searchQuery = null;
+    await _run(() async {
+      final data = await repository.invoke({
+        'action': 'catalog_detail',
+        'internalPlaceId': placeId,
+      });
+      if (_disposed) return const PlaceSearchResult([]);
+      final place = Place.fromJson(
+        Map<String, dynamic>.from(data['place'] as Map),
+      );
+      _viewport = MapViewport(place.latitude, place.longitude);
+      final places = await repository.nearby(_viewport);
+      publishedRevision++;
+      return PlaceSearchResult(places);
+    });
   }
 
   Future<void> searchGoogle() async {

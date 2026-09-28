@@ -2,6 +2,24 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { catalogRequest } from './catalog.ts';
 import { explicitGoogleAction, dailyLimit } from '../google-places/policy.ts';
+
+test('nearby requires posts while restaurant search keeps unposted choices',async()=>{
+  const query=async()=>({places:[{internalId:1,pindPostCount:0},{internalId:2,pindPostCount:1},{internalId:3}]});
+  const map=await catalogRequest({action:'nearby',latitude:37.57,longitude:126.98,radiusMeters:1000},query,p=>p,true);
+  assert.deepEqual((map.places as Record<string,unknown>[]).map(p=>p.internalId),[2]);
+  const search=await catalogRequest({action:'search',query:'카페'},query,p=>p,true);
+  assert.equal((search.places as unknown[]).length,3);
+});
+test('private media resolves a signed URL and strips internal storage fields',async()=>{
+  const calls:unknown[]=[];
+  const result=await catalogRequest({action:'catalog_detail',internalPlaceId:1},async()=>({places:[{
+    internalId:1,pindPostCount:1,pindPhotoPath:'owner/photo.png',pindPhotoBucket:'post-media-v2',pindPhotoAuthor:'Pind',
+  }]}),async(path,bucket)=>{calls.push([path,bucket]);return 'https://storage/signed/photo';},true);
+  assert.deepEqual(calls,[['owner/photo.png','post-media-v2']]);
+  const place=result.place as Record<string,unknown>;
+  assert.equal(place.heroImageUrl,'https://storage/signed/photo');
+  assert.equal(place.pindPhotoBucket,undefined);assert.equal(place.pindPhotoPath,undefined);
+});
 test('catalog empty and errors never turn into paid lookup',async()=>{
   let calls=0;
   const query=async()=>{calls++;return {places:[],catalogReady:false};};

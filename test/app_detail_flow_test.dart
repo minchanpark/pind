@@ -95,6 +95,17 @@ void main() {
         await tester.tap(find.byType(ListTile).first);
         await tester.pumpAndSettle();
         expect(find.byType(PlaceSheet), findsOneWidget);
+        final detail = tester
+            .widget<PlaceSheet>(find.byType(PlaceSheet))
+            .controller;
+        final requestsBeforeResize = actions.length;
+        tester.view.physicalSize = const Size(402, 900);
+        await tester.pumpAndSettle();
+        expect(
+          tester.widget<PlaceSheet>(find.byType(PlaceSheet)).controller,
+          same(detail),
+        );
+        expect(actions, hasLength(requestsBeforeResize));
         expect(
           find.descendant(
             of: find.byType(PlaceSheet),

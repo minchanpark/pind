@@ -1,5 +1,27 @@
 # 구현 및 검증 상태
 
+## 2026-09-28 Google Cloud Pind API 연결
+
+- Google Cloud `pind` (`inductive-time-509809-p4`)로 지도·Google Places 키 연결을 맞췄다. 사용자가 수정한 앱 지도 키의 프로젝트 소속을 확인하고 iOS 앱을 재빌드하여 설치 산출물에 반영된 것을 비교했다.
+- Pind 프로젝트에 Places API (New) 전용 서버 키를 생성했다. Git 제외된 `supabase/functions/.env`와 연결된 Supabase 프로젝트의 `GOOGLE_PLACES_API_KEY`를 갱신했고 원격 digest 일치를 검증했다.
+- Places API (New), Maps SDK for iOS/Android 활성화와 billing 상태를 확인했다. Google Places 실요청 HTTP 200 / 장소 ID 1개 반환을 확인했다. iOS 지도 SDK 단독 검증 화면에서 실제 포항 타일을 확인했고 [네이티브 캡처](../artifacts/ios/google-cloud-pind-map.png)를 남겼다.
+- Android 지도 기기 렌더링은 이번에 검증하지 않았다. 상세 설정은 [지도·장소 공급자 안내](google-maps-setup.md)를 따른다.
+
+## 2026-09-28 전체 온보딩 구성
+
+- 로그인 → 국가 → 기본 정보 → 닉네임/아이디 → 위치 권한 → 우선순위 3개 → 외식 선호도 → 음식 선택 → 지도 진입을 일반 앱에 연결했다. 제공한 Figma 다섯 화면의 원본 에셋·브랜드 서체를 사용하고 기존 취향 세 화면을 재사용했다.
+- MVC 책임에 따라 가입 model/controller/auth·draft services를 추가했다. OAuth 호출 후 실제 인증 이벤트에서만 진행하며 계정별 draft 복원, 필수 동의·만 14세·아이디 형식, 위치 거부/건너뛰기/설정 오류, 이전 화면 선택 유지와 중복 완료 요청을 처리한다.
+- `flutter analyze` 문제 없음, 전체 `flutter test` **72개 통과**. 기존 60개와 가입 단위/위젯 11개, 원본 에셋의 파일·슬롯·렌더링 크기 검증 1개를 포함한다.
+- iPhone 17 Pro / iOS 26.5에서 `registration_flow_test.dart` 네이티브 테스트 통과. 가짜 인증과 로컬 저장소를 주입하여 8단계·완료 후 지도 진입을 검증하고 `artifacts/ios/onboarding-qa-*.png` 8장을 확인했다. 실제 소셜 공급자 로그인·실기기 권한 검증과 구분한다.
+- 현재 기본 정보와 완료는 기기에 저장한다. 공급자 콘솔/redirect 설정, 아이디 중복·불변성, 닉네임 변경, 서버 프로필·동의 버전·취향·완료 저장은 연결이 남아 있다. 원격 DB·인증 설정은 변경하지 않았다. 구현 범위·설정·캡처는 [온보딩 안내](onboarding.md)를 따른다.
+
+## 2026-09-28 MVC 구조 전환
+
+- `lib`를 `model`, `view`, `controllers`, `services`, `main.dart`로 정리했다. 데이터·ChangeNotifier 상태는 model, 화면·테마는 view, 조회·저장 흐름은 controllers, Supabase·기기 기능 접근은 services에 배치했다. 자세한 책임과 수명 관리는 [MVC 아키텍처](architecture.md)를 따른다.
+- 앱·탐색·상세·온보딩·탭 상태와 서비스 연결을 분리했다. 상세 시트가 화면 크기 변경으로 다시 그려져도 같은 컨트롤러를 유지한다.
+- `flutter analyze` 문제 없음, `flutter test` **60개 통과**. 기존 53개와 요청 순서·해제 후 응답·저장 실패 복구·중복 제출 관련 컨트롤러 테스트 7개를 포함한다. 일반 앱의 상세 화면 크기 변경 시 재조회가 발생하지 않는 것도 확인했다.
+- 계층 간 의존성 및 이전 Dart import 경로의 잔존 여부를 확인했다. 이번 구조 변경 후 실제 Supabase 연동·시뮬레이터/실기기 통합 테스트·배포 빌드는 다시 실행하지 않았다.
+
 ## 2026-09-27 앱 ID 통일 및 서울·포항 공공 장소 조회 연결
 
 - iOS Debug/Profile/Release의 bundle ID, Android namespace/applicationId, MainActivity 패키지를 모두 `com.pind.app`으로 수정했다. RunnerTests는 `com.pind.app.RunnerTests`다. 기존 사용자 변경 및 React Native 삭제 상태는 보존했다.
