@@ -1,5 +1,7 @@
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { createClient } from "npm:@supabase/supabase-js@2.112.3";
+import { explicitGoogleAction, dailyLimit } from "./policy.ts";
+type GoogleAccess = { key: string; userId: string };
 
 const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, apikey, content-type, x-client-info",
@@ -60,11 +62,16 @@ type GooglePlace = {
     weekdayDescriptions?: string[];
   };
   websiteUri?: string;
+  currentOpeningHours?: { openNow?: boolean; weekdayDescriptions?: string[] };
+  userRatingCount?: number;
+  utcOffsetMinutes?: number;
   nationalPhoneNumber?: string;
   editorialSummary?: { text?: string; languageCode?: string };
 };
 
 type PlacePayload = {
+  provider: "google_places";
+  sourceUri: string;
   internalId?: number;
   externalPlaceId: string;
   name: string;
@@ -83,6 +90,8 @@ type PlacePayload = {
   }>;
   businessStatus: string | null;
   isOpenNow: boolean | null;
+  userRatingCount: number | null;
+  utcOffsetMinutes: number | null;
   weekdayDescriptions: string[];
   websiteUri: string | null;
   phoneNumber: string | null;
@@ -104,25 +113,21 @@ Deno.serve(async (request: Request) => {
   if (request.method !== "POST") return json({ error: { code: "METHOD_NOT_ALLOWED", message: "Use POST." } }, 405);
 
   try {
-    await requireUser(request);
-
-    const apiKey = Deno.env.get("GOOGLE_PLACES_API_KEY");
-    if (!apiKey) {
-      throw new RequestError(
-        503,
-        "GOOGLE_PLACES_NOT_CONFIGURED",
-        "Real-place search is ready, but the Google Places server key has not been configured yet.",
-      );
-    }
-
+    const userId = await requireUser(request);
     const body = await readBody(request);
-    if (body.action === "nearby") return await nearbyPlaces(body, apiKey);
-    if (body.action === "search") return await searchPlaces(body, apiKey);
-    if (body.action === "resolve") return await resolvePlace(body, apiKey);
-    if (body.action === "detail") return await placeDetail(body, apiKey);
-    if (body.action === "details") return await hydratePlaces(body, apiKey);
-
-    throw new RequestError(400, "INVALID_ACTION", "Action must be nearby, search, resolve, detail, or details.");
+    if (!explicitGoogleAction(body)) {
+      throw new RequestError(400, "EXPLICIT_GOOGLE_ONLY", "Google 추가 검색이나 선택한 상세 요청만 허용합니다.");
+    }
+    const key = Deno.env.get("GOOGLE_PLACES_API_KEY");
+    if (!key || Deno.env.get("GOOGLE_FALLBACK_ENABLED") === "false") {
+      throw new RequestError(503, "GOOGLE_DISABLED", "Google 추가 정보를 현재 사용할 수 없어요.");
+    }
+    const access: GoogleAccess = {key, userId};
+    if (body.action === "google_search") {
+      return json({places: await searchGooglePlaces(body,access),googleSearchEnabled:true});
+    }
+    if (body.action === "resolve") return await resolvePlace(body,access);
+    return await placeDetail(body,access);
   } catch (caught) {
     if (caught instanceof RequestError) {
       return json({ error: { code: caught.code, message: caught.message } }, caught.status);
@@ -146,6 +151,7 @@ async function requireUser(request: Request) {
   });
   const { data, error } = await client.auth.getUser();
   if (error || !data.user) throw new RequestError(401, "UNAUTHORIZED", "Your session is no longer valid.");
+  return data.user.id;
 }
 
 async function readBody(request: Request): Promise<Record<string, unknown>> {
@@ -158,45 +164,7 @@ async function readBody(request: Request): Promise<Record<string, unknown>> {
   }
 }
 
-async function nearbyPlaces(body: Record<string, unknown>, apiKey: string) {
-  const latitude = requiredNumber(body.latitude, "latitude", -90, 90);
-  const longitude = requiredNumber(body.longitude, "longitude", -180, 180);
-  if (!isInKorea(latitude, longitude)) {
-    throw new RequestError(400, "OUTSIDE_KOREA", "Move the map within South Korea to load places.");
-  }
-  const radiusMeters = requiredNumber(body.radiusMeters, "radiusMeters", 100, 50000);
-  const languageCode = body.languageCode === "ko" ? "ko" : "en";
-  const response = await googleFetch<{ places?: GooglePlace[] }>(
-    `${googleApiBase}/places:searchNearby`,
-    apiKey,
-    {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "X-Goog-FieldMask": basePlaceFields("places."),
-      },
-      body: JSON.stringify({
-        includedPrimaryTypes: ["restaurant", "cafe", "bakery", "dessert_shop"],
-        maxResultCount: 20,
-        rankPreference: "POPULARITY",
-        languageCode,
-        regionCode: "KR",
-        locationRestriction: {
-          circle: { center: { latitude, longitude }, radius: radiusMeters },
-        },
-      }),
-    },
-  );
-
-  const normalized = await Promise.all(
-    (response.places ?? [])
-      .filter(isSouthKoreanPlace)
-      .map((place) => normalizePlace(place, apiKey, 1)),
-  );
-  return json({ places: await attachInternalIds(normalized.flatMap((place) => (place ? [place] : []))) });
-}
-
-async function searchPlaces(body: Record<string, unknown>, apiKey: string) {
+async function searchGooglePlaces(body: Record<string, unknown>, apiKey: GoogleAccess): Promise<PlacePayload[]> {
   const query = requiredString(body.query, "query", 2, 120);
   const languageCode = body.languageCode === "ko" ? "ko" : "en";
   const response = await googleFetch<{ places?: GooglePlace[] }>(
@@ -216,7 +184,6 @@ async function searchPlaces(body: Record<string, unknown>, apiKey: string) {
           "places.primaryType",
           "places.primaryTypeDisplayName",
           "places.googleMapsUri",
-          "places.photos",
         ].join(","),
       },
       body: JSON.stringify({
@@ -234,14 +201,14 @@ async function searchPlaces(body: Record<string, unknown>, apiKey: string) {
     isSouthKoreanPlace(place) &&
     (place.types ?? []).some((type) => foodTypes.has(type) || type.endsWith("_restaurant")),
   );
-  const candidates = await Promise.all(foodPlaces.slice(0, 8).map((place) => normalizePlace(place, apiKey, 1)));
-  return json({ places: candidates.flatMap((place) => (place ? [place] : [])) });
+  const candidates = await Promise.all(foodPlaces.slice(0, 8).map((place) => normalizePlace(place, apiKey, 0)));
+  return candidates.flatMap((place) => (place ? [place] : []));
 }
 
-async function resolvePlace(body: Record<string, unknown>, apiKey: string) {
+async function resolvePlace(body: Record<string, unknown>, apiKey: GoogleAccess) {
   const externalPlaceId = requiredString(body.externalPlaceId, "externalPlaceId", 8, 255);
   const place = await getPlace(externalPlaceId, apiKey);
-  const normalized = await normalizePlace(place, apiKey, 1);
+  const normalized = await normalizePlace(place, apiKey, 0);
   if (!normalized) throw new RequestError(404, "PLACE_NOT_FOUND", "Google did not return this place.");
 
   const admin = adminClient();
@@ -275,7 +242,7 @@ async function resolvePlace(body: Record<string, unknown>, apiKey: string) {
   return json({ place: { ...normalized, internalId: Number(data.id) } });
 }
 
-async function placeDetail(body: Record<string, unknown>, apiKey: string) {
+async function placeDetail(body: Record<string, unknown>, apiKey: GoogleAccess) {
   const internalPlaceId = requiredNumber(body.internalPlaceId, "internalPlaceId", 1, Number.MAX_SAFE_INTEGER);
   const admin = adminClient();
   const { data, error } = await admin
@@ -289,56 +256,21 @@ async function placeDetail(body: Record<string, unknown>, apiKey: string) {
   if (!data?.external_place_id) throw new RequestError(404, "PLACE_NOT_FOUND", "This Google place is not attached to Pind.");
 
   const place = await getPlace(String(data.external_place_id), apiKey, true);
-  const normalized = await normalizePlace(place, apiKey, 6);
+  const normalized = await normalizePlace(place, apiKey, 1);
   if (!normalized) throw new RequestError(404, "PLACE_NOT_FOUND", "Google did not return this place.");
   return json({ place: { ...normalized, internalId: Number(data.id) } });
 }
 
-async function hydratePlaces(body: Record<string, unknown>, apiKey: string) {
-  if (!Array.isArray(body.internalPlaceIds)) {
-    throw new RequestError(400, "INVALID_PLACE_IDS", "internalPlaceIds must be an array.");
-  }
-  const internalPlaceIds = [...new Set(body.internalPlaceIds)]
-    .filter((value): value is number => typeof value === "number" && Number.isSafeInteger(value) && value > 0)
-    .slice(0, 20);
-  if (internalPlaceIds.length === 0) return json({ places: [] });
-
-  const admin = adminClient();
-  const { data, error } = await admin
-    .from("places")
-    .select("id,external_place_id")
-    .eq("external_provider", "google_places")
-    .eq("is_reference_only", true)
-    .in("id", internalPlaceIds);
-  if (error) throw new RequestError(500, "REFERENCE_READ_FAILED", "Could not read place references.");
-
-  const places = await Promise.all(
-    (data ?? []).map(async (reference) => {
-      try {
-        const externalPlaceId = String(reference.external_place_id);
-        const place = await getPlace(externalPlaceId, apiKey);
-        const normalized = await normalizePlace(place, apiKey, 1);
-        return normalized ? { ...normalized, internalId: Number(reference.id) } : null;
-      } catch (caught) {
-        console.warn(`Could not hydrate Google place reference ${reference.id}: ${caught instanceof Error ? caught.message : "unknown error"}`);
-        return null;
-      }
-    }),
-  );
-
-  return json({ places: places.flatMap((place) => (place ? [place] : [])) });
-}
-
-async function getPlace(externalPlaceId: string, apiKey: string, extended = false): Promise<GooglePlace> {
+async function getPlace(externalPlaceId: string, apiKey: GoogleAccess, extended = false): Promise<GooglePlace> {
   return await googleFetch<GooglePlace>(
-    `${googleApiBase}/places/${encodeURIComponent(externalPlaceId)}?languageCode=en&regionCode=KR`,
+    `${googleApiBase}/places/${encodeURIComponent(externalPlaceId)}?languageCode=ko&regionCode=KR`,
     apiKey,
     {
       headers: {
         "X-Goog-FieldMask": [
           basePlaceFields(),
           ...(extended
-            ? ["regularOpeningHours", "websiteUri", "nationalPhoneNumber", "editorialSummary"]
+            ? ["photos", "regularOpeningHours", "currentOpeningHours", "userRatingCount", "utcOffsetMinutes", "editorialSummary"]
             : []),
         ].join(","),
       },
@@ -346,7 +278,7 @@ async function getPlace(externalPlaceId: string, apiKey: string, extended = fals
   );
 }
 
-async function normalizePlace(place: GooglePlace, apiKey: string, photoLimit: number): Promise<PlacePayload | null> {
+async function normalizePlace(place: GooglePlace, apiKey: GoogleAccess, photoLimit: number): Promise<PlacePayload | null> {
   const externalPlaceId = place.id;
   const name = place.displayName?.text;
   const address = place.formattedAddress;
@@ -369,6 +301,8 @@ async function normalizePlace(place: GooglePlace, apiKey: string, photoLimit: nu
   }))).flatMap((photo) => photo ? [photo] : []);
   const heroPhoto = gallery[0];
   return {
+    provider: "google_places",
+    sourceUri: googleMapsUri,
     externalPlaceId,
     name,
     category: place.primaryTypeDisplayName?.text ?? formatType(place.primaryType),
@@ -381,8 +315,10 @@ async function normalizePlace(place: GooglePlace, apiKey: string, photoLimit: nu
     photoAttributions: heroPhoto?.attributions ?? [],
     gallery,
     businessStatus: place.businessStatus ?? null,
-    isOpenNow: place.regularOpeningHours?.openNow ?? null,
-    weekdayDescriptions: place.regularOpeningHours?.weekdayDescriptions ?? [],
+    isOpenNow: (place.currentOpeningHours ?? place.regularOpeningHours)?.openNow ?? null,
+    weekdayDescriptions: (place.currentOpeningHours ?? place.regularOpeningHours)?.weekdayDescriptions ?? [],
+    userRatingCount: place.userRatingCount ?? null,
+    utcOffsetMinutes: place.utcOffsetMinutes ?? null,
     websiteUri: place.websiteUri ?? null,
     phoneNumber: place.nationalPhoneNumber ?? null,
     editorialSummary: place.editorialSummary?.text ?? null,
@@ -444,12 +380,11 @@ function basePlaceFields(prefix = ""): string {
     "primaryType",
     "primaryTypeDisplayName",
     "googleMapsUri",
-    "photos",
     "businessStatus",
   ].map((field) => `${prefix}${field}`).join(",");
 }
 
-async function getPhotoUri(photoName: string, apiKey: string): Promise<string | null> {
+async function getPhotoUri(photoName: string, apiKey: GoogleAccess): Promise<string | null> {
   try {
     const photo = await googleFetch<{ photoUri?: string }>(
       `${googleApiBase}/${photoName}/media?maxWidthPx=1200&maxHeightPx=1200&skipHttpRedirect=true`,
@@ -463,9 +398,20 @@ async function getPhotoUri(photoName: string, apiKey: string): Promise<string | 
   }
 }
 
-async function googleFetch<T>(url: string, apiKey: string, init: RequestInit): Promise<T> {
+async function googleFetch<T>(url: string, apiKey: GoogleAccess, init: RequestInit): Promise<T> {
+  const { error: budgetError } = await adminClient().rpc("take_place_google_budget", {
+    p_user_id: apiKey.userId,
+    p_user_limit: dailyLimit(Deno.env.get("GOOGLE_USER_DAILY_REQUESTS"),20),
+    p_total_limit: dailyLimit(Deno.env.get("GOOGLE_TOTAL_DAILY_REQUESTS"),1000),
+  });
+  if (budgetError) {
+    const limited = /GOOGLE_(DAILY_LIMIT|USER_LIMIT|BUDGET_DISABLED)/.test(budgetError.message);
+    throw new RequestError(limited ? 429 : 503, limited ? "GOOGLE_BUDGET_LIMIT" : "GOOGLE_BUDGET_UNAVAILABLE",
+      limited ? "오늘의 Google 추가 조회 한도에 도달했어요. 기본 장소 정보는 계속 사용할 수 있어요."
+        : "조회량 제한을 확인하지 못해 Google 요청을 중단했어요.");
+  }
   const headers = new Headers(init.headers);
-  headers.set("X-Goog-Api-Key", apiKey);
+  headers.set("X-Goog-Api-Key", apiKey.key);
   const response = await fetch(url, {
     ...init,
     headers,

@@ -1,0 +1,372 @@
+import 'package:pind_flutter/model/detail_preview_model.dart';
+import 'package:pind_flutter/controllers/place_detail_controller.dart';
+
+import 'dart:io';
+
+import 'package:flutter/material.dart';
+import 'package:flutter_svg/flutter_svg.dart';
+import 'package:flutter_test/flutter_test.dart';
+import 'package:pind_flutter/view/theme.dart';
+import 'package:pind_flutter/services/place_service.dart';
+import 'package:pind_flutter/services/preview/detail_fixture.dart';
+import 'package:pind_flutter/model/place_context.dart';
+import 'package:pind_flutter/model/places.dart';
+import 'package:pind_flutter/view/explore/place_sheet.dart';
+
+Future<void> mount(
+  WidgetTester tester,
+  LocalDetailContext data, {
+  Size size = const Size(402, 874),
+  double scale = 1,
+  Map<String, dynamic>? payload,
+  Future<MapViewport?> Function(bool)? position,
+  Future<void> Function(String, Rect)? share,
+  Future<void> Function(String)? link,
+}) async {
+  tester.view.physicalSize = size;
+  tester.view.devicePixelRatio = 1;
+  addTearDown(tester.view.resetPhysicalSize);
+  addTearDown(tester.view.resetDevicePixelRatio);
+  await tester.pumpWidget(
+    MaterialApp(
+      theme: PindTheme.data,
+      builder: (context, child) => MediaQuery(
+        data: MediaQuery.of(context)
+            .copyWith(textScaler: TextScaler.linear(scale)),
+        child: child!,
+      ),
+      home: Scaffold(
+        body: Align(
+          alignment: Alignment.bottomCenter,
+          child: PlaceSheet(
+            controller: PlaceDetailController(
+              place: payload == null ? detailPlace : Place.fromJson(payload),
+              places: payload == null
+                  ? detailPlaces
+                  : PlaceService((_) async => {'place': payload}),
+              context: data,
+              preferences: detailPreferences,
+              position:
+                  position ?? (_) async => const MapViewport(37.5712, 126.905),
+              shareAction: share,
+              linkAction: link,
+            ),
+          ),
+        ),
+      ),
+    ),
+  );
+  await tester.pumpAndSettle();
+}
+
+void main() {
+  test('friend relationship and visit visibility matrix', () async {
+    final repo = LocalDetailContext();
+    for (final r in TestFriendship.values) {
+      repo.relationship = r;
+      expect(
+        (await repo.load(900001)).visitors.length,
+        r == TestFriendship.accepted ? 1 : 0,
+      );
+    }
+    repo.relationship = TestFriendship.accepted;
+    repo.publicVisit = false;
+    expect((await repo.load(900001)).visitors, isEmpty);
+    repo.publicVisit = true;
+    repo.hasVisit = false;
+    expect((await repo.load(900001)).visitors, isEmpty);
+  });
+  test(
+    'today hours follow Korean date, review count stays unknown when omitted',
+    () {
+      final p = Place.fromJson({
+        ...detailPayload,
+        'weekdayDescriptions': [
+          'Mon: 11:00–21:00',
+          'Tue: closed',
+          'Wed: closed',
+          'Thu: closed',
+          'Fri: closed',
+          'Sat: closed',
+          'Sun: 24 hours',
+        ],
+      });
+      expect(todayHours(p, DateTime.utc(2026, 9, 27, 16)), '11:00–21:00');
+      expect(todayHours(p, DateTime.utc(2026, 9, 27, 2)), '24 hours');
+      expect(formatDistance(1800), '1.8km');
+      expect(formatDistance(350), '350m');
+      expect(
+        directionsUri(p).queryParameters['destination_place_id'],
+        'local-qa-only',
+      );
+      expect(
+        Place.fromJson({...detailPayload, 'userRatingCount': null}).reviewCount,
+        null,
+      );
+    },
+  );
+  testWidgets('glass header assets, real formula and friend row', (
+    tester,
+  ) async {
+    await mount(tester, LocalDetailContext());
+    expect(find.text('내 취향 94%'), findsOneWidget);
+    expect(find.textContaining('11:30 – 21:00'), findsWidgets);
+    expect(find.text('1.8km'), findsOneWidget);
+    expect(find.text('리뷰 87개'), findsOneWidget);
+    expect(find.byKey(const ValueKey('friend-visits')), findsOneWidget);
+    expect(find.byType(BackdropFilter), findsWidgets);
+    const roots = {
+      'close': 38.0,
+      'location': 13.3989,
+      'save': 13.4603,
+      'share': 13.542,
+      'directions': 15.4546,
+    };
+    for (final e in roots.entries) {
+      final path = 'assets/figma/detail_${e.key}.svg';
+      expect(File(path).lengthSync(), greaterThan(0));
+      final finder = find.byWidgetPredicate(
+        (w) =>
+            w is SvgPicture &&
+            w.bytesLoader is SvgAssetLoader &&
+            (w.bytesLoader as SvgAssetLoader).assetName == path,
+      );
+      expect(finder, findsOneWidget);
+      expect(tester.getSize(finder).width, closeTo(e.value, .001));
+      expect(tester.getSize(finder).height, closeTo(e.value, .001));
+    }
+    expect(tester.takeException(), isNull);
+  });
+  testWidgets(
+    'no friends and no ratings do not fabricate social proof or score',
+    (tester) async {
+      await mount(
+        tester,
+        LocalDetailContext()
+          ..relationship = TestFriendship.none
+          ..hasRatings = false,
+      );
+      expect(find.byKey(const ValueKey('friend-visits')), findsNothing);
+      expect(find.text('내 취향 평가 부족'), findsOneWidget);
+    },
+  );
+  testWidgets(
+    'actions stay fixed when expanded and scrolling; save persists, failure rolls back',
+    (tester) async {
+      final repo = LocalDetailContext();
+      await mount(tester, repo);
+      final actions = find.byKey(const ValueKey('detail-fixed-actions'));
+      final bottom = tester.getBottomLeft(actions).dy;
+      await tester.tap(find.byKey(const ValueKey('detail-save')));
+      await tester.pumpAndSettle();
+      expect(repo.saved, true);
+      expect(find.text('저장됨'), findsOneWidget);
+      await tester.tap(find.byKey(const ValueKey('detail-expand')));
+      await tester.pumpAndSettle();
+      await tester.drag(find.byType(ListView).first, const Offset(0, -300));
+      await tester.pumpAndSettle();
+      expect(tester.getBottomLeft(actions).dy, bottom);
+      repo.failSave = true;
+      await tester.tap(find.byKey(const ValueKey('detail-save')));
+      await tester.pumpAndSettle();
+      expect(find.text('저장됨'), findsOneWidget);
+      expect(repo.saved, true);
+      expect(find.textContaining('저장하지 못했어요'), findsOneWidget);
+    },
+  );
+  testWidgets(
+    'share gets source URL and origin; directions uses navigation URL',
+    (tester) async {
+      String? shared, opened;
+      Rect? rect;
+      await mount(
+        tester,
+        LocalDetailContext(),
+        share: (t, r) async {
+          shared = t;
+          rect = r;
+        },
+        link: (u) async => opened = u,
+      );
+      await tester.tap(find.byKey(const ValueKey('detail-share')));
+      await tester.pump();
+      expect(shared, contains(detailPlace.mapsUri));
+      expect(rect!.width, greaterThan(0));
+      await tester.tap(find.byKey(const ValueKey('detail-directions')));
+      await tester.pump();
+      expect(opened, contains('/maps/dir/'));
+    },
+  );
+  testWidgets(
+    '320px 200 percent text fixed actions remain usable without location',
+    (tester) async {
+      await mount(
+        tester,
+        LocalDetailContext(),
+        size: const Size(320, 568),
+        scale: 2,
+        position: (_) async => null,
+      );
+      expect(find.text('거리 확인'), findsOneWidget);
+      expect(
+        find.byKey(const ValueKey('detail-save')).hitTestable(),
+        findsOneWidget,
+      );
+      expect(
+        find.byKey(const ValueKey('detail-directions')).hitTestable(),
+        findsOneWidget,
+      );
+      expect(tester.takeException(), isNull);
+    },
+  );
+  testWidgets('detail keeps only today hours and one directions action', (
+    tester,
+  ) async {
+    await mount(
+      tester,
+      LocalDetailContext(),
+      payload: {
+        ...detailPayload,
+        'phoneNumber': '02-1234-5678',
+        'websiteUri': 'https://example.com/shop',
+      },
+    );
+    await tester.tap(find.byKey(const ValueKey('detail-expand')));
+    await tester.pumpAndSettle();
+    expect(find.textContaining('11:30 – 21:00'), findsOneWidget);
+    expect(find.bySemanticsLabel('전체 영업시간'), findsNothing);
+    for (final day in ['월요일', '화요일', '수요일', '목요일', '금요일', '토요일', '일요일']) {
+      expect(find.textContaining('$day:'), findsNothing);
+    }
+    expect(find.text('02-1234-5678'), findsNothing);
+    expect(find.text('웹사이트'), findsNothing);
+    expect(find.text('Google Maps에서 길찾기'), findsNothing);
+    expect(find.text('정보 제공: Google Maps'), findsOneWidget);
+    expect(
+      find.byKey(const ValueKey('detail-directions')).hitTestable(),
+      findsOneWidget,
+    );
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('Figma tabs fill equal halves and switch underline and content', (
+    tester,
+  ) async {
+    await mount(tester, LocalDetailContext());
+    await tester.tap(find.byKey(const ValueKey('detail-expand')));
+    await tester.pumpAndSettle();
+    final intro = find.byKey(const ValueKey('detail-tab-0'));
+    final posts = find.byKey(const ValueKey('detail-tab-1'));
+    final tabs = find.byKey(const ValueKey('detail-tabs'));
+    final introLine = find.byKey(const ValueKey('detail-tab-line-0'));
+    final postsLine = find.byKey(const ValueKey('detail-tab-line-1'));
+    expect(tester.getSize(tabs).width, 402);
+    expect(tester.getSize(intro).width, 201);
+    expect(tester.getSize(posts).width, 201);
+    expect(tester.getSize(introLine).height, 3);
+    expect(tester.getSize(postsLine).height, 1);
+    expect(
+      tester.widget<Text>(find.text('소개')).style!.fontWeight,
+      FontWeight.w700,
+    );
+    expect(
+      tester.widget<Text>(find.text('게시물')).style!.color,
+      const Color(0xFF9B9B9B),
+    );
+    expect(find.text(detailPlace.summary!), findsOneWidget);
+
+    await tester.tap(posts);
+    await tester.pumpAndSettle();
+    expect(tester.getSize(introLine).height, 1);
+    expect(tester.getSize(postsLine).height, 3);
+    expect(
+      tester.widget<Text>(find.text('게시물')).style!.fontWeight,
+      FontWeight.w700,
+    );
+    expect(find.text(detailPlace.summary!), findsNothing);
+    expect(find.text('게시물 목록은 다음 단계에서 연결합니다.'), findsOneWidget);
+
+    await tester.tap(intro);
+    await tester.pumpAndSettle();
+    expect(find.text(detailPlace.summary!), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
+
+  for (final scale in [1.0, 2.0]) {
+    testWidgets(
+      'photo credits stay beneath their own photo at text scale $scale',
+      (tester) async {
+        String? opened;
+        const author = '아주 긴 이름의 사진 제공자 Alice';
+        const authorUri = 'https://example.com/author/alice';
+        const sourceUri = 'https://www.google.com/maps/photo/first';
+        await mount(
+          tester,
+          LocalDetailContext(),
+          scale: scale,
+          payload: {
+            ...detailPayload,
+            'gallery': [
+              {
+                'uri': 'assets/figma/detail_fixture_photo_1.png',
+                'googleMapsUri': sourceUri,
+                'attributions': [
+                  {'displayName': author, 'uri': authorUri},
+                ],
+              },
+              {
+                'uri': 'assets/figma/detail_fixture_photo_2.png',
+                'attributions': [
+                  {'displayName': 'Bob'},
+                ],
+              },
+            ],
+          },
+          link: (uri) async => opened = uri,
+        );
+        await tester.scrollUntilVisible(
+          find.text('사진: $author'),
+          200,
+          scrollable: find
+              .descendant(
+                of: find.byType(ListView).first,
+                matching: find.byType(Scrollable),
+              )
+              .first,
+        );
+        await tester.pumpAndSettle();
+        final first = find.byKey(const ValueKey('detail-photo-0'));
+        final firstImage = find.descendant(
+          of: first,
+          matching: find.byType(Image),
+        );
+        final credit = find.descendant(
+          of: first,
+          matching: find.text('사진: $author'),
+        );
+        expect(credit, findsOneWidget);
+        expect(
+          find.descendant(of: first, matching: find.text('사진: Bob')),
+          findsNothing,
+        );
+        expect(
+          tester.getTopLeft(credit).dy,
+          greaterThanOrEqualTo(tester.getBottomLeft(firstImage).dy),
+        );
+        expect(tester.widget<Text>(credit).style!.fontSize, 9);
+        await tester.ensureVisible(credit);
+        await tester.pumpAndSettle();
+        await tester.tap(credit);
+        await tester.pump();
+        expect(opened, authorUri);
+        final source = find.descendant(of: first, matching: find.text('사진 출처'));
+        await tester.ensureVisible(source);
+        await tester.pumpAndSettle();
+        await tester.tap(source);
+        await tester.pump();
+        expect(opened, sourceUri);
+        expect(tester.takeException(), isNull);
+      },
+    );
+  }
+}

@@ -1,97 +1,45 @@
-# Google Maps and Places setup
+# Flutter 지도·장소 공급자 설정
 
-Pind uses two separate Google keys. Never reuse or ship the Places Web Service
-key in the mobile app.
+클라이언트는 저장소 루트의 Flutter 앱 하나다. React Native/Expo 설정은 제거했다.
 
-At runtime, the Map tab uses Nearby Search (New) to load food venues around the
-current viewport whenever the map stops moving within South Korea. Tapping a
-place fetches its current Place Details and up to six live place photos. Only
-the Google Place ID and Pind's internal reference ID are persisted.
-
-Google Places returns general venue photos, not a reliable structured restaurant
-menu or menu-photo classification. Pind therefore labels Google images as place
-photos and builds the menu-photo section only from Pind logs that contain a dish
-name and user-uploaded food photo.
-
-## 1. Enable Google services
-
-In one billing-enabled Google Cloud project, enable:
-
-- Places API (New)
-- Maps SDK for iOS
-- Maps SDK for Android when Android work starts
-
-Google setup references:
-
-- [Places API setup](https://developers.google.com/maps/documentation/places/web-service/cloud-setup)
-- [Expo react-native-maps setup](https://docs.expo.dev/versions/v57.0.0/sdk/map-view/)
-
-## 2. Create the iOS map key
-
-Create an API key with:
-
-- Application restriction: iOS apps
-- Bundle identifier: `com.pind.app`
-- API restriction: Maps SDK for iOS
-
-Add it to `mobile/.env.local`:
-
-```dotenv
-GOOGLE_MAPS_IOS_API_KEY=your_ios_restricted_key
-EXPO_PUBLIC_GOOGLE_MAPS_ENABLED=true
-```
-
-The native key is applied by `mobile/app.config.ts`. Rebuild the native app
-after changing it:
+## 앱 실행
 
 ```sh
-cd mobile
-npx expo prebuild --platform ios
-npm run ios:native
+flutter pub get
+# config/local.json이 없을 때만 config/example.json을 복사해 설정한다.
+flutter run --dart-define-from-file=config/local.json
 ```
 
-If Xcode exits with code 70 and says its bundled iOS version is not installed,
-install the matching simulator runtime (omit `-buildVersion` so Xcode selects
-the compatible build):
+`config/local.json`은 Git에서 제외한다. `SUPABASE_URL`, 공개 `SUPABASE_PUBLISHABLE_KEY`, OS별 제한된 `GOOGLE_MAPS_API_KEY`를 넣는다. 개발 익명 인증은 `ALLOW_ANONYMOUS_AUTH`로 명시적으로 허용한다.
+
+- iOS Maps SDK 키 제한: `com.pind.app`.
+- Android Maps SDK 키 제한: `com.pind.app`와 해당 서명 인증서.
+- Places API 서버 키와 service_role은 앱에 넣지 않는다.
+- 실제 Google 지도가 비어 있으면 Maps SDK 활성화, billing, OS/API 제한, 현재 bundle ID를 확인한다. PIN이 표시돼도 지도 타일 정상 로드를 증명하지 않는다.
+
+2026-09-27: iOS의 Debug/Profile/Release, Android의 namespace/applicationId와 MainActivity 패키지를 `com.pind.app`으로 통일했다. RunnerTests는 `com.pind.app.RunnerTests`다. iOS 시뮬레이터 빌드·설치 ID와 지도 타일 표시, Android debug APK의 application ID/launchable activity를 확인했다. Android 지도 실기기·서명·전용 키는 별도 확인이 필요하다. 기존 ID 앱의 데이터가 새 앱으로 자동 이전되지는 않는다.
+
+## 서버
+
+`supabase/functions/.env.example`은 값 없는 템플릿이다. 실제 키는 Supabase Edge Function secrets로 관리한다.
+
+| 설정 | 용도 |
+| --- | --- |
+| `GOOGLE_PLACES_API_KEY` | 기존 Google 검색·상세·사진 |
+| `LOCAL_PLACES_PROVIDERS` | 기본 빈 값(보완 검색 꺼짐), 검토 후 `kakao` 또는 `kakao,naver` |
+| `KAKAO_LOCAL_REST_API_KEY` | 카카오 Local REST API |
+| `NAVER_LOCAL_CLIENT_ID`, `NAVER_LOCAL_CLIENT_SECRET` | NAVER API HUB 인증; 구형 Naver Search API 키와 구분 |
+
+함수 이름은 하위 호환을 위해 `google-places`를 유지한다. 새로운 `supplemental` action과 Google `search`의 `allowSupplemental` 처리는 수정된 함수를 배포해야 적용된다. 원격 배포/키 등록/공급자 이용권한 확인을 로컬 테스트 성공으로 대신하지 않는다.
+
+보완 정보는 목록·상세·원본 링크에만 사용한다. 사진/설명/운영시간을 추정하지 않으며 Google 지도 위 보완 PIN, AI 입력, 영구 저장·게시물 연결은 이용권한 검토 후 별도 확장한다.
+
+## 오프라인 검증
 
 ```sh
-xcodebuild -downloadPlatform iOS
+node --experimental-strip-types --test supabase/functions/google-places/local-places.test.ts
+flutter analyze
+flutter test
 ```
 
-## 3. Create the server Places key
-
-Create another API key restricted to Places API (New). This key cannot have an
-iOS/Android application restriction because Supabase calls Google from the
-server. Keep quotas and billing alerts enabled.
-
-Set it as a hosted Supabase Edge Function secret:
-
-```sh
-npx supabase secrets set GOOGLE_PLACES_API_KEY=your_server_key \
-  --project-ref mkfgqobwededpzdekvxg
-```
-
-Do not put `GOOGLE_PLACES_API_KEY` in `mobile/.env.local`, app config, source
-code, or an `EXPO_PUBLIC_` variable. The deployed `google-places` function sees
-new secrets immediately and does not need another deployment.
-
-If the app reports `GOOGLE_PERMISSION_DENIED`, verify all three server-key
-requirements:
-
-- Places API (New) is enabled in the key's Google Cloud project.
-- Billing is active for that project.
-- The key has an API restriction for Places API (New), but no iOS, Android,
-  website, or IP application restriction.
-
-## 4. Before TestFlight
-
-- Confirm the Google map is visible and its built-in attribution is unobscured.
-- Search and select a real venue, create a MyLog, relaunch, and confirm the log
-  returns on the map with freshly hydrated place content.
-- Add public Terms of Use and Privacy Policy pages that incorporate the Google
-  Maps terms and privacy requirements.
-- Set Google Cloud quota limits and budget alerts.
-
-Pind stores only the Google Place ID. Place names, addresses, coordinates,
-photo references, and photo URLs are fetched when needed and are not persisted
-in Postgres.
+위 테스트는 네이버·카카오의 실제 인증·응답·요금·원격 배포를 검증하지 않는다. 공급자 키 없이 mock 데이터로 계약과 오류 처리를 검증한다.

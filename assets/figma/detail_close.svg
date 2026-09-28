@@ -1,0 +1,45 @@
+<svg preserveAspectRatio="none" overflow="visible" style="display: block;" width="38" height="38" viewBox="0 0 38 38" fill="none" xmlns="http://www.w3.org/2000/svg">
+<g id="Group 465">
+<foreignObject x="-19" y="-21" width="76" height="76"><div xmlns="http://www.w3.org/1999/xhtml" style="backdrop-filter:blur(12px);clip-path:url(#bgblur_0_0_9_clip_path);height:100%;width:100%"></div></foreignObject><g id="Ellipse 2123" filter="url(#filter0_ddiii_0_9)" data-figma-bg-blur-radius="24">
+<circle cx="19" cy="17" r="14" fill="#FBFBFD" fill-opacity="0.72"/>
+<circle cx="19" cy="17" r="13.75" stroke="#E3E4EA" stroke-width="0.5"/>
+</g>
+<path id="Vector" d="M20.2125 16.9987L23.9054 13.3144C24.0671 13.1526 24.158 12.9333 24.158 12.7046C24.158 12.4759 24.0671 12.2566 23.9054 12.0949C23.7437 11.9331 23.5243 11.8423 23.2956 11.8423C23.0669 11.8423 22.8476 11.9331 22.6859 12.0949L19.0016 15.7877L15.3173 12.0949C15.1556 11.9331 14.9362 11.8423 14.7075 11.8423C14.4788 11.8423 14.2595 11.9331 14.0978 12.0949C13.9361 12.2566 13.8452 12.4759 13.8452 12.7046C13.8452 12.9333 13.9361 13.1526 14.0978 13.3144L17.7907 16.9987L14.0978 20.683C14.0173 20.7628 13.9534 20.8578 13.9098 20.9624C13.8662 21.0671 13.8438 21.1793 13.8438 21.2927C13.8438 21.4061 13.8662 21.5183 13.9098 21.623C13.9534 21.7276 14.0173 21.8226 14.0978 21.9025C14.1776 21.983 14.2726 22.0469 14.3773 22.0905C14.4819 22.1341 14.5942 22.1565 14.7075 22.1565C14.8209 22.1565 14.9332 22.1341 15.0378 22.0905C15.1425 22.0469 15.2375 21.983 15.3173 21.9025L19.0016 18.2096L22.6859 21.9025C22.7657 21.983 22.8607 22.0469 22.9654 22.0905C23.07 22.1341 23.1823 22.1565 23.2956 22.1565C23.409 22.1565 23.5213 22.1341 23.6259 22.0905C23.7306 22.0469 23.8256 21.983 23.9054 21.9025C23.9859 21.8226 24.0498 21.7276 24.0934 21.623C24.137 21.5183 24.1594 21.4061 24.1594 21.2927C24.1594 21.1793 24.137 21.0671 24.0934 20.9624C24.0498 20.8578 23.9859 20.7628 23.9054 20.683L20.2125 16.9987Z" fill="#515151"/>
+</g>
+<defs>
+<filter id="filter0_ddiii_0_9" x="-19" y="-21" width="76" height="76" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB">
+<feFlood flood-opacity="0" result="BackgroundImageFix"/>
+<feColorMatrix in="SourceAlpha" type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 127 0" result="hardAlpha"/>
+<feOffset dy="2"/>
+<feGaussianBlur stdDeviation="2.5"/>
+<feColorMatrix type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.05 0"/>
+<feBlend mode="normal" in2="BackgroundImageFix" result="effect1_dropShadow_0_9"/>
+<feColorMatrix in="SourceAlpha" type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 127 0" result="hardAlpha"/>
+<feOffset dy="1"/>
+<feGaussianBlur stdDeviation="1"/>
+<feColorMatrix type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.05 0"/>
+<feBlend mode="normal" in2="effect1_dropShadow_0_9" result="effect2_dropShadow_0_9"/>
+<feBlend mode="normal" in="SourceGraphic" in2="effect2_dropShadow_0_9" result="shape"/>
+<feColorMatrix in="SourceAlpha" type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 127 0" result="hardAlpha"/>
+<feMorphology radius="1" operator="erode" in="SourceAlpha" result="effect3_innerShadow_0_9"/>
+<feOffset/>
+<feGaussianBlur stdDeviation="0.5"/>
+<feComposite in2="hardAlpha" operator="arithmetic" k2="-1" k3="1"/>
+<feColorMatrix type="matrix" values="0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 0 0 0 0.95 0"/>
+<feBlend mode="normal" in2="shape" result="effect3_innerShadow_0_9"/>
+<feColorMatrix in="SourceAlpha" type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 127 0" result="hardAlpha"/>
+<feOffset dy="1"/>
+<feGaussianBlur stdDeviation="0.75"/>
+<feComposite in2="hardAlpha" operator="arithmetic" k2="-1" k3="1"/>
+<feColorMatrix type="matrix" values="0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 0 0 0 0.9 0"/>
+<feBlend mode="normal" in2="effect3_innerShadow_0_9" result="effect4_innerShadow_0_9"/>
+<feColorMatrix in="SourceAlpha" type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 127 0" result="hardAlpha"/>
+<feOffset dy="-1"/>
+<feGaussianBlur stdDeviation="0.75"/>
+<feComposite in2="hardAlpha" operator="arithmetic" k2="-1" k3="1"/>
+<feColorMatrix type="matrix" values="0 0 0 0 0.541176 0 0 0 0 0.54902 0 0 0 0 0.588235 0 0 0 0.03 0"/>
+<feBlend mode="normal" in2="effect4_innerShadow_0_9" result="effect5_innerShadow_0_9"/>
+</filter>
+<clipPath id="bgblur_0_0_9_clip_path" transform="translate(19 21)"><circle cx="19" cy="17" r="14"/>
+</clipPath></defs>
+</svg>

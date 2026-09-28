@@ -1,3 +1,4 @@
+
 create table public.taste_tags (
   code text primary key,
   axis text not null check (axis in ('taste', 'texture', 'vibe', 'for')),
@@ -138,3 +139,4 @@ from (
     ('seoul-green-table', 'light', 5), ('seoul-green-table', 'crispy', 3), ('seoul-green-table', 'solo', 4), ('seoul-green-table', 'korean_first', 4)
 ) as x(place_slug, tag_code, strength)
 join public.places p on p.slug = x.place_slug;
+;

@@ -1,56 +1,42 @@
 # Pind
 
-Pind is an English-first Korea food discovery app that recommends places from a
-visitor's taste signals instead of star ratings.
+한국의 음식점을 취향으로 탐색하는 앱. 현재 제품 기준은 [PRD v3](doc/prd.md)와 Figma 6차 디자인이며, 클라이언트는 **Flutter 전용**, 서버는 **Supabase**다.
 
-## Fast MVP
+## 프로젝트 구조
 
-The current vertical slice lets a visitor:
+- `lib/`, `ios/`, `android/`: 프로젝트 루트의 Flutter 클라이언트. 취향 선택·장소 지도/검색/상세.
+- `supabase/`: 기존 DB migration, 인증·RLS·Storage, Google Places Edge Function. 이번 단계에서 원격 변경하지 않음.
+- `doc/`: 요구사항, 화면 근거, 전환 설계, 실제 검증 상태.
 
-1. choose at least three taste signals;
-2. explore live Google restaurants, cafes, bakeries, and dessert shops with pinch/button zoom and optional current-location recentering as the map moves anywhere in South Korea;
-3. open a place photo PIN and read venue details, a live Google photo gallery, and menu photos contributed through Pind logs;
-4. switch to the **Logs** tab to browse post-style logs from the visitor, friends, and Pind;
-5. create a photo-based taste log after explicitly choosing a real Google place;
-6. read, edit, and delete their own logs from the same feed.
+## Flutter 실행
 
-The client is Expo SDK 57 with React Native and TypeScript. Discovery and post
-data are connected to Supabase. Supabase anonymous Auth owns writes, RLS
-protects each visitor's content, Storage holds post photos, and the taste
-profile remains on the device. Google place lookup runs through an authenticated
-Edge Function so the Places key is never included in the mobile bundle.
-
-## Run locally
+일반 앱의 지도 핀이나 장소 목록을 누르면 새 가게 상세가 열린다. IDE에서는 **Pind — 일반 앱** 구성을 사용한다. `lib/view/preview/detail_preview.dart`는 개발 검증 전용이며 일반 앱 진입점이 아니다.
 
 ```sh
-cd mobile
-cp .env.example .env.local
-# Add the Supabase publishable key to .env.local.
-npm install
-npm run ios
+flutter pub get
+cp config/example.json config/local.json
+# local.json에 프로젝트의 공개 클라이언트 설정을 입력
+flutter run -t lib/main.dart --dart-define-from-file=config/local.json
 ```
 
-`npm run ios` builds the native app so the Google Maps renderer is available.
-Use `npm run ios:go` for the faster Expo Go loop; Google place search and photos
-work there, but its iOS map uses Apple's renderer. Native key setup is described
-in `doc/google-maps-setup.md`.
+현재 소셜 로그인은 미구현이다. 개발 프로젝트에서 익명 인증을 사용할 때만 `ALLOW_ANONYMOUS_AUTH`를 `"true"`로 설정한다. 앱에 service_role 또는 서버용 Places 키를 넣지 않는다.
 
-Run the automated checks with:
+네이티브 지도 키, 별도 bundle ID, 테스트 명령은 [지도 설정](doc/google-maps-setup.md) 및 [검증 상태](doc/implementation-status.md)를 따른다.
 
-```sh
-cd mobile
-npm run verify
-```
+## 문서
 
-## Project references
+- [PRD v3](doc/prd.md)
+- [Figma 화면·요구사항 대응](doc/figma-screen-map.md)
+- [기존 프로젝트 전환 및 구현 설계](doc/implementation-design.md)
+- [MVC 아키텍처](doc/architecture.md)
+- [구현·검증·남은 작업](doc/implementation-status.md)
+- [이전 PRD v2 보관본](doc/archive/prd-v2.md)
+- [지도·장소 공급자 설정](doc/google-maps-setup.md)
 
-- Product requirements: `doc/prd.md`
-- MVP decisions and deferred scope: `doc/fast-mvp-decisions.md`
-- Google Maps and Places setup: `doc/google-maps-setup.md`
-- Database migrations: `supabase/migrations/`
+## 장소 공급자
 
-This build is demo-ready. The current development project has Google Maps and
-Places configured and verified; a fresh environment remains configuration-gated
-until Google Cloud billing and both keys are supplied.
-Production phone/Apple authentication, friend-management UI, and production
-analytics are intentionally deferred.
+Google Places를 우선 사용하고 정상 검색 결과가 없거나 사용자가 추가 검색할 때만 카카오·네이버를 보완 조회한다. 보완 장소에는 사진·소개 대신 운영시간 확인 안내와 원본 링크를 제공한다. 보완 API는 서버 키·이용 범위 확인 후 활성화하며, 현재 로컬 구현과 원격 연결 완료는 구분한다.
+
+2026-09-26 사용자 요청으로 React Native/Expo 코드·패키지·빌드 설정을 프로젝트에서 제거했다. 수정 중이던 파일과 로컬 설정은 프로젝트 외부 `../pind-react-native-backup-116Aiw/`에 복구용으로 보존했다. Supabase의 TypeScript Edge Function은 모바일 클라이언트가 아니라 서버 코드이므로 유지한다.
+
+2026-09-26에 새 클라이언트의 실제 장소 연동 테스트까지 통과했다. 초기 서버 일시 장애와 남은 검증은 구현 상태 문서에 기록했다. 소셜 인증·후기·친구 등 전체 제품이나 출시 준비가 완료된 것은 아니다.
