@@ -6,6 +6,7 @@
 
 - `lib/`, `ios/`, `android/`: 프로젝트 루트의 Flutter 클라이언트. 취향 선택·장소 지도/검색/상세.
 - `supabase/`: 기존 DB migration, 인증·RLS·Storage, Google Places Edge Function. 이번 단계에서 원격 변경하지 않음.
+- 가게 상세의 소개글·항목별 한 줄 평은 `places` Edge Function이 게시물 수가 바뀐 뒤 첫 상세 조회 때 Gemini(`gemini-3.8-flash`)로 백그라운드 생성해 `place_insights`에 저장한다. `GEMINI_API_KEY` 시크릿이 없으면 생성을 건너뛴다.
 - `doc/`: 요구사항, 화면 근거, 전환 설계, 실제 검증 상태.
 
 ## Flutter 실행

@@ -3,7 +3,6 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:integration_test/integration_test.dart';
 import 'package:pind_flutter/services/config.dart';
 import 'package:pind_flutter/services/place_service.dart';
-import 'package:pind_flutter/model/places.dart';
 import 'package:pind_flutter/main.dart' as app;
 import 'package:supabase_flutter/supabase_flutter.dart';
 
@@ -58,7 +57,7 @@ void main() {
       allowAnonymous: AppConfig.allowAnonymous,
     );
     final repository = PlaceService(gateway.call);
-    final nearby = await repository.nearby(MapViewport.seoul);
+    final nearby = await repository.posted();
     expect(nearby, isNotEmpty);
     expect(nearby.every((place) => place.id != null), isTrue);
     final sessionId = client.auth.currentSession!.user.id;

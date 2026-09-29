@@ -166,7 +166,7 @@ void main() {
         tester.widget<TextField>(find.byType(TextField)).controller!.text,
         '서울 카페',
       );
-      expect(calls, ['nearby', 'search']);
+      expect(calls, ['posted', 'search']);
     },
   );
 

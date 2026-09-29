@@ -42,26 +42,33 @@ class ExploreController {
   MapViewport get viewport => _viewport;
   int publishedRevision = 0;
   bool _disposed = false;
-  String? _lastKey;
+  List<Place>? _posted;
 
-  Future<void> load(MapViewport viewport, {bool force = false}) async {
-    _viewport = viewport;
-    if (!force && viewport.queryKey == _lastKey) return;
-    _lastKey = viewport.queryKey;
+  /// Posted places are fetched once; camera moves never hit the catalog.
+  Future<void> load({bool force = false}) async {
     _searchQuery = null;
+    final cached = _posted;
+    if (!force && cached != null) {
+      _request++;
+      model.update(() {
+        model.places = cached;
+        model.error = null;
+        model.notice = null;
+        model.loading = false;
+      });
+      return;
+    }
     await _run(
-      () async => PlaceSearchResult(await repository.nearby(viewport)),
+      () async => PlaceSearchResult(_posted = await repository.posted()),
     );
   }
 
   Future<void> search(String query) async {
-    _lastKey = null;
     _searchQuery = query.trim();
     await _run(() => repository.searchResults(query));
   }
 
   Future<void> showPublishedPlace(int placeId) async {
-    _lastKey = null;
     _searchQuery = null;
     await _run(() async {
       final data = await repository.invoke({
@@ -73,7 +80,7 @@ class ExploreController {
         Map<String, dynamic>.from(data['place'] as Map),
       );
       _viewport = MapViewport(place.latitude, place.longitude);
-      final places = await repository.nearby(_viewport);
+      final places = _posted = await repository.posted();
       publishedRevision++;
       return PlaceSearchResult(places);
     });
@@ -118,7 +125,6 @@ class ExploreController {
       model.googleSearchEnabled = result.googleSearchEnabled;
     } catch (caught) {
       if (_disposed || request != _request) return;
-      _lastKey = null;
       model.error = caught is PlaceFailure
           ? caught.message
           : '연결을 확인하고 다시 시도해 주세요.';

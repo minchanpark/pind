@@ -38,8 +38,6 @@ class _ExploreScreenState extends State<ExploreScreen> {
   ExploreController? get controller => widget.controller;
   final query = TextEditingController();
   GoogleMapController? map;
-  MapViewport viewport = MapViewport.seoul;
-  Timer? debounce;
   bool searchMode = false;
 
   /// On iOS, Flutter widgets above the map platform view are painted into a
@@ -53,20 +51,21 @@ class _ExploreScreenState extends State<ExploreScreen> {
   int seenPublishedRevision = 0;
   Set<Marker> markers = {};
   List<Place>? markerPlaces;
+  // Patterns also cover public-data categories (요리 주점, 돼지고기 구이/찜, 빵/도넛...).
   static const categories = {
     '전체': '',
     '☕ 카페': 'cafe|coffee|카페|커피',
-    '🍺 술집': 'bar|pub|술집|바',
-    '🥩 고기': 'barbecue|bbq|steak|고기|구이',
+    '🍺 술집': 'bar(?!becue)|pub|술집|주점|맥주|호프|포차|이자카야|와인',
+    '🥩 고기': 'barbecue|bbq|steak|고기|곱창|족발|보쌈|갈비|삼겹',
     '🍜 면': 'noodle|ramen|면|국수',
-    '🍰 디저트': 'dessert|bakery|디저트|베이커리',
+    '🍰 디저트': 'dessert|bakery|디저트|베이커리|빵|도넛|떡|아이스크림|빙수|케이크',
   };
 
   @override
   void initState() {
     super.initState();
     controller?.model.addListener(changed);
-    controller?.load(viewport);
+    controller?.load();
   }
 
   @override
@@ -77,7 +76,7 @@ class _ExploreScreenState extends State<ExploreScreen> {
       controller?.model.addListener(changed);
       markerPlaces = null;
       markers = {};
-      controller?.load(viewport, force: true);
+      controller?.load(force: true);
     }
   }
 
@@ -86,11 +85,10 @@ class _ExploreScreenState extends State<ExploreScreen> {
     if (controller!.publishedRevision != seenPublishedRevision) {
       seenPublishedRevision = controller!.publishedRevision;
       searchGeneration++;
-      debounce?.cancel();
       query.clear();
       searchMode = false;
       category = '전체';
-      viewport = controller!.viewport;
+      final viewport = controller!.viewport;
       map
           ?.animateCamera(
             CameraUpdate.newLatLngZoom(
@@ -111,15 +109,14 @@ class _ExploreScreenState extends State<ExploreScreen> {
     final places = controller?.places ?? <Place>[];
     final pattern = categories[category]!;
     if (pattern.isEmpty) return places;
-    final expression = RegExp(pattern, caseSensitive: false);
-    return places
-        .where((p) => expression.hasMatch('${p.category} ${p.name}'))
-        .toList();
+    return places.where((p) => _inCategory(pattern, p)).toList();
   }
+
+  /// Emoji markers are six fixed images, so each is drawn once and reused.
+  static final markerIcons = <String, Future<BitmapDescriptor>>{};
 
   Future<void> updateMarkers() async {
     final generation = ++markerGeneration;
-    // Marker images belong to the current request only; don't persist provider content.
     final result = await Future.wait(
       // Cross-map display rights for supplemental providers are not confirmed.
       visiblePlaces
@@ -128,7 +125,10 @@ class _ExploreScreenState extends State<ExploreScreen> {
             (p) async => Marker(
               markerId: MarkerId(p.key),
               position: LatLng(p.latitude, p.longitude),
-              icon: await photoMarker(p.imageUrl),
+              icon: await markerIcons.putIfAbsent(
+                markerEmoji(p),
+                () => emojiMarker(markerEmoji(p)),
+              ),
               infoWindow: InfoWindow(title: p.name),
               onTap: () => showPlace(p),
             ),
@@ -139,29 +139,7 @@ class _ExploreScreenState extends State<ExploreScreen> {
     }
   }
 
-  Future<BitmapDescriptor> photoMarker(String? url) async {
-    ui.Image? photo;
-    if (url != null) {
-      final completer = Completer<ui.Image>();
-      final stream = NetworkImage(url).resolve(ImageConfiguration.empty);
-      late ImageStreamListener listener;
-      listener = ImageStreamListener(
-        (info, _) {
-          if (!completer.isCompleted) completer.complete(info.image.clone());
-        },
-        onError: (Object error, StackTrace? stack) {
-          if (!completer.isCompleted) completer.completeError(error);
-        },
-      );
-      stream.addListener(listener);
-      try {
-        photo = await completer.future.timeout(const Duration(seconds: 5));
-      } catch (_) {
-        /* Category fallback remains visible. */
-      } finally {
-        stream.removeListener(listener);
-      }
-    }
+  Future<BitmapDescriptor> emojiMarker(String emoji) async {
     final recorder = ui.PictureRecorder();
     final canvas = Canvas(recorder);
     canvas.drawCircle(
@@ -170,30 +148,18 @@ class _ExploreScreenState extends State<ExploreScreen> {
       Paint()..color = PindTheme.purple,
     );
     canvas.drawCircle(const Offset(56, 56), 49, Paint()..color = Colors.white);
-    if (photo != null) {
-      canvas.save();
-      canvas.clipPath(Path()..addOval(const Rect.fromLTWH(14, 14, 84, 84)));
-      paintImage(
-        canvas: canvas,
-        rect: const Rect.fromLTWH(14, 14, 84, 84),
-        image: photo,
-        fit: BoxFit.cover,
-      );
-      canvas.restore();
-    } else {
-      final label = TextPainter(
-        text: const TextSpan(text: '🍽️', style: TextStyle(fontSize: 48)),
-        textDirection: TextDirection.ltr,
-      )..layout();
-      label.paint(
-        canvas,
-        Offset((112 - label.width) / 2, (112 - label.height) / 2),
-      );
-      label.dispose();
-    }
+    // Font size keeps the Figma 531:19871 emoji-to-pin ratio (29px glyph in a 57px pin).
+    final label = TextPainter(
+      text: TextSpan(text: emoji, style: const TextStyle(fontSize: 48)),
+      textDirection: TextDirection.ltr,
+    )..layout();
+    label.paint(
+      canvas,
+      Offset((112 - label.width) / 2, (112 - label.height) / 2),
+    );
+    label.dispose();
     final picture = recorder.endRecording();
     final bitmap = await picture.toImage(112, 112);
-    photo?.dispose();
     picture.dispose();
     final data = await bitmap.toByteData(format: ui.ImageByteFormat.png);
     bitmap.dispose();
@@ -206,7 +172,6 @@ class _ExploreScreenState extends State<ExploreScreen> {
 
   @override
   void dispose() {
-    debounce?.cancel();
     markerGeneration++;
     controller?.model.removeListener(changed);
     map?.dispose();
@@ -214,35 +179,10 @@ class _ExploreScreenState extends State<ExploreScreen> {
     super.dispose();
   }
 
-  void cameraIdle() {
-    if (searchMode || !widget.isActive) return;
-    debounce?.cancel();
-    debounce = Timer(const Duration(milliseconds: 450), () async {
-      final activeMap = map;
-      if (activeMap == null) return;
-      LatLngBounds bounds;
-      try {
-        bounds = await activeMap.getVisibleRegion();
-      } catch (_) {
-        // The platform map can be torn down while its bounds are in flight.
-        return;
-      }
-      if (!mounted || searchMode || !widget.isActive) return;
-      viewport = MapViewport(
-        (bounds.northeast.latitude + bounds.southwest.latitude) / 2,
-        (bounds.northeast.longitude + bounds.southwest.longitude) / 2,
-        latitudeDelta: bounds.northeast.latitude - bounds.southwest.latitude,
-        longitudeDelta: bounds.northeast.longitude - bounds.southwest.longitude,
-      );
-      await controller?.load(viewport);
-    });
-  }
-
   Future<void> search() async {
     if (controller == null) return;
     final generation = ++searchGeneration;
     FocusScope.of(context).unfocus();
-    debounce?.cancel();
     setState(() {
       searchMode = query.text.trim().isNotEmpty;
       category = '전체';
@@ -263,7 +203,7 @@ class _ExploreScreenState extends State<ExploreScreen> {
       // Explicit searches keep all providers reachable without a nearby-list CTA.
       if (mounted && generation == searchGeneration) showResults();
     } else {
-      await controller?.load(viewport, force: true);
+      await controller?.load();
     }
   }
 
@@ -278,7 +218,6 @@ class _ExploreScreenState extends State<ExploreScreen> {
     try {
       final location = await controller!.locate();
       if (!mounted) return;
-      viewport = location;
       query.clear();
       setState(() => searchMode = false);
       await map?.animateCamera(
@@ -287,7 +226,7 @@ class _ExploreScreenState extends State<ExploreScreen> {
           14,
         ),
       );
-      await controller?.load(viewport, force: true);
+      await controller?.load();
     } catch (error) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -492,8 +431,6 @@ class _ExploreScreenState extends State<ExploreScreen> {
               zoom: 13,
             ),
             onMapCreated: (value) => map = value,
-            onCameraMoveStarted: () => debounce?.cancel(),
-            onCameraIdle: cameraIdle,
             markers: markers,
             myLocationButtonEnabled: false,
             zoomControlsEnabled: false,
@@ -728,4 +665,18 @@ class _SearchBarHighlights extends CustomPainter {
 
   @override
   bool shouldRepaint(_SearchBarHighlights oldDelegate) => false;
+}
+
+bool _inCategory(String pattern, Place place) => RegExp(
+  pattern,
+  caseSensitive: false,
+).hasMatch('${place.category} ${place.name}');
+
+/// Map pin emoji: the first category chip the place falls under, else 🍽️.
+String markerEmoji(Place place) {
+  for (final MapEntry(:key, :value)
+      in _ExploreScreenState.categories.entries.skip(1)) {
+    if (_inCategory(value, place)) return key.split(' ').first;
+  }
+  return '🍽️';
 }

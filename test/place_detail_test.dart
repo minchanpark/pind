@@ -12,6 +12,7 @@ import 'package:pind_flutter/services/preview/detail_fixture.dart';
 import 'package:pind_flutter/model/place_context.dart';
 import 'package:pind_flutter/model/places.dart';
 import 'package:pind_flutter/view/explore/place_sheet.dart';
+import 'package:pind_flutter/view/explore/post_photo_viewer.dart';
 
 Future<void> mount(
   WidgetTester tester,
@@ -163,7 +164,10 @@ void main() {
       expect(find.text('저장됨'), findsOneWidget);
       await tester.tap(find.byKey(const ValueKey('detail-expand')));
       await tester.pumpAndSettle();
-      await tester.drag(find.byType(ListView).first, const Offset(0, -300));
+      await tester.drag(
+        find.byType(CustomScrollView).first,
+        const Offset(0, -300),
+      );
       await tester.pumpAndSettle();
       expect(tester.getBottomLeft(actions).dy, bottom);
       repo.failSave = true;
@@ -249,6 +253,131 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
+  testWidgets('intro tab shows AI summary and one-liners for priorities', (
+    tester,
+  ) async {
+    final photo = {'uri': 'assets/figma/detail_fixture_photo_1.png'};
+    await mount(
+      tester,
+      LocalDetailContext(),
+      payload: {
+        ...detailPayload,
+        'gallery': List.filled(7, photo),
+        'insight': {
+          'summary': '무화과 타르트로 알려진 디저트 카페예요.',
+          'criteria': {'taste': '달지 않고 깔끔해요', 'quiet': '조용해요'},
+        },
+      },
+    );
+    expect(find.byKey(const ValueKey('detail-photo-4')), findsOneWidget);
+    expect(find.byKey(const ValueKey('detail-photo-5')), findsNothing);
+    await tester.tap(find.byKey(const ValueKey('detail-expand')));
+    await tester.pumpAndSettle();
+    expect(
+      find.byKey(const ValueKey('detail-intro-photo-4'), skipOffstage: false),
+      findsOneWidget,
+    );
+    expect(
+      find.byKey(const ValueKey('detail-intro-photo-5'), skipOffstage: false),
+      findsNothing,
+    );
+    expect(find.text('무화과 타르트로 알려진 디저트 카페예요.'), findsOneWidget);
+    expect(find.text('맛 · 양 · 분위기·공간 한 줄 요약'), findsOneWidget);
+    expect(find.text('달지 않고 깔끔해요'), findsOneWidget);
+    expect(find.text('조용해요'), findsNothing);
+    expect(find.text('아직 한 줄 평이 없어요.'), findsNWidgets(2));
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('posts tab shows author, text, fanned photos and ratings', (
+    tester,
+  ) async {
+    const a = 'assets/figma/detail_fixture_photo_1.png';
+    const b = 'assets/figma/detail_fixture_photo_2.png';
+    await mount(
+      tester,
+      LocalDetailContext(),
+      payload: {
+        ...detailPayload,
+        'posts': [
+          {
+            'author': 'haramsyoo',
+            'body': '분위기도 좋고 음식도 맛있어요.',
+            'ratings': {'ambience': 3, 'taste': 4, 'portion': 4},
+            'photos': [a, b, a, b, a, b],
+          },
+          {
+            'author': 'itisnewdawn',
+            'photos': [b],
+            'ratings': {'quiet': 5},
+          },
+          ...List.filled(3, {
+            'author': 'more',
+            'photos': [b],
+          }),
+        ],
+      },
+    );
+    await tester.tap(find.byKey(const ValueKey('detail-expand')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const ValueKey('detail-tab-1')));
+    await tester.pumpAndSettle();
+    final first = find.byKey(const ValueKey('detail-post-0'));
+    Finder inFirst(Finder f) => find.descendant(of: first, matching: f);
+    Finder chip(String label) => find.byWidgetPredicate(
+      (w) => w is Semantics && w.properties.label == label,
+      skipOffstage: false,
+    );
+    expect(inFirst(find.text('@haramsyoo')), findsOneWidget);
+    expect(inFirst(find.text('분위기도 좋고 음식도 맛있어요.')), findsOneWidget);
+    expect(inFirst(find.byType(Image)), findsNWidgets(3));
+    expect(inFirst(find.text('+ 3')), findsOneWidget);
+    for (final label in ['맛 4점', '양 4점', '분위기·공간 3점']) {
+      expect(chip(label), findsOneWidget);
+    }
+    // Tapping a post photo opens the pager at that photo.
+    await tester.tap(find.bySemanticsLabel('게시물 사진 2 크게 보기').first);
+    await tester.pumpAndSettle();
+    expect(find.byType(PostPhotoViewer), findsOneWidget);
+    expect(find.bySemanticsLabel('게시물 사진 2/6'), findsOneWidget);
+    await tester.drag(find.byType(PageView), const Offset(-300, 0));
+    await tester.pumpAndSettle();
+    expect(find.bySemanticsLabel('게시물 사진 3/6'), findsOneWidget);
+    await tester.tap(find.byKey(const ValueKey('photo-viewer-back')));
+    await tester.pumpAndSettle();
+    expect(find.byType(PostPhotoViewer), findsNothing);
+    expect(find.text('@haramsyoo'), findsOneWidget);
+    final second = find.byKey(
+      const ValueKey('detail-post-1'),
+      skipOffstage: false,
+    );
+    await tester.ensureVisible(second);
+    await tester.pumpAndSettle();
+    expect(find.text('@itisnewdawn'), findsOneWidget);
+    expect(
+      find.descendant(of: second, matching: find.byType(Image)),
+      findsOneWidget,
+    );
+    expect(chip('조용함 5점'), findsOneWidget);
+    expect(find.text('아직 게시물이 없어요.'), findsNothing);
+
+    // Fully expanded: the body scrolls under tabs that stay pinned on top.
+    await tester.drag(
+      find.byType(CustomScrollView).first,
+      const Offset(0, -3000),
+    );
+    await tester.pumpAndSettle();
+    final tabs = find.byKey(const ValueKey('detail-tabs'));
+    final sheetTop = tester.getTopLeft(find.byType(PlaceSheet)).dy;
+    expect(tester.getTopLeft(tabs).dy, closeTo(sheetTop, 1));
+    expect(
+      find.byKey(const ValueKey('detail-post-0')).hitTestable(),
+      findsNothing,
+    );
+
+    expect(tester.takeException(), isNull);
+  });
+
   testWidgets('Figma tabs fill equal halves and switch underline and content', (
     tester,
   ) async {
@@ -284,7 +413,7 @@ void main() {
       FontWeight.w700,
     );
     expect(find.text(detailPlace.summary!), findsNothing);
-    expect(find.text('게시물 목록은 다음 단계에서 연결합니다.'), findsOneWidget);
+    expect(find.text('아직 게시물이 없어요.'), findsOneWidget);
 
     await tester.tap(intro);
     await tester.pumpAndSettle();
@@ -325,11 +454,11 @@ void main() {
           link: (uri) async => opened = uri,
         );
         await tester.scrollUntilVisible(
-          find.text('사진: $author'),
+          find.text('사진: $author').first,
           200,
           scrollable: find
               .descendant(
-                of: find.byType(ListView).first,
+                of: find.byType(CustomScrollView).first,
                 matching: find.byType(Scrollable),
               )
               .first,

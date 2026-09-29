@@ -11,18 +11,9 @@ class PlaceService {
   PlaceService(this.invoke);
   final PlacesInvoker invoke;
 
-  Future<List<Place>> nearby(MapViewport viewport) async {
-    if (!viewport.inKorea) throw const PlaceFailure('대한민국 안에서 지도를 이동해 주세요.');
-    return _list(
-      await invoke({
-        'action': 'nearby',
-        'latitude': viewport.latitude,
-        'longitude': viewport.longitude,
-        'radiusMeters': viewport.radiusMeters,
-        'languageCode': 'ko',
-      }),
-    );
-  }
+  /// Every restaurant with a published post; the map needs nothing else.
+  Future<List<Place>> posted() async =>
+      _list(await invoke({'action': 'posted'}));
 
   Future<List<Place>> search(String query) async {
     return (await searchResults(query)).places;

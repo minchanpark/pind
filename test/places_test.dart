@@ -19,41 +19,10 @@ Map<String, dynamic> payload(String name, {int? id}) => {
 };
 
 void main() {
-  test('Korea bounds and query radius remain bounded', () {
+  test('Korea bounds', () {
     expect(MapViewport.seoul.inKorea, true);
     expect(const MapViewport(33.3, 126.5).inKorea, true);
     expect(const MapViewport(35, 139).inKorea, false);
-    expect(
-      const MapViewport(
-        37,
-        127,
-        latitudeDelta: 10,
-        longitudeDelta: 10,
-      ).radiusMeters,
-      50000,
-    );
-    expect(
-      const MapViewport(
-        37,
-        127,
-        latitudeDelta: 0,
-        longitudeDelta: 0,
-      ).radiusMeters,
-      500,
-    );
-  });
-
-  test('outside Korea does not call the provider', () async {
-    var calls = 0;
-    final repo = PlaceService((body) async {
-      calls++;
-      return {'places': []};
-    });
-    await expectLater(
-      repo.nearby(const MapViewport(35, 139)),
-      throwsA(isA<PlaceFailure>()),
-    );
-    expect(calls, 0);
   });
 
   test(
@@ -82,14 +51,14 @@ void main() {
   test('late viewport response cannot replace a newer search', () async {
     final old = Completer<Map<String, dynamic>>();
     final repo = PlaceService(
-      (body) => body['action'] == 'nearby'
+      (body) => body['action'] == 'posted'
           ? old.future
           : Future.value({
               'places': [payload('new')],
             }),
     );
     final controller = ExploreController(repo);
-    final first = controller.load(MapViewport.seoul);
+    final first = controller.load();
     await controller.search('new');
     old.complete({
       'places': [payload('old')],
@@ -100,7 +69,7 @@ void main() {
     controller.dispose();
   });
 
-  test('failed request is retryable and duplicate successful viewport is suppressed', () async {
+  test('failed request is retryable and posted places load once', () async {
     var calls = 0;
     final controller = ExploreController(
       PlaceService((body) async {
@@ -108,10 +77,10 @@ void main() {
         return {'places': []};
       }),
     );
-    await controller.load(MapViewport.seoul);
+    await controller.load();
     expect(controller.error, 'failed');
-    await controller.load(MapViewport.seoul);
-    await controller.load(MapViewport.seoul);
+    await controller.load();
+    await controller.load();
     expect(calls, 2);
     expect(controller.error, null);
     controller.dispose();
@@ -122,7 +91,7 @@ void main() {
     final controller = ExploreController(
       PlaceService((body) => pending.future),
     );
-    final request = controller.load(MapViewport.seoul);
+    final request = controller.load();
     controller.dispose();
     pending.complete({'places': []});
     await request;

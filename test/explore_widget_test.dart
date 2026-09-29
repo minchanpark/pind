@@ -10,17 +10,49 @@ import 'package:pind_flutter/view/app.dart';
 import 'package:pind_flutter/services/place_service.dart';
 import 'package:pind_flutter/services/preference_service.dart';
 import 'package:pind_flutter/model/preferences.dart';
+import 'package:pind_flutter/model/places.dart';
 import 'package:pind_flutter/view/explore/explore_screen.dart';
 import 'package:pind_flutter/view/explore/place_sheet.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 void main() {
+  test(
+    'map pins use the category emoji from public-data and Google categories',
+    () {
+      String emoji(String category, [String name = '가게']) => markerEmoji(
+        Place(
+          externalId: category,
+          name: name,
+          category: category,
+          address: '',
+          latitude: 37,
+          longitude: 127,
+          mapsUri: '',
+        ),
+      );
+      expect(emoji('카페'), '☕');
+      expect(emoji('Cafe'), '☕');
+      expect(emoji('요리 주점'), '🍺');
+      expect(emoji('생맥주 전문'), '🍺');
+      expect(emoji('돼지고기 구이/찜'), '🥩');
+      expect(emoji('곱창 전골/구이'), '🥩');
+      expect(emoji('barbecue_restaurant'), '🥩');
+      expect(emoji('냉면/밀면', '화담면옥'), '🍜');
+      expect(emoji('국수/칼국수'), '🍜');
+      expect(emoji('빵/도넛'), '🍰');
+      expect(emoji('Bakery'), '🍰');
+      expect(emoji('아이스크림/빙수'), '🍰');
+      expect(emoji('해산물 구이/찜'), '🍽️');
+      expect(emoji('치킨'), '🍽️');
+    },
+  );
+
   testWidgets(
     'only latest search opens results; supplemental places remain selectable',
     (tester) async {
       final pending = <String, Completer<Map<String, dynamic>>>{};
       final repository = PlaceService((body) async {
-        if (body['action'] == 'nearby') return {'places': <dynamic>[]};
+        if (body['action'] == 'posted') return {'places': <dynamic>[]};
         final request = Completer<Map<String, dynamic>>();
         pending[body['query'] as String] = request;
         return request.future;
@@ -90,33 +122,34 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
-  testWidgets('failed nearby request shows error and retries successfully', (
-    tester,
-  ) async {
-    var attempts = 0;
-    final repository = PlaceService((body) async {
-      attempts++;
-      if (attempts == 1) throw const PlaceFailure('테스트 연결 오류');
-      return {'places': <dynamic>[]};
-    });
-    await tester.pumpWidget(
-      MaterialApp(
-        home: ExploreScreen(
-          controller: ExploreController(repository),
-          mapsEnabled: false,
-          onEditPreferences: () {},
+  testWidgets(
+    'failed posted places request shows error and retries successfully',
+    (tester) async {
+      var attempts = 0;
+      final repository = PlaceService((body) async {
+        attempts++;
+        if (attempts == 1) throw const PlaceFailure('테스트 연결 오류');
+        return {'places': <dynamic>[]};
+      });
+      await tester.pumpWidget(
+        MaterialApp(
+          home: ExploreScreen(
+            controller: ExploreController(repository),
+            mapsEnabled: false,
+            onEditPreferences: () {},
+          ),
         ),
-      ),
-    );
-    await tester.pumpAndSettle();
-    expect(find.text('테스트 연결 오류'), findsOneWidget);
-    await tester.tap(find.text('재시도'));
-    await tester.pumpAndSettle();
-    expect(attempts, 2);
-    expect(find.text('테스트 연결 오류'), findsNothing);
-    expect(find.text('게시물이 있는 식당이 지도에 표시돼요.'), findsOneWidget);
-    expect(tester.takeException(), isNull);
-  });
+      );
+      await tester.pumpAndSettle();
+      expect(find.text('테스트 연결 오류'), findsOneWidget);
+      await tester.tap(find.text('재시도'));
+      await tester.pumpAndSettle();
+      expect(attempts, 2);
+      expect(find.text('테스트 연결 오류'), findsNothing);
+      expect(find.text('게시물이 있는 식당이 지도에 표시돼요.'), findsOneWidget);
+      expect(tester.takeException(), isNull);
+    },
+  );
 
   testWidgets(
     'complete local draft restores map and edit cancellation keeps it',

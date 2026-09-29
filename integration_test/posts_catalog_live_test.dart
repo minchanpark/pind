@@ -3,7 +3,6 @@ import 'package:integration_test/integration_test.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:pind_flutter/services/config.dart';
 import 'package:pind_flutter/services/place_service.dart';
-import 'package:pind_flutter/model/places.dart';
 
 void main() {
   IntegrationTestWidgetsFlutterBinding.ensureInitialized();
@@ -27,7 +26,7 @@ void main() {
       final result = await client.functions.invoke('places', body: body);
       return Map<String, dynamic>.from(result.data as Map);
     });
-    final nearby = await places.nearby(const MapViewport(36.032629, 129.3657));
+    final nearby = await places.posted();
     expect(
       nearby.every(
         (place) => (place.pindPostCount ?? 0) > 0 && place.canShowOnMap,

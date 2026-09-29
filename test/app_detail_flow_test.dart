@@ -120,7 +120,7 @@ void main() {
         );
         expect(contexts.requestedId, 71);
         expect(actions, [
-          'nearby',
+          'posted',
           'search',
           provider == 'sbiz' ? 'catalog_detail' : 'detail',
         ]);
@@ -143,7 +143,7 @@ void main() {
         expect(find.byType(PlaceSheet), findsNothing);
         expect(find.byType(PindNavigationBar), findsOneWidget);
         expect(actions, [
-          'nearby',
+          'posted',
           'search',
           provider == 'sbiz' ? 'catalog_detail' : 'detail',
         ]);

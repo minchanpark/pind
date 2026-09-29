@@ -1,28 +1,12 @@
-import 'dart:math' as math;
-
 class MapViewport {
-  const MapViewport(
-    this.latitude,
-    this.longitude, {
-    this.latitudeDelta = .08,
-    this.longitudeDelta = .08,
-  });
-  final double latitude, longitude, latitudeDelta, longitudeDelta;
+  const MapViewport(this.latitude, this.longitude);
+  final double latitude, longitude;
   static const seoul = MapViewport(37.5665, 126.978);
   bool get inKorea =>
       latitude >= 33 &&
       latitude <= 38.8 &&
       longitude >= 124.5 &&
       longitude <= 132;
-  int get radiusMeters {
-    final y = latitudeDelta.abs() * 111320 / 2;
-    final x =
-        longitudeDelta.abs() * 111320 * math.cos(latitude * math.pi / 180) / 2;
-    return math.sqrt(x * x + y * y).clamp(500, 50000).round();
-  }
-
-  String get queryKey =>
-      '${latitude.toStringAsFixed(3)}:${longitude.toStringAsFixed(3)}:${(radiusMeters / 500).round()}';
 }
 
 class PhotoAttribution {
@@ -41,6 +25,34 @@ class PlacePhoto {
     json['uri'] as String,
     json['googleMapsUri'] as String?,
     _authors(json['attributions']),
+  );
+}
+
+/// A published post as shown in the place detail posts tab.
+class PlacePost {
+  const PlacePost({
+    required this.author,
+    this.avatar,
+    this.body = '',
+    this.ratings = const {},
+    this.photos = const [],
+  });
+  final String author, body;
+  final String? avatar;
+
+  /// Criterion name to the author's 1–5 score.
+  final Map<String, int> ratings;
+  final List<String> photos;
+
+  factory PlacePost.fromJson(Map<String, dynamic> json) => PlacePost(
+    author: json['author'] as String? ?? 'Pind 사용자',
+    avatar: json['avatar'] as String?,
+    body: json['body'] as String? ?? '',
+    ratings: {
+      for (final e in (json['ratings'] as Map? ?? {}).entries)
+        e.key as String: (e.value as num).round(),
+    },
+    photos: List<String>.from(json['photos'] as List? ?? []),
   );
 }
 
@@ -97,6 +109,9 @@ class Place {
     this.sourceDate,
     this.pindPostCount,
     this.googleSearchEnabled = false,
+    this.insightSummary,
+    this.insightLines = const {},
+    this.posts = const [],
   });
   final int? id;
   final PlaceProvider provider;
@@ -124,6 +139,11 @@ class Place {
   final int? reviewCount, utcOffsetMinutes, pindPostCount;
   final String? dataSourceUri, sourceDate;
   final bool googleSearchEnabled;
+
+  /// AI digest of Pind posts; one-liners are keyed by criterion name.
+  final String? insightSummary;
+  final Map<String, String> insightLines;
+  final List<PlacePost> posts;
 
   factory Place.fromJson(Map<String, dynamic> json) {
     final provider = PlaceProvider.parse(json['provider'] as String?);
@@ -159,6 +179,14 @@ class Place {
       website: rich ? json['websiteUri'] as String? : null,
       phone: rich ? json['phoneNumber'] as String? : null,
       reviewCount: rich ? (json['userRatingCount'] as num?)?.toInt() : null,
+      posts: [
+        for (final p in json['posts'] as List? ?? [])
+          PlacePost.fromJson(Map<String, dynamic>.from(p as Map)),
+      ],
+      insightSummary: (json['insight'] as Map?)?['summary'] as String?,
+      insightLines: Map<String, String>.from(
+        (json['insight'] as Map?)?['criteria'] as Map? ?? {},
+      ),
       utcOffsetMinutes: rich
           ? (json['utcOffsetMinutes'] as num?)?.toInt()
           : null,

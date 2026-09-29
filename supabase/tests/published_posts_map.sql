@@ -41,6 +41,8 @@ begin
  data:=public.get_catalog_places(p_lat=>37.57,p_lng=>126.98,p_radius=>1000);
  assert jsonb_array_length(data->'places')=1,'filter before limit: forty closer unposted places';
  assert (data->'places'->0->>'internalId')::bigint=p;
+ data:=public.get_catalog_places();
+ assert jsonb_array_length(data->'places')=1 and (data->'places'->0->>'internalId')::bigint=p,'no-arg lists every posted place only';
  assert data->'places'->0->>'pindPhotoBucket'='post-media-v2';
  delete from storage.objects where name=photo->0->>'path'; get diagnostics removed=row_count;
  assert removed=0,'cleanup cannot delete published media';
@@ -58,6 +60,28 @@ begin
  saved:=public.publish_post_v3('40000000-0000-0000-0000-000000000004',p,'{"value":4,"quiet":2,"parking":5}','',photo2);
  assert (select ratings from public.posts where id=(saved->>'id')::bigint)='{"value":4,"quiet":2,"parking":5}'::jsonb;
  assert (public.get_place_detail_context(p)->'mine'->>'quiet')::numeric=2,'priority ratings';
+ data:=public.get_catalog_places(p_place_id=>p)->'places'->0;
+ assert jsonb_array_length(data->'pindPosts')=2 and data->'pindPosts'->0->'photos'->>0=photo2->0->>'path','detail posts newest first';
+ assert data->'pindPosts'->0->'ratings'='{"value":4,"quiet":2,"parking":5}'::jsonb and data->'pindPosts'->1->'ratings'='{"taste":5,"portion":4,"ambience":4}'::jsonb,'v3 and legacy ratings';
+ assert jsonb_typeof(data->'insight')='null','no insight before first refresh';
+ assert public.get_catalog_places(p_lat=>37.57,p_lng=>126.98,p_radius=>1000)->'places'->0->'pindPosts'='null'::jsonb,'map skips posts';
+ assert not has_function_privilege('authenticated','public.claim_place_insight(bigint)','execute');
+ assert not has_table_privilege('authenticated','public.place_insights','update');
+end $$;
+reset role;
+set local role service_role;
+do $$ declare p bigint; begin
+ select id into p from public.places where external_place_id='post-qa-main';
+ assert public.claim_place_insight(p),'first claim wins';
+ assert public.claim_place_insight(p) is null,'concurrent claim rejected';
+ update public.place_insights set summary='소개',criteria='{"taste":"맛있어요"}',post_count=2,claimed_at=now()-interval '3 minutes' where place_id=p;
+ assert public.claim_place_insight(p),'stale claim expires';
+end $$;
+reset role;
+set local role authenticated;
+do $$ begin
+ assert public.get_catalog_places(p_place_id=>(select id from public.places where external_place_id='post-qa-main'))
+  ->'places'->0->'insight'='{"summary":"소개","criteria":{"taste":"맛있어요"},"postCount":2}'::jsonb,'insight readable';
 end $$;
 set local request.jwt.claim.sub='30000000-0000-0000-0000-000000000002';
 do $$ declare p bigint; begin
@@ -96,4 +120,4 @@ do $$ begin
  assert (select count(*) from public.post_media)=0,'media references cascade';
 end $$;
 rollback;
-\echo 'PASS: posted-only map, searchable catalog, media privacy, atomic ratings, priority ratings, idempotency, deletion'
+\echo 'PASS: posted-only map, searchable catalog, media privacy, atomic ratings, priority ratings, idempotency, deletion, detail photos, insight claims'

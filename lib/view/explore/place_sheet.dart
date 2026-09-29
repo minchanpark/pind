@@ -1,3 +1,4 @@
+import 'dart:math' as math;
 import 'dart:ui';
 
 import 'package:flutter/material.dart';
@@ -8,6 +9,7 @@ import '../../model/places.dart';
 import '../../model/preferences.dart';
 import '../../model/place_context.dart';
 import '../../controllers/place_detail_controller.dart';
+import 'post_photo_viewer.dart';
 
 /// Flutter rendering of Figma glass, not an iOS-only native control.
 class DetailGlass extends StatelessWidget {
@@ -156,58 +158,84 @@ class _PlaceSheetState extends State<PlaceSheet> {
     width: width,
     height: width,
   );
+
+  /// Up to five photos gathered from the place's posts.
   List<PlacePhoto> get photos => !place.hasRichContent
       ? []
       : place.gallery.isNotEmpty
-      ? place.gallery
+      ? place.gallery.take(5).toList()
       : place.imageUrl == null
       ? []
       : [PlacePhoto(place.imageUrl!, place.photoSourceUri, place.authors)];
 
   @override
-  Widget build(BuildContext context) => DraggableScrollableSheet(
-    controller: sheet,
-    initialChildSize: .70,
-    minChildSize: .4,
-    maxChildSize: .96,
-    expand: false,
-    snap: true,
-    snapSizes: const [.70],
-    builder: (context, scroll) => DetailGlass(
-      topOnly: true,
-      child: Column(
-        children: [
-          Expanded(
-            child: ListView(
-              controller: scroll,
-              padding: EdgeInsets.zero,
-              children: [
-                header(),
-                if (loading) const LinearProgressIndicator(minHeight: 2),
-                if (detailError) errorRow('상세 정보를 불러오지 못했어요.'),
-                if (contextError) errorRow('취향·친구 정보를 불러오지 못했어요.'),
-                if (photos.isNotEmpty) gallery(),
-                TextButton(
-                  key: const ValueKey('detail-expand'),
-                  onPressed: () => sheet.animateTo(
-                    .96,
-                    duration: const Duration(milliseconds: 280),
-                    curve: Curves.easeOutCubic,
+  Widget build(BuildContext context) {
+    // Built once per build so per-frame clip updates don't rebuild the tab body.
+    final body = description();
+    return DraggableScrollableSheet(
+      controller: sheet,
+      initialChildSize: .70,
+      minChildSize: .4,
+      maxChildSize: .96,
+      expand: false,
+      snap: true,
+      snapSizes: const [.70],
+      builder: (context, scroll) => DetailGlass(
+        topOnly: true,
+        child: Column(
+          children: [
+            Expanded(
+              child: CustomScrollView(
+                controller: scroll,
+                slivers: [
+                  SliverList.list(
+                    children: [
+                      header(),
+                      if (loading) const LinearProgressIndicator(minHeight: 2),
+                      if (detailError) errorRow('상세 정보를 불러오지 못했어요.'),
+                      if (contextError) errorRow('취향·친구 정보를 불러오지 못했어요.'),
+                      if (photos.isNotEmpty) gallery(photos),
+                      TextButton(
+                        key: const ValueKey('detail-expand'),
+                        onPressed: () => sheet.animateTo(
+                          .96,
+                          duration: const Duration(milliseconds: 280),
+                          curve: Curves.easeOutCubic,
+                        ),
+                        child: const Text(
+                          '⌃  위로 올려서 소개 · 게시물 보기',
+                          style: TextStyle(
+                            fontSize: 11,
+                            color: Color(0xFF7A7A80),
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
-                  child: const Text(
-                    '⌃  위로 올려서 소개 · 게시물 보기',
-                    style: TextStyle(fontSize: 11, color: Color(0xFF7A7A80)),
+                  // Once the sheet is fully up, tabs stay put and only the tab body
+                  // scrolls. The body is clipped under the transparent tabs instead of
+                  // giving them a fill (a blur can't hide Flutter content over the iOS map).
+                  if (place.hasRichContent) PinnedHeaderSliver(child: tabs()),
+                  SliverLayoutBuilder(
+                    builder: (_, constraints) => SliverToBoxAdapter(
+                      child: ClipRect(
+                        clipper: _ClipTop(
+                          constraints.scrollOffset + constraints.overlap,
+                        ),
+                        child: body,
+                      ),
+                    ),
                   ),
-                ),
-                description(),
-              ],
+                ],
+              ),
             ),
-          ),
-          footer(),
-        ],
+            footer(),
+          ],
+        ),
       ),
-    ),
-  );
+    );
+  }
+
   Widget errorRow(String text) => Padding(
     padding: const EdgeInsets.symmetric(horizontal: 16),
     child: Wrap(
@@ -376,12 +404,20 @@ class _PlaceSheetState extends State<PlaceSheet> {
     );
   }
 
-  Widget ratingChip(PreferenceCriterion axis, int index) {
-    const colors = [Color(0xFFA8154A), Color(0xFFB65B00), Color(0xFF3155D9)];
-    final color = colors[index % 3], value = social?.averages[axis];
-    final text = value == null
+  static const axisColors = [
+    Color(0xFFA8154A),
+    Color(0xFFB65B00),
+    Color(0xFF3155D9),
+  ];
+  String average(PreferenceCriterion axis) {
+    final value = social?.averages[axis];
+    return value == null
         ? '—'
         : value.toStringAsFixed(value == value.roundToDouble() ? 0 : 1);
+  }
+
+  Widget ratingChip(PreferenceCriterion axis, int index) {
+    final color = axisColors[index % 3], text = average(axis);
     return Tooltip(
       message: '${axis.label} · 가게 평균 $text / 5',
       child: Container(
@@ -430,7 +466,7 @@ class _PlaceSheetState extends State<PlaceSheet> {
                     ),
                     child: visitors[i].avatar == null
                         ? const Icon(Icons.person, size: 18)
-                        : photo(visitors[i].avatar!, BoxFit.cover),
+                        : placePhoto(visitors[i].avatar!, BoxFit.cover),
                   ),
                 ),
             ],
@@ -448,59 +484,52 @@ class _PlaceSheetState extends State<PlaceSheet> {
     );
   }
 
-  Widget photo(String uri, BoxFit fit) => uri.startsWith('assets/')
-      ? Image.asset(uri, fit: fit)
-      : Image.network(
-          uri,
-          fit: fit,
-          errorBuilder: (_, error, stack) =>
-              const Center(child: Icon(Icons.image_not_supported_outlined)),
-          loadingBuilder: (_, child, progress) => progress == null
-              ? child
-              : const Center(child: CircularProgressIndicator(strokeWidth: 2)),
-        );
-  Widget gallery() => Padding(
-    padding: const EdgeInsets.only(top: 16),
-    child: SingleChildScrollView(
-      scrollDirection: Axis.horizontal,
-      padding: const EdgeInsets.symmetric(horizontal: 8),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          for (var index = 0; index < photos.length; index++)
-            Padding(
-              padding: EdgeInsets.only(
-                right: index == photos.length - 1 ? 0 : 8,
-              ),
-              child: SizedBox(
-                key: ValueKey('detail-photo-$index'),
-                width: index == 0 ? 140 : 210,
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Semantics(
-                      label: '${place.name} 장소 사진 ${index + 1}',
-                      child: ClipRRect(
-                        borderRadius: BorderRadius.circular(8),
-                        child: SizedBox(
-                          width: double.infinity,
-                          height: 182,
-                          child: photo(photos[index].uri, BoxFit.cover),
+  Widget gallery(List<PlacePhoto> photos, [String key = 'detail-photo']) =>
+      Padding(
+        padding: const EdgeInsets.only(top: 16),
+        child: SingleChildScrollView(
+          scrollDirection: Axis.horizontal,
+          padding: const EdgeInsets.symmetric(horizontal: 8),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              for (var index = 0; index < photos.length; index++)
+                Padding(
+                  padding: EdgeInsets.only(
+                    right: index == photos.length - 1 ? 0 : 8,
+                  ),
+                  child: SizedBox(
+                    key: ValueKey('$key-$index'),
+                    width: index == 0 ? 140 : 210,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Semantics(
+                          label: '${place.name} 장소 사진 ${index + 1}',
+                          child: ClipRRect(
+                            borderRadius: BorderRadius.circular(8),
+                            child: SizedBox(
+                              width: double.infinity,
+                              height: 182,
+                              child: placePhoto(
+                                photos[index].uri,
+                                BoxFit.cover,
+                              ),
+                            ),
+                          ),
                         ),
-                      ),
+                        for (final author in photos[index].authors)
+                          photoCredit('사진: ${author.name}', author.uri),
+                        if (photos[index].sourceUri != null)
+                          photoCredit('사진 출처', photos[index].sourceUri),
+                      ],
                     ),
-                    for (final author in photos[index].authors)
-                      photoCredit('사진: ${author.name}', author.uri),
-                    if (photos[index].sourceUri != null)
-                      photoCredit('사진 출처', photos[index].sourceUri),
-                  ],
+                  ),
                 ),
-              ),
-            ),
-        ],
-      ),
-    ),
-  );
+            ],
+          ),
+        ),
+      );
 
   Widget photoCredit(String label, String? uri) => Semantics(
     link: uri != null,
@@ -571,24 +600,342 @@ class _PlaceSheetState extends State<PlaceSheet> {
     ],
   );
 
+  /// Figma 586:23828: author row, text, fanned photos and the author's ratings.
+  Widget postCard(PlacePost post, int index) {
+    // Posts don't store the author's priority order; Figma leads with 맛·양·분위기.
+    const order = [
+      PreferenceCriterion.taste,
+      PreferenceCriterion.portion,
+      PreferenceCriterion.ambience,
+      PreferenceCriterion.value,
+      PreferenceCriterion.service,
+      PreferenceCriterion.photogenic,
+      PreferenceCriterion.quiet,
+      PreferenceCriterion.parking,
+    ];
+    final ratings = [
+      for (final axis in order)
+        if (post.ratings[axis.name] != null) (axis, post.ratings[axis.name]!),
+    ];
+    return Padding(
+      key: ValueKey('detail-post-$index'),
+      padding: const EdgeInsets.fromLTRB(32, 24, 32, 10),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              ClipOval(
+                child: SizedBox.square(
+                  dimension: 32,
+                  child: post.avatar == null
+                      ? const ColoredBox(
+                          color: Color(0xFFEDEDF1),
+                          child: Icon(Icons.person, size: 22),
+                        )
+                      : placePhoto(post.avatar!, BoxFit.cover),
+                ),
+              ),
+              const SizedBox(width: 7),
+              Expanded(
+                child: Text(
+                  '@${post.author}',
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w500,
+                    letterSpacing: -.07,
+                    color: Colors.black,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          Padding(
+            padding: const EdgeInsets.only(left: 39),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                if (post.body.trim().isNotEmpty)
+                  Text(
+                    post.body.trim(),
+                    style: const TextStyle(
+                      fontSize: 12,
+                      height: 16.869 / 12,
+                      color: Colors.black,
+                    ),
+                  ),
+                const SizedBox(height: 12),
+                Stack(
+                  clipBehavior: Clip.none,
+                  alignment: Alignment.topCenter,
+                  children: [
+                    Padding(
+                      padding: EdgeInsets.only(
+                        bottom: ratings.isEmpty ? 0 : 15,
+                      ),
+                      child: postPhotos(post),
+                    ),
+                    if (ratings.isNotEmpty)
+                      Positioned(
+                        bottom: 0,
+                        child: Row(
+                          children: [
+                            for (var i = 0; i < ratings.length; i++) ...[
+                              if (i > 0) const SizedBox(width: 6),
+                              postRatingChip(ratings[i].$1, ratings[i].$2, i),
+                            ],
+                          ],
+                        ),
+                      ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget postPhotos(PlacePost post) {
+    const yellow = Color(0xFFF4FF5A);
+    if (post.photos.length < 2) {
+      return post.photos.isEmpty
+          ? const SizedBox(height: 30)
+          : openable(
+              post,
+              0,
+              Container(
+                height: 217.32,
+                foregroundDecoration: BoxDecoration(
+                  border: Border.all(color: yellow, width: 3.747),
+                  borderRadius: BorderRadius.circular(14.238),
+                ),
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(14.238),
+                  child: SizedBox.expand(
+                    child: placePhoto(post.photos.first, BoxFit.cover),
+                  ),
+                ),
+              ),
+            );
+    }
+    final extra = post.photos.length - 3;
+    Widget card(int index, Color border, [int more = 0]) => Container(
+      width: 109.01,
+      height: 164.912,
+      foregroundDecoration: BoxDecoration(
+        border: Border.all(color: border, width: 2),
+        borderRadius: BorderRadius.circular(12.086),
+      ),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(12.086),
+        child: Stack(
+          fit: StackFit.expand,
+          children: [
+            placePhoto(post.photos[index], BoxFit.cover),
+            if (more > 0) ...[
+              const ColoredBox(color: Color(0x33000000)),
+              Center(
+                child: Text(
+                  '+ $more',
+                  style: const TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.w500,
+                    color: Colors.white,
+                  ),
+                ),
+              ),
+            ],
+          ],
+        ),
+      ),
+    );
+    // Offsets and tilts are measured from the Figma cards around the center one.
+    Widget side(Widget child, double dx, double dy, double degrees) =>
+        Transform.translate(
+          offset: Offset(dx, dy),
+          child: Transform.rotate(angle: degrees * math.pi / 180, child: child),
+        );
+    // Full width, so the fanned side cards stay inside the Stack and receive taps.
+    return SizedBox(
+      width: double.infinity,
+      height: 179,
+      child: Stack(
+        clipBehavior: Clip.none,
+        alignment: const Alignment(0, 1),
+        children: [
+          if (post.photos.length > 2)
+            side(openable(post, 2, card(2, yellow, extra)), 95, -8, 6.51),
+          side(openable(post, 1, card(1, yellow)), -93, -7, -8.21),
+          openable(post, 0, card(0, const Color(0xFF6300DB))),
+        ],
+      ),
+    );
+  }
+
+  Widget openable(PlacePost post, int index, Widget child) => Semantics(
+    button: true,
+    label: '게시물 사진 ${index + 1} 크게 보기',
+    child: GestureDetector(
+      key: ValueKey('post-photo-${post.hashCode}-$index'),
+      onTap: () => Navigator.of(context).push(
+        MaterialPageRoute<void>(
+          builder: (_) => PostPhotoViewer(photos: post.photos, initial: index),
+        ),
+      ),
+      child: child,
+    ),
+  );
+
+  Widget postRatingChip(PreferenceCriterion axis, int score, int index) {
+    const borders = [Color(0x66E8336E), Color(0x66FF8A1F), Color(0x663563FF)];
+    const colors = [Color(0xFFA8154A), Color(0xFFB85600), Color(0xFF1C3FC4)];
+    return Semantics(
+      label: '${axis.label} $score점',
+      excludeSemantics: true,
+      child: Container(
+        padding: const EdgeInsets.fromLTRB(9, 8, 10, 8),
+        decoration: BoxDecoration(
+          color: const Color(0xF0FFFFFF),
+          border: Border.all(color: borders[index % 3]),
+          borderRadius: BorderRadius.circular(14),
+          boxShadow: const [
+            BoxShadow(
+              color: Color(0x1A000000),
+              blurRadius: 8,
+              offset: Offset(0, 2),
+            ),
+          ],
+        ),
+        child: Text.rich(
+          TextSpan(
+            children: [
+              TextSpan(
+                text: '${axis.emoji} ',
+                style: const TextStyle(color: Color(0xFF111111)),
+              ),
+              TextSpan(
+                text: '★ $score',
+                style: TextStyle(
+                  color: colors[index % 3],
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+            ],
+          ),
+          style: const TextStyle(fontSize: 10),
+        ),
+      ),
+    );
+  }
+
+  /// Store averages beside AI one-liners for the viewer's three priorities.
+  Widget reviewSummary() {
+    final axes = controller.preferences?.priorities.length == 3
+        ? controller.preferences!.priorities
+        : const [
+            PreferenceCriterion.taste,
+            PreferenceCriterion.portion,
+            PreferenceCriterion.ambience,
+          ];
+    return Column(
+      key: const ValueKey('detail-review-summary'),
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          '${axes.map((a) => a.label).join(' · ')} 한 줄 요약',
+          style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w700),
+        ),
+        const SizedBox(height: 10),
+        DetailGlass(
+          radius: 20,
+          child: Column(
+            children: [
+              for (var i = 0; i < axes.length; i++) ...[
+                if (i > 0)
+                  const Divider(
+                    height: 1,
+                    indent: 14,
+                    endIndent: 14,
+                    color: Color(0x14000000),
+                  ),
+                Padding(
+                  padding: const EdgeInsets.all(14),
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(axes[i].emoji, style: const TextStyle(fontSize: 14)),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              '${axes[i].label}  ★ ${average(axes[i])}',
+                              style: TextStyle(
+                                fontSize: 12,
+                                fontWeight: FontWeight.w700,
+                                color: axisColors[i % 3],
+                              ),
+                            ),
+                            const SizedBox(height: 2),
+                            Text(
+                              place.insightLines[axes[i].name] ??
+                                  '아직 한 줄 평이 없어요.',
+                              style: const TextStyle(
+                                fontSize: 11,
+                                color: Color(0xFF454550),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
   Widget description() => Column(
     crossAxisAlignment: CrossAxisAlignment.start,
     children: [
-      if (place.hasRichContent) tabs(),
+      if (place.hasRichContent && tab == 0 && photos.isNotEmpty)
+        gallery(photos, 'detail-intro-photo'),
+      if (place.hasRichContent && tab == 1)
+        for (var i = 0; i < place.posts.length; i++)
+          postCard(place.posts[i], i),
       Padding(
         padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             if (place.hasRichContent)
-              if (tab == 0)
+              if (tab == 0) ...[
                 Text(
-                  place.summary?.trim().isNotEmpty == true
-                      ? place.summary!
-                      : '제공된 소개가 없어요.',
-                )
-              else
-                const Text('게시물 목록은 다음 단계에서 연결합니다.'),
+                  [place.insightSummary, place.summary].firstWhere(
+                        (text) => text?.trim().isNotEmpty == true,
+                        orElse: () => null,
+                      ) ??
+                      '제공된 소개가 없어요.',
+                  key: const ValueKey('detail-intro'),
+                  style: const TextStyle(
+                    fontSize: 12,
+                    height: 1.5,
+                    color: Color(0xFF6B6B70),
+                  ),
+                ),
+                const SizedBox(height: 20),
+                reviewSummary(),
+              ] else if (place.posts.isEmpty)
+                const Text('아직 게시물이 없어요.'),
             if (place.isCatalog && place.googleSearchEnabled)
               TextButton(
                 key: const ValueKey('detail-google-search'),
@@ -741,4 +1088,14 @@ class _PlaceSheetState extends State<PlaceSheet> {
       ),
     ),
   );
+}
+
+/// Hides the part of the tab body that has scrolled under the pinned tabs.
+class _ClipTop extends CustomClipper<Rect> {
+  const _ClipTop(this.top);
+  final double top;
+  @override
+  Rect getClip(Size size) => Rect.fromLTRB(0, top, size.width, size.height);
+  @override
+  bool shouldReclip(_ClipTop old) => old.top != top;
 }

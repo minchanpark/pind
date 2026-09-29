@@ -108,7 +108,7 @@ void main() {
         }),
       );
       addTearDown(controller.dispose);
-      await controller.load(const MapViewport(36, 129));
+      await controller.load();
       expect(controller.places, isEmpty);
       published = true;
       await controller.showPublishedPlace(42);
