@@ -7,6 +7,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 
+import '../components/pind_glass.dart';
 import '../theme.dart';
 import '../../model/preferences.dart';
 import '../../model/places.dart';
@@ -112,9 +113,6 @@ class _ExploreScreenState extends State<ExploreScreen> {
     return places.where((p) => _inCategory(pattern, p)).toList();
   }
 
-  /// Emoji markers are six fixed images, so each is drawn once and reused.
-  static final markerIcons = <String, Future<BitmapDescriptor>>{};
-
   Future<void> updateMarkers() async {
     final generation = ++markerGeneration;
     final result = await Future.wait(
@@ -125,10 +123,7 @@ class _ExploreScreenState extends State<ExploreScreen> {
             (p) async => Marker(
               markerId: MarkerId(p.key),
               position: LatLng(p.latitude, p.longitude),
-              icon: await markerIcons.putIfAbsent(
-                markerEmoji(p),
-                () => emojiMarker(markerEmoji(p)),
-              ),
+              icon: await placeMarkerIcon(p),
               infoWindow: InfoWindow(title: p.name),
               onTap: () => showPlace(p),
             ),
@@ -137,37 +132,6 @@ class _ExploreScreenState extends State<ExploreScreen> {
     if (mounted && generation == markerGeneration) {
       setState(() => markers = result.toSet());
     }
-  }
-
-  Future<BitmapDescriptor> emojiMarker(String emoji) async {
-    final recorder = ui.PictureRecorder();
-    final canvas = Canvas(recorder);
-    canvas.drawCircle(
-      const Offset(56, 56),
-      54,
-      Paint()..color = PindTheme.purple,
-    );
-    canvas.drawCircle(const Offset(56, 56), 49, Paint()..color = Colors.white);
-    // Font size keeps the Figma 531:19871 emoji-to-pin ratio (29px glyph in a 57px pin).
-    final label = TextPainter(
-      text: TextSpan(text: emoji, style: const TextStyle(fontSize: 48)),
-      textDirection: TextDirection.ltr,
-    )..layout();
-    label.paint(
-      canvas,
-      Offset((112 - label.width) / 2, (112 - label.height) / 2),
-    );
-    label.dispose();
-    final picture = recorder.endRecording();
-    final bitmap = await picture.toImage(112, 112);
-    picture.dispose();
-    final data = await bitmap.toByteData(format: ui.ImageByteFormat.png);
-    bitmap.dispose();
-    return BitmapDescriptor.bytes(
-      data!.buffer.asUint8List(),
-      width: 56,
-      height: 56,
-    );
   }
 
   @override
@@ -245,14 +209,7 @@ class _ExploreScreenState extends State<ExploreScreen> {
   Future<void> showPlace(Place place) async {
     final detail = controller!.details(place, widget.preferences);
     setState(() => placeOpen = true);
-    await showModalBottomSheet<void>(
-      context: context,
-      isScrollControlled: true,
-      useSafeArea: true,
-      backgroundColor: Colors.transparent,
-      barrierColor: Colors.black.withValues(alpha: .04),
-      builder: (_) => PlaceSheet(controller: detail),
-    );
+    await showPlaceSheet(context, detail);
     if (mounted) setState(() => placeOpen = false);
   }
 
@@ -368,7 +325,7 @@ class _ExploreScreenState extends State<ExploreScreen> {
                           tooltip: '검색',
                           padding: const EdgeInsets.only(left: 9.2667),
                           icon: SvgPicture.asset(
-                            'assets/figma/explore_search.svg',
+                            'assets/explore/search_icon.svg',
                             width: 15.4927,
                             height: 15.4927,
                           ),
@@ -401,7 +358,7 @@ class _ExploreScreenState extends State<ExploreScreen> {
                           tooltip: '취향 수정',
                           padding: const EdgeInsets.only(right: 9.2667),
                           icon: SvgPicture.asset(
-                            'assets/figma/explore_filter.svg',
+                            'assets/explore/filter_icon.svg',
                             width: 14.457,
                             height: 14.457,
                           ),
@@ -425,7 +382,7 @@ class _ExploreScreenState extends State<ExploreScreen> {
       children: [
         if (widget.mapsEnabled)
           GoogleMap(
-            style: '[{"featureType":"poi.business","stylers":[{"visibility":"off"}]}]',
+            style: pindMapStyle,
             initialCameraPosition: const CameraPosition(
               target: LatLng(37.5665, 126.978),
               zoom: 13,
@@ -529,86 +486,75 @@ class _ExploreScreenState extends State<ExploreScreen> {
             child: Stack(
               children: [
                 Positioned(
-                  right: 16,
-                  bottom: 116 + widget.bottomClearance,
-                  child: Column(
-                    children: [
-                      if (widget.mapsEnabled) ...[
-                        FloatingActionButton.small(
-                          heroTag: 'zoomIn',
-                          tooltip: '확대',
-                          onPressed: () =>
-                              map?.animateCamera(CameraUpdate.zoomIn()),
-                          child: const Icon(Icons.add),
-                        ),
-                        const SizedBox(height: 8),
-                        FloatingActionButton.small(
-                          heroTag: 'zoomOut',
-                          tooltip: '축소',
-                          onPressed: () =>
-                              map?.animateCamera(CameraUpdate.zoomOut()),
-                          child: const Icon(Icons.remove),
-                        ),
-                        const SizedBox(height: 8),
-                      ],
-                      FloatingActionButton.small(
-                        heroTag: 'locate',
-                        tooltip: '현재 위치',
-                        onPressed: locating ? null : locate,
-                        child: locating
-                            ? const SizedBox(
-                                width: 18,
-                                height: 18,
-                                child: CircularProgressIndicator(
-                                  strokeWidth: 2,
-                                ),
-                              )
-                            : const Icon(Icons.my_location),
-                      ),
-                    ],
-                  ),
-                ),
-                Positioned(
                   left: 0,
                   right: 0,
-                  bottom: widget.bottomClearance,
-                  child: SafeArea(
-                    top: false,
-                    child: Padding(
-                      padding: const EdgeInsets.only(bottom: 12),
-                      child: Column(
-                        children: [
-                          SingleChildScrollView(
-                            scrollDirection: Axis.horizontal,
-                            padding: const EdgeInsets.symmetric(horizontal: 16),
-                            child: Row(
-                              children: [
-                                for (final label in categories.keys)
-                                  Padding(
-                                    padding: const EdgeInsets.only(right: 8),
-                                    child: MapFilterChip(
-                                      label: label,
-                                      selected: category == label,
-                                      onTap: () {
-                                        setState(() => category = label);
-                                        updateMarkers();
-                                      },
-                                    ),
+                  // 14pt between the chip glass and the nav bar (nav top is
+                  // clearance − 12); the chip's 44pt hit box adds ~3pt below.
+                  bottom: widget.bottomClearance - 1,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      Align(
+                        alignment: Alignment.centerRight,
+                        child: Padding(
+                          padding: const EdgeInsets.only(right: 14),
+                          child: Column(
+                            spacing: 4,
+                            children: [
+                              if (widget.mapsEnabled) ...[
+                                _MapGlassButton(
+                                  tooltip: '확대',
+                                  onPressed: () =>
+                                      map?.animateCamera(CameraUpdate.zoomIn()),
+                                  child: const Icon(Icons.add),
+                                ),
+                                _MapGlassButton(
+                                  tooltip: '축소',
+                                  onPressed: () => map?.animateCamera(
+                                    CameraUpdate.zoomOut(),
                                   ),
+                                  child: const Icon(Icons.remove),
+                                ),
                               ],
-                            ),
+                              _MapGlassButton(
+                                tooltip: '현재 위치',
+                                onPressed: locating ? null : locate,
+                                child: locating
+                                    ? const SizedBox(
+                                        width: 18,
+                                        height: 18,
+                                        child: CircularProgressIndicator(
+                                          strokeWidth: 2,
+                                        ),
+                                      )
+                                    : const Icon(Icons.my_location),
+                              ),
+                            ],
                           ),
-                          if (controller != null &&
-                              !controller!.loading &&
-                              controller!.error == null &&
-                              visiblePlaces.isEmpty)
-                            const Text(
-                              '게시물이 있는 식당이 지도에 표시돼요.',
-                              style: TextStyle(fontSize: 12),
-                            ),
-                        ],
+                        ),
                       ),
-                    ),
+                      const SizedBox(height: 12),
+                      SingleChildScrollView(
+                        scrollDirection: Axis.horizontal,
+                        padding: const EdgeInsets.symmetric(horizontal: 16),
+                        child: Row(
+                          children: [
+                            for (final label in categories.keys)
+                              Padding(
+                                padding: const EdgeInsets.only(right: 8),
+                                child: MapFilterChip(
+                                  label: label,
+                                  selected: category == label,
+                                  onTap: () {
+                                    setState(() => category = label);
+                                    updateMarkers();
+                                  },
+                                ),
+                              ),
+                          ],
+                        ),
+                      ),
+                    ],
                   ),
                 ),
               ],
@@ -667,6 +613,48 @@ class _SearchBarHighlights extends CustomPainter {
   bool shouldRepaint(_SearchBarHighlights oldDelegate) => false;
 }
 
+/// Map control in the same liquid glass as the filter chips and nav bar.
+class _MapGlassButton extends StatelessWidget {
+  const _MapGlassButton({
+    required this.tooltip,
+    required this.onPressed,
+    required this.child,
+  });
+  final String tooltip;
+  final VoidCallback? onPressed;
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) => Semantics(
+    button: true,
+    enabled: onPressed != null,
+    child: Tooltip(
+      message: tooltip,
+      child: GestureDetector(
+        behavior: HitTestBehavior.opaque,
+        onTap: onPressed,
+        child: SizedBox.square(
+          dimension: 44,
+          child: Center(
+            child: PindGlass(
+              radius: 20,
+              child: SizedBox.square(
+                dimension: 38,
+                child: Center(
+                  child: IconTheme.merge(
+                    data: const IconThemeData(size: 22, color: PindTheme.ink),
+                    child: child,
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ),
+      ),
+    ),
+  );
+}
+
 bool _inCategory(String pattern, Place place) => RegExp(
   pattern,
   caseSensitive: false,
@@ -679,4 +667,71 @@ String markerEmoji(Place place) {
     if (_inCategory(value, place)) return key.split(' ').first;
   }
   return '🍽️';
+}
+
+/// [placeMarkerIcon] as a widget, for lists that should match the map.
+class PlacePin extends StatelessWidget {
+  const PlacePin(this.place, {super.key, this.size = 48});
+  final Place place;
+  final double size;
+
+  @override
+  Widget build(BuildContext context) => Container(
+    width: size,
+    height: size,
+    alignment: Alignment.center,
+    decoration: BoxDecoration(
+      color: Colors.white,
+      shape: BoxShape.circle,
+      border: Border.all(color: PindTheme.purple, width: size * 5 / 112),
+    ),
+    child: Text(
+      markerEmoji(place),
+      style: TextStyle(fontSize: size * 48 / 112, height: 1),
+    ),
+  );
+}
+
+/// Hides Google's own business POIs so only Pind pins show.
+const pindMapStyle =
+    '[{"featureType":"poi.business","stylers":[{"visibility":"off"}]}]';
+
+/// The map screen's pin. Emoji markers are six fixed images, so each is drawn
+/// once and reused by every map.
+Future<BitmapDescriptor> placeMarkerIcon(Place place) {
+  final emoji = markerEmoji(place);
+  return _markerIcons.putIfAbsent(emoji, () => _emojiMarker(emoji));
+}
+
+final _markerIcons = <String, Future<BitmapDescriptor>>{};
+
+Future<BitmapDescriptor> _emojiMarker(String emoji) async {
+  final recorder = ui.PictureRecorder();
+  final canvas = Canvas(recorder);
+  canvas.drawCircle(
+    const Offset(56, 56),
+    54,
+    Paint()..color = PindTheme.purple,
+  );
+  canvas.drawCircle(const Offset(56, 56), 49, Paint()..color = Colors.white);
+  // Font size keeps the Figma 531:19871 emoji-to-pin ratio (29px glyph in a 57px pin).
+  final label = TextPainter(
+    text: TextSpan(text: emoji, style: const TextStyle(fontSize: 48)),
+    textDirection: TextDirection.ltr,
+  )..layout();
+  label.paint(
+    canvas,
+    Offset((112 - label.width) / 2, (112 - label.height) / 2),
+  );
+  label.dispose();
+  final picture = recorder.endRecording();
+  final bitmap = await picture.toImage(112, 112);
+  picture.dispose();
+  final data = await bitmap.toByteData(format: ui.ImageByteFormat.png);
+  bitmap.dispose();
+  return BitmapDescriptor.bytes(
+    data!.buffer.asUint8List(),
+    width: 56,
+    height: 56,
+  );
 }

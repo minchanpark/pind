@@ -4,6 +4,8 @@ import '../model/post_model.dart';
 import '../model/places.dart';
 import '../model/preferences.dart';
 import '../model/place_search_result.dart';
+import '../model/profile_model.dart';
+import '../services/location_service.dart';
 import '../services/place_service.dart';
 import '../services/post_service.dart';
 import '../services/post_photo_service.dart';
@@ -13,6 +15,8 @@ class PostController {
     required this.posts,
     required this.photos,
     this.places,
+    this.mine,
+    this.position = LocationService.position,
     Place? place,
     List<PreferenceCriterion>? criteria,
   }) : authorId = posts.userId,
@@ -24,6 +28,12 @@ class PostController {
   final PostService posts;
   final PostPhotoService photos;
   final PlaceService? places;
+
+  /// My Page's overview as last loaded: the picker's 최근 방문 / 저장한 곳.
+  final ProfileOverview? Function()? mine;
+
+  /// `request` asks for permission when it hasn't been decided yet.
+  final Future<MapViewport?> Function(bool request) position;
   final String? authorId;
   final PostModel model;
 
@@ -102,6 +112,15 @@ class PostController {
     return (await places!.search(query))
         .where((p) => p.isCatalog && p.id != null)
         .toList();
+  }
+
+  /// Null when location is off, denied or times out.
+  Future<MapViewport?> currentPosition({bool request = false}) async {
+    try {
+      return await position(request);
+    } catch (_) {
+      return null;
+    }
   }
 
   Future<PublishedPost?> publish() async {

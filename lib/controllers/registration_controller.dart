@@ -1,10 +1,13 @@
 import 'dart:async';
 
+import '../model/place_search_result.dart';
 import '../model/preferences.dart';
 import '../model/registration_model.dart';
 import '../services/auth_service.dart';
 import '../services/registration_service.dart';
 import '../services/location_service.dart';
+import '../services/post_photo_service.dart';
+import '../services/profile_service.dart';
 
 class RegistrationController {
   RegistrationController({
@@ -14,6 +17,8 @@ class RegistrationController {
     this.allowPreview = false,
     this.requestPermission = LocationService.requestPermission,
     this.openSettings = LocationService.openSettings,
+    this.profile,
+    this.photos,
   }) {
     final identity = auth.identity;
     if (identity != null &&
@@ -48,6 +53,8 @@ class RegistrationController {
   final bool allowPreview;
   final Future<RegistrationPermission> Function() requestPermission;
   final Future<bool> Function() openSettings;
+  final ProfileService? profile;
+  final PostPhotoService? photos;
   final model = RegistrationModel();
   late final StreamSubscription<AuthIdentity?> _subscription;
   bool _disposed = false, _previewRequested = false;
@@ -104,6 +111,33 @@ class RegistrationController {
     }
   }
 
+  Future<void> pickAvatar() async {
+    if (model.busy || _disposed) return;
+    final profile = this.profile, photos = this.photos;
+    if (profile == null || photos == null) {
+      model.update(() => model.error = '프로필 서버에 연결하지 못했어요.');
+      return;
+    }
+    model.update(() {
+      model.busy = true;
+      model.error = null;
+    });
+    try {
+      final selected = await photos.pick(1);
+      if (selected.isEmpty || _disposed) return;
+      final url = await profile.uploadAvatar(selected.first);
+      if (!_disposed) model.draft = model.draft.copyWith(avatarUrl: url);
+    } catch (error) {
+      if (!_disposed) {
+        model.error = error is PlaceFailure
+            ? error.message
+            : '사진을 올리지 못했어요. 다시 시도해 주세요.';
+      }
+    } finally {
+      if (!_disposed) model.update(() => model.busy = false);
+    }
+  }
+
   void edit(RegistrationDraft draft) {
     if (model.busy) return;
     model.update(() {
@@ -150,6 +184,15 @@ class RegistrationController {
     });
     final draft = model.draft.copyWith(step: step);
     try {
+      if (model.step == RegistrationStep.handle &&
+          profile != null &&
+          !identity.development) {
+        await profile!.save(
+          handle: draft.handle,
+          displayName: draft.name.trim(),
+          avatarUrl: draft.avatarUrl,
+        );
+      }
       await storage.save(identity.id, draft);
       if (!_disposed && model.identity?.id == identity.id) {
         model.update(() {
@@ -157,6 +200,8 @@ class RegistrationController {
           model.step = step;
         });
       }
+    } on PlaceFailure catch (e) {
+      if (!_disposed) model.update(() => model.error = e.message);
     } catch (_) {
       if (!_disposed) {
         model.update(() => model.error = '입력 내용을 저장하지 못했어요. 다시 시도해 주세요.');

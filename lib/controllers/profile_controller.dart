@@ -1,0 +1,152 @@
+import 'dart:ui';
+
+import '../model/place_search_result.dart';
+import '../model/profile_model.dart';
+import '../services/friends_service.dart';
+import '../services/place_action_service.dart';
+import '../services/post_photo_service.dart';
+import '../services/profile_service.dart';
+
+class ProfileController {
+  ProfileController({required this.profile, this.userId, this.friends});
+  final ProfileService? profile;
+
+  /// Someone else's page when set; null is My Page.
+  final String? userId;
+  final FriendsService? friends;
+  bool get isMe => userId == null;
+  final model = ProfileModel();
+  bool _disposed = false;
+  int _request = 0;
+
+  ProfileService get _service => profile ?? UnavailableProfileService();
+
+  Future<void> load() async {
+    final request = ++_request;
+    model.update(() {
+      model.loading = true;
+      model.error = null;
+    });
+    try {
+      final overview = await _service.overview(userId: userId);
+      if (_disposed || request != _request) return;
+      model.update(() {
+        model.overview = overview;
+        model.loading = false;
+      });
+    } catch (caught) {
+      if (_disposed || request != _request) return;
+      model.update(() {
+        model.loading = false;
+        model.error = _message(caught, '프로필을 불러오지 못했어요. 다시 시도해 주세요.');
+      });
+    }
+  }
+
+  /// Optimistic, followers count included. False (and [ProfileModel.error]
+  /// set) when the server refused and the page was reverted.
+  Future<bool> toggleFollow() async {
+    final o = model.overview, id = userId;
+    if (o == null || id == null || model.saving) return true;
+    final target = !o.following;
+    void apply(bool following) => model.update(() {
+      final now = model.overview!;
+      final c = now.counts;
+      model.overview = now.copyWith(
+        following: following,
+        counts: ProfileCounts(
+          followers: c.followers + (following ? 1 : -1),
+          following: c.following,
+          posts: c.posts,
+          saved: c.saved,
+        ),
+      );
+    });
+    model.saving = true;
+    apply(target);
+    try {
+      await (friends ?? UnavailableFriendsService()).setFollowing(id, target);
+      return true;
+    } catch (caught) {
+      if (_disposed) return false;
+      model.error = _message(
+        caught,
+        target ? '팔로우하지 못했어요.' : '팔로우를 취소하지 못했어요.',
+      );
+      apply(!target);
+      return false;
+    } finally {
+      if (!_disposed) model.saving = false;
+    }
+  }
+
+  void selectTab(ProfileTab tab) => model.update(() => model.tab = tab);
+
+  Future<void> pickAndUploadAvatar(PostPhotoService photos) async {
+    if (model.saving) return;
+    model.update(() {
+      model.saving = true;
+      model.error = null;
+    });
+    try {
+      final picked = await photos.pick(1);
+      if (_disposed || picked.isEmpty) return;
+      final url = await _service.uploadAvatar(picked.first);
+      await _service.save(avatarUrl: url);
+      if (!_disposed) _patch((p) => p.copyWith(avatarUrl: url));
+    } catch (caught) {
+      if (!_disposed) {
+        model.error = _message(caught, '사진을 올리지 못했어요. 다시 시도해 주세요.');
+      }
+    } finally {
+      if (!_disposed) model.update(() => model.saving = false);
+    }
+  }
+
+  /// True on success; the failure text is left in [ProfileModel.error].
+  Future<bool> saveProfile({String? displayName, String? bio}) async {
+    if (model.saving) return false;
+    model.update(() {
+      model.saving = true;
+      model.error = null;
+    });
+    try {
+      await _service.save(displayName: displayName, bio: bio);
+      if (_disposed) return false;
+      _patch((p) => p.copyWith(displayName: displayName, bio: bio));
+      return true;
+    } catch (caught) {
+      if (!_disposed) {
+        model.error = _message(caught, '프로필을 저장하지 못했어요. 다시 시도해 주세요.');
+      }
+      return false;
+    } finally {
+      if (!_disposed) model.update(() => model.saving = false);
+    }
+  }
+
+  Future<void> share(MyPost post, Rect origin) async {
+    try {
+      await PlaceActionService.share(
+        '${post.place.name} · Pind',
+        post.place.name,
+        origin,
+      );
+    } catch (_) {}
+  }
+
+  void _patch(UserProfile Function(UserProfile) change) {
+    final o = model.overview;
+    if (o == null) return;
+    model.overview = o.copyWith(profile: change(o.profile));
+  }
+
+  String _message(Object caught, String fallback) =>
+      caught is PlaceFailure ? caught.message : fallback;
+
+  void dispose() {
+    _disposed = true;
+    _request++;
+    model.dispose();
+  }
+}

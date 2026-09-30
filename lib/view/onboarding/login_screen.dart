@@ -2,6 +2,7 @@ import 'dart:math' as math;
 import 'dart:ui';
 
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import 'package:flutter/services.dart';
 
 import '../../controllers/registration_controller.dart';
@@ -203,7 +204,7 @@ class _LoginArtwork extends StatelessWidget {
             // Original Figma export of the individual path node. Its SVG export
             // produces different dash spacing from the design in Flutter.
             child: Image.asset(
-              'assets/figma/login_path.png',
+              'assets/login/route_path.png',
               width: 393,
               height: 281,
             ),
@@ -239,7 +240,11 @@ class _LoginArtwork extends StatelessWidget {
           Positioned(
             left: 321,
             top: 210,
-            child: setupAsset('a0e89.svg', 58, 78.1015),
+            child: SvgPicture.asset(
+              'assets/login/pin.svg',
+              width: 58,
+              height: 78.1015,
+            ),
           ),
           const Positioned(
             left: 6,

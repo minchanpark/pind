@@ -3,14 +3,14 @@ import 'dart:io';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
-  test('iOS and Android ship the same com.pind.app application identity', () {
+  test('iOS uses registered com.newdawn.pind; Android keeps com.pind.app', () {
     final ios = File('ios/Runner.xcodeproj/project.pbxproj').readAsStringSync();
     expect(
-      RegExp(r'PRODUCT_BUNDLE_IDENTIFIER = com\.pind\.app;').allMatches(ios),
+      RegExp(r'PRODUCT_BUNDLE_IDENTIFIER = com\.newdawn\.pind;').allMatches(ios),
       hasLength(3),
     );
     expect(
-      RegExp(r'PRODUCT_BUNDLE_IDENTIFIER = com\.pind\.app\.RunnerTests;')
+      RegExp(r'PRODUCT_BUNDLE_IDENTIFIER = com\.newdawn\.pind\.RunnerTests;')
           .allMatches(ios),
       hasLength(3),
     );

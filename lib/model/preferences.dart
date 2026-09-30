@@ -30,18 +30,18 @@ enum DiningOccasion {
 }
 
 enum Cuisine {
-  korean('한식·백반', '838d7.png'),
-  barbecue('고기구이', 'b887a.png'),
-  soup('국물·탕', '319be.png'),
-  noodles('면·국수', 'eb159.png'),
-  street('분식', '230fd.png'),
-  japanese('일식', 'c1df7.png'),
-  sushi('스시·회', '8aa62.png'),
-  chinese('중식', '56250.png'),
-  western('양식·파스타', '92aad.png'),
-  asian('아시안', '09c52.png'),
-  chicken('치킨', '27b11.png'),
-  dessert('카페·디저트', 'fc2b8.png'),
+  korean('한식·백반', 'korean.png'),
+  barbecue('고기구이', 'barbecue.png'),
+  soup('국물·탕', 'soup.png'),
+  noodles('면·국수', 'noodles.png'),
+  street('분식', 'street.png'),
+  japanese('일식', 'japanese.png'),
+  sushi('스시·회', 'sushi.png'),
+  chinese('중식', 'chinese.png'),
+  western('양식·파스타', 'western.png'),
+  asian('아시안', 'asian.png'),
+  chicken('치킨', 'chicken.png'),
+  dessert('카페·디저트', 'dessert.png'),
   bakery('베이커리', null),
   bar('술집·바', null);
 

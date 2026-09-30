@@ -44,10 +44,12 @@ class FriendVisit {
   final String? avatar;
 }
 
+/// Priority weights shared by [tasteMatch] and the profile taste card.
+const tasteWeights = [.5, .3, .2];
+
 /// All three selected axes must have an aggregate. No partial-score inflation.
 int? tasteMatch(TastePreferences? preferences, PlaceContext data) {
   if (preferences == null || preferences.priorities.length != 3) return null;
-  const weights = [.5, .3, .2];
   double result = 0;
   for (var i = 0; i < 3; i++) {
     final axis = preferences.priorities[i];
@@ -59,7 +61,7 @@ int? tasteMatch(TastePreferences? preferences, PlaceContext data) {
     }
     if (average == null) return null;
     final score = mine == null ? average : (average + mine) / 2;
-    result += score / 5 * weights[i];
+    result += score / 5 * tasteWeights[i];
   }
   return (result * 100).round().clamp(0, 100);
 }

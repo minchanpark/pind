@@ -25,25 +25,25 @@ void main() {
     );
     await tester.pumpAndSettle();
     const roots = {
-      'post_close.svg': Size(20.6096, 20.6096),
-      'post_camera.svg': Size(22.9817, 22.9817),
-      'post_add.svg': Size(20, 17.8653),
-      'post_taste_star.svg': Size(25.6324, 24.1341),
-      'post_portion_star.svg': Size(25.6324, 24.1341),
-      'post_portion_star_empty.svg': Size(19.6324, 18.1341),
-      'post_ambience_star.svg': Size(25.6324, 24.1341),
-      'post_ambience_star_empty.svg': Size(19.6324, 18.1341),
+      'close_icon.svg': Size(20.6096, 20.6096),
+      'camera_icon.svg': Size(22.9817, 22.9817),
+      'add_photo_icon.svg': Size(20, 17.8653),
+      'star_taste.svg': Size(25.6324, 24.1341),
+      'star_portion.svg': Size(25.6324, 24.1341),
+      'star_portion_empty.svg': Size(19.6324, 18.1341),
+      'star_ambience.svg': Size(25.6324, 24.1341),
+      'star_ambience_empty.svg': Size(19.6324, 18.1341),
     };
     Finder svg(String name) => find.byWidgetPredicate(
       (widget) =>
           widget is SvgPicture &&
           widget.bytesLoader is SvgAssetLoader &&
           (widget.bytesLoader as SvgAssetLoader).assetName ==
-              'assets/figma/$name',
+              'assets/post_composer/$name',
     );
     void verify(String name) {
       final expected = roots[name]!;
-      final file = File('assets/figma/$name');
+      final file = File('assets/post_composer/$name');
       expect(file.lengthSync(), greaterThan(0));
       final root = RegExp(r'<svg\b[^>]*>')
           .firstMatch(file.readAsStringSync())!
@@ -69,11 +69,11 @@ void main() {
       }
     }
 
-    verify('post_close.svg');
-    verify('post_camera.svg');
+    verify('close_icon.svg');
+    verify('camera_icon.svg');
     await fixtures.ready(controller);
     await tester.pumpAndSettle();
-    for (final name in roots.keys.where((name) => name != 'post_camera.svg')) {
+    for (final name in roots.keys.where((name) => name != 'camera_icon.svg')) {
       verify(name);
     }
     for (final star in find.byType(PostStar).evaluate()) {

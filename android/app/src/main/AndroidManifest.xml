@@ -2,8 +2,9 @@
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+    <uses-permission android:name="android.permission.CAMERA" />
     <application
-        android:label="pind_flutter"
+        android:label="Pind"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher">
         <meta-data android:name="com.google.android.geo.API_KEY" android:value="${PIND_MAPS_API_KEY}" />
@@ -35,6 +36,29 @@
                 <category android:name="android.intent.category.BROWSABLE"/>
                 <data android:scheme="com.pind.app" android:host="login-callback"/>
             </intent-filter>
+            <!-- Shared profile links; verified via web_links/.well-known/assetlinks.json. -->
+            <intent-filter android:autoVerify="true">
+                <action android:name="android.intent.action.VIEW"/>
+                <category android:name="android.intent.category.DEFAULT"/>
+                <category android:name="android.intent.category.BROWSABLE"/>
+                <data android:scheme="https" android:host="pind-profile-links.vercel.app"/>
+                <data android:pathPattern="/@.*"/>
+                <data android:pathPattern="/u/.*"/>
+            </intent-filter>
+            <!-- "앱에서 열기" on the web fallback page. -->
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW"/>
+                <category android:name="android.intent.category.DEFAULT"/>
+                <category android:name="android.intent.category.BROWSABLE"/>
+                <data android:scheme="com.pind.app" android:host="profile"/>
+            </intent-filter>
+            <!-- Kakao Talk sharing callback. -->
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW"/>
+                <category android:name="android.intent.category.DEFAULT"/>
+                <category android:name="android.intent.category.BROWSABLE"/>
+                <data android:scheme="kakaoe0b2e1cb53043c8ef1ede8669ef760ab" android:host="kakaolink"/>
+            </intent-filter>
         </activity>
         <!-- Don't delete the meta-data below.
              This is used by the Flutter tool to generate GeneratedPluginRegistrant.java -->
@@ -52,5 +76,7 @@
             <action android:name="android.intent.action.PROCESS_TEXT"/>
             <data android:mimeType="text/plain"/>
         </intent>
+        <package android:name="com.kakao.talk"/>
+        <package android:name="com.instagram.android"/>
     </queries>
 </manifest>

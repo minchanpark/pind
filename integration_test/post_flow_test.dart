@@ -18,7 +18,7 @@ class FixturePhotos implements PostPhotoService {
   Future<List<PostPhoto>> pick(int remaining) async {
     final photos = <PostPhoto>[];
     for (final n in [1, 2]) {
-      final data = await rootBundle.load('assets/figma/post_fixture_$n.png');
+      final data = await rootBundle.load('assets/preview/post_photo_$n.png');
       photos.add(
         PostPhoto(bytes: data.buffer.asUint8List(), mimeType: 'image/png'),
       );
@@ -148,6 +148,9 @@ void main() {
       expect(find.text('최고예요'), findsOneWidget);
       expect(find.text('★ 4'), findsOneWidget);
       await binding.takeScreenshot('post-composer-filled');
+      // The button ends the page rather than floating over it.
+      await tester.ensureVisible(find.byKey(const ValueKey('publish-post')));
+      await tester.pumpAndSettle();
       await tester.tap(find.byKey(const ValueKey('publish-post')));
       await tester.pumpAndSettle();
       expect(saved?.placeId, 42);

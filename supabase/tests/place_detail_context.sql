@@ -6,9 +6,10 @@ insert into auth.users(id) values
  ('10000000-0000-0000-0000-000000000003');
 update public.profiles set display_name='pind_test_friend',is_demo=true
  where id='10000000-0000-0000-0000-000000000002';
-insert into public.friendships(requester_id,addressee_id,status,accepted_at) values
- ('10000000-0000-0000-0000-000000000001','10000000-0000-0000-0000-000000000002','accepted',now()),
- ('10000000-0000-0000-0000-000000000001','10000000-0000-0000-0000-000000000003','pending',null);
+-- 1 follows 2; 3 follows 1 (the reverse direction must not count).
+insert into public.follows(follower_id,followee_id) values
+ ('10000000-0000-0000-0000-000000000001','10000000-0000-0000-0000-000000000002'),
+ ('10000000-0000-0000-0000-000000000003','10000000-0000-0000-0000-000000000001');
 insert into public.posts(author_id,place_id,menu_name,photo_path,emoji,body,is_public)
  select id,1,'QA','qa/photo.png','☕','QA visit',true from auth.users;
 insert into public.place_ratings(user_id,place_id,criterion,rating,is_public) values
@@ -22,9 +23,9 @@ set local role authenticated;
 set local request.jwt.claim.sub = '10000000-0000-0000-0000-000000000001';
 do $$ declare data jsonb; begin
  data := public.get_place_detail_context(1);
- assert jsonb_array_length(data->'visitors')=1, 'only accepted friend';
+ assert jsonb_array_length(data->'visitors')=1, 'only people I follow';
  assert data->'visitors'->0->>'name'='pind_test_friend';
- assert (data->>'friendSaveCount')::int=1, 'pending saves excluded';
+ assert (data->>'friendSaveCount')::int=1, 'follower saves excluded';
  assert (data->'averages'->>'taste')::numeric=4, 'private ratings excluded';
  assert (data->'mine'->>'taste')::numeric=5, 'own rating';
  assert (select count(*) from public.saved_places)=1, 'save RLS';
@@ -49,10 +50,10 @@ do $$ begin
 end $$;
 reset role;
 update public.posts set is_public=true;
-update public.friendships set status='removed';
+delete from public.follows;
 set local role authenticated;
 do $$ begin
- assert jsonb_array_length(public.get_place_detail_context(1)->'visitors')=0, 'removed friend hidden';
+ assert jsonb_array_length(public.get_place_detail_context(1)->'visitors')=0, 'unfollowed hidden';
  assert (public.get_place_detail_context(1)->>'friendSaveCount')::int=0;
 end $$;
 reset role;
@@ -60,4 +61,4 @@ do $$ begin
  assert not has_function_privilege('anon','public.get_place_detail_context(bigint)','execute');
 end $$;
 rollback;
-\echo 'PASS: accepted/pending/removed/private visits, ratings, owner isolation, save idempotency, RPC grants'
+\echo 'PASS: followed/follower/unfollowed/private visits, ratings, owner isolation, save idempotency, RPC grants'

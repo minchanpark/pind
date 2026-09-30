@@ -56,11 +56,11 @@ class TestPhotos implements PostPhotoService {
   Future<List<PostPhoto>> pick(int remaining) async => pending == null
       ? [
           PostPhoto(
-            bytes: File('assets/figma/post_fixture_1.png').readAsBytesSync(),
+            bytes: File('assets/preview/post_photo_1.png').readAsBytesSync(),
             mimeType: 'image/png',
           ),
           PostPhoto(
-            bytes: File('assets/figma/post_fixture_2.png').readAsBytesSync(),
+            bytes: File('assets/preview/post_photo_2.png').readAsBytesSync(),
             mimeType: 'image/png',
           ),
         ]
@@ -240,6 +240,31 @@ void main() {
       expect(tester.takeException(), isNull);
     },
   );
+  testWidgets('publish button ends the page instead of floating', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(402, 600);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: PindTheme.data,
+        home: PostComposer(controller: make(TestPosts())),
+      ),
+    );
+    await tester.pumpAndSettle();
+    final button = find.byKey(const ValueKey('publish-post'));
+    final scroll = find.byType(Scrollable).first;
+    // Scrolls with the content: out of reach until the page is scrolled.
+    expect(button.hitTestable(), findsNothing);
+    await tester.drag(scroll, const Offset(0, -2000));
+    await tester.pumpAndSettle();
+    expect(button.hitTestable(), findsOneWidget);
+    expect(tester.getRect(button).bottom, lessThanOrEqualTo(600));
+    // Full width between the 18pt side margins.
+    expect(tester.getSize(button).width, 402 - 36 - 2);
+  });
   testWidgets('composer scrolls at 320px with large text and keyboard', (
     tester,
   ) async {

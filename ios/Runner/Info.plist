@@ -2,27 +2,12 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
-  <key>NSPhotoLibraryUsageDescription</key>
-  <string>방문한 식당의 사진을 게시물에 추가하기 위해 사진을 선택합니다.</string>
-	<key>FlutterDeepLinkingEnabled</key>
-	<false/>
-	<key>CFBundleURLTypes</key>
-	<array>
-		<dict>
-			<key>CFBundleURLSchemes</key>
-			<array><string>com.pind.app</string></array>
-		</dict>
-	</array>
-	<key>PindDartDefines</key>
-	<string>$(DART_DEFINES)</string>
-	<key>NSLocationWhenInUseUsageDescription</key>
-	<string>현재 위치 주변의 음식점을 찾아드려요. 위치는 저장하지 않습니다.</string>
 	<key>CADisableMinimumFrameDurationOnPhone</key>
 	<true/>
 	<key>CFBundleDevelopmentRegion</key>
 	<string>$(DEVELOPMENT_LANGUAGE)</string>
 	<key>CFBundleDisplayName</key>
-	<string>Pind Flutter</string>
+	<string>Pind</string>
 	<key>CFBundleExecutable</key>
 	<string>$(EXECUTABLE_NAME)</string>
 	<key>CFBundleIdentifier</key>
@@ -30,17 +15,47 @@
 	<key>CFBundleInfoDictionaryVersion</key>
 	<string>6.0</string>
 	<key>CFBundleName</key>
-	<string>pind_flutter</string>
+	<string>Pind</string>
 	<key>CFBundlePackageType</key>
 	<string>APPL</string>
 	<key>CFBundleShortVersionString</key>
 	<string>$(FLUTTER_BUILD_NAME)</string>
 	<key>CFBundleSignature</key>
 	<string>????</string>
+	<key>CFBundleURLTypes</key>
+	<array>
+		<dict>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>com.pind.app</string>
+				<string>kakaoe0b2e1cb53043c8ef1ede8669ef760ab</string>
+			</array>
+		</dict>
+	</array>
 	<key>CFBundleVersion</key>
 	<string>$(FLUTTER_BUILD_NUMBER)</string>
+	<key>FlutterDeepLinkingEnabled</key>
+	<false/>
+	<key>ITSAppUsesNonExemptEncryption</key>
+	<false/>
+	<key>LSApplicationQueriesSchemes</key>
+	<array>
+		<string>kakaokompassauth</string>
+		<string>kakaolink</string>
+		<string>kakaotalk</string>
+		<string>instagram</string>
+		<string>instagram-stories</string>
+	</array>
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
+	<key>NSCameraUsageDescription</key>
+	<string>친구의 Pind 코드를 스캔하기 위해 카메라를 사용해요.</string>
+	<key>NSLocationWhenInUseUsageDescription</key>
+	<string>현재 위치 주변의 음식점을 찾아드려요. 위치는 저장하지 않습니다.</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>방문한 식당의 사진을 게시물에 추가하기 위해 사진을 선택합니다.</string>
+	<key>PindDartDefines</key>
+	<string>$(DART_DEFINES)</string>
 	<key>UIApplicationSceneManifest</key>
 	<dict>
 		<key>UIApplicationSupportsMultipleScenes</key>

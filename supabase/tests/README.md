@@ -11,7 +11,8 @@ Docker is required. The script creates a unique container without a host port, a
 `post_storage_bootstrap.sql` supplies minimal Storage tables and JWT claims for SQL policy checks. The older `detail_bootstrap.sql` is retained for historical vanilla PostgreSQL tests and does not support the newer post migration. Neither bootstrap is a production installation.
 
 - `public_first_places.sql`: catalog IDs, public visibility, RPC privileges and Google budgets.
-- `place_detail_context.sql`: accepted/pending/removed friendships, private visits/ratings, owner isolation and save idempotency.
+- `place_detail_context.sql`: followed/follower/unfollowed users, private visits/ratings, owner isolation and save idempotency.
+- `follows_taste.sql`: taste weights (50/30/20 start, own and saved-place ratings on the user's priorities), match %, recommendations, profile search, follow RLS and grants.
 - `published_posts_map.sql`: unposted restaurants remain searchable; published-only filtering precedes the nearby limit; hide/delete removes the last pin; uploaded media belongs to the author; anonymous writes are rejected; ratings/photos/posts are atomic; v3 ratings accept exactly three allowlisted priority criteria with integer 1–5 scores; retry creates one post/visit. Media RLS allows published readers and rejects another author's upload/attachment.
 
 SQL fixtures roll back. These checks do not validate the Storage HTTP service, physical photo picker, OAuth login, or Google map rendering.

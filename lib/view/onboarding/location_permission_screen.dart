@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../controllers/registration_controller.dart';
+import '../components/pind_glass.dart';
 import '../theme.dart';
 import 'registration_components.dart';
 
@@ -46,18 +47,13 @@ class LocationPermissionScreen extends StatelessWidget {
         large: true,
       ),
       const SizedBox(height: 24),
-      _benefit('🍜', '내 주변 맛집', '반경 안에서만 추천해요', 'dce83.svg'),
-      _benefit('👫', '친구들 맛집', '친구들이 간 맛집을 볼 수 있어요', '457fb.svg'),
-      _benefit('🏡', '동네 랭킹', '#1 in 성수동 같은 지역 순위', '457fb.svg'),
+      _benefit('🍜', '내 주변 맛집', '반경 안에서만 추천해요'),
+      _benefit('👫', '친구들 맛집', '친구들이 간 맛집을 볼 수 있어요'),
+      _benefit('🏡', '동네 랭킹', '#1 in 성수동 같은 지역 순위'),
     ],
   );
 
-  Widget _benefit(
-    String emoji,
-    String title,
-    String subtitle,
-    String asset,
-  ) => Padding(
+  Widget _benefit(String emoji, String title, String subtitle) => Padding(
     padding: const EdgeInsets.symmetric(vertical: 9),
     child: Row(
       children: [
@@ -67,7 +63,7 @@ class LocationPermissionScreen extends StatelessWidget {
           child: Stack(
             clipBehavior: Clip.none,
             children: [
-              Positioned(left: -16, top: -10, child: setupAsset(asset, 72, 72)),
+              const SetupCircle(40, borderColor: Colors.transparent),
               Center(
                 child: Text(
                   emoji,
@@ -130,15 +126,19 @@ class _LocationIllustration extends StatelessWidget {
                 child: Stack(
                   clipBehavior: Clip.none,
                   children: [
-                    Positioned(
+                    const Positioned(
                       left: -31,
                       top: 119,
-                      child: setupAsset('d43d2.svg', 170, 140),
+                      width: 170,
+                      height: 140,
+                      child: _Park(),
                     ),
-                    Positioned(
+                    const Positioned(
                       left: 249,
                       top: -31,
-                      child: setupAsset('9d337.svg', 150, 120),
+                      width: 150,
+                      height: 120,
+                      child: _Park(),
                     ),
                     const Positioned(
                       left: -11,
@@ -161,20 +161,30 @@ class _LocationIllustration extends StatelessWidget {
                       height: 260,
                       child: ColoredBox(color: Colors.white),
                     ),
-                    Positioned(
-                      left: 160,
-                      top: 100,
-                      child: setupAsset('ae7d9.svg', 32, 32),
+                    const Positioned(
+                      left: 165,
+                      top: 103,
+                      child: SetupCircle(22, tone: PindGlassTone.purple),
                     ),
-                    Positioned(
+                    const Positioned(
                       left: 116,
                       top: 57,
-                      child: setupAsset('33c00.svg', 120, 120),
+                      width: 120,
+                      height: 120,
+                      child: DecoratedBox(
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          color: Color.fromRGBO(99, 0, 219, .1),
+                          border: Border.fromBorderSide(
+                            BorderSide(color: Color.fromRGBO(99, 0, 219, .25)),
+                          ),
+                        ),
+                      ),
                     ),
-                    Positioned(
-                      left: 132,
-                      top: 79,
-                      child: setupAsset('e7fea.svg', 88, 88),
+                    const Positioned(
+                      left: 148,
+                      top: 89,
+                      child: SetupCircle(56),
                     ),
                     const Positioned(
                       left: 156,
@@ -187,11 +197,7 @@ class _LocationIllustration extends StatelessWidget {
                         style: TextStyle(fontSize: 30, height: 1),
                       ),
                     ),
-                    Positioned(
-                      left: 43,
-                      top: 29,
-                      child: setupAsset('f61aa.svg', 72, 72),
-                    ),
+                    const Positioned(left: 59, top: 39, child: SetupCircle(40)),
                     const Positioned(
                       left: 59,
                       top: 47.8,
@@ -203,10 +209,10 @@ class _LocationIllustration extends StatelessWidget {
                         style: TextStyle(fontSize: 20, height: 1),
                       ),
                     ),
-                    Positioned(
-                      left: 233,
-                      top: 129,
-                      child: setupAsset('f61aa.svg', 72, 72),
+                    const Positioned(
+                      left: 249,
+                      top: 139,
+                      child: SetupCircle(40),
                     ),
                     const Positioned(
                       left: 249,
@@ -219,10 +225,10 @@ class _LocationIllustration extends StatelessWidget {
                         style: TextStyle(fontSize: 20, height: 1),
                       ),
                     ),
-                    Positioned(
-                      left: 263,
-                      top: 39,
-                      child: setupAsset('fe8cf.svg', 68, 68),
+                    const Positioned(
+                      left: 279,
+                      top: 49,
+                      child: SetupCircle(36),
                     ),
                     const Positioned(
                       left: 279,
@@ -243,5 +249,14 @@ class _LocationIllustration extends StatelessWidget {
         ),
       ),
     ),
+  );
+}
+
+/// Green park patch on the location illustration's map.
+class _Park extends StatelessWidget {
+  const _Park();
+  @override
+  Widget build(BuildContext context) => const DecoratedBox(
+    decoration: ShapeDecoration(shape: OvalBorder(), color: Color(0xFFD4E7C8)),
   );
 }

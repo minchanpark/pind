@@ -1,0 +1,12 @@
+{
+  "rewrites": [
+    { "source": "/@:handle", "destination": "/index.html" },
+    { "source": "/u/:id", "destination": "/index.html" }
+  ],
+  "headers": [
+    {
+      "source": "/.well-known/apple-app-site-association",
+      "headers": [{ "key": "Content-Type", "value": "application/json" }]
+    }
+  ]
+}

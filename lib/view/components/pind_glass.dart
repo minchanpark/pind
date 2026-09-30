@@ -15,12 +15,18 @@ class PindGlass extends StatelessWidget {
     this.radius = 20,
     this.padding = EdgeInsets.zero,
     this.borderColor,
+    this.borderWidth = 1,
+    this.fillColor,
   });
   final Widget child;
   final PindGlassTone tone;
   final double radius;
   final EdgeInsetsGeometry padding;
   final Color? borderColor;
+  final double borderWidth;
+
+  /// Replaces the tone's fill; rim, sheen and shadow stay the tone's.
+  final Color? fillColor;
 
   @override
   Widget build(BuildContext context) {
@@ -80,9 +86,12 @@ class PindGlass extends StatelessWidget {
             foregroundPainter: _GlassHighlights(radius, highlight, rim),
             child: DecoratedBox(
               decoration: BoxDecoration(
-                color: color,
+                color: fillColor ?? color,
                 borderRadius: corners,
-                border: Border.all(color: borderColor ?? border),
+                border: Border.all(
+                  color: borderColor ?? border,
+                  width: borderWidth,
+                ),
               ),
               child: Material(
                 type: MaterialType.transparency,

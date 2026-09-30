@@ -102,78 +102,41 @@ class PindNavigationBar extends StatelessWidget {
   }
 }
 
-/// Preserve the supplied SVG root dimensions; only their original slots move.
+/// `assets/navigation/` glyphs at their SVG root size, centered in the slot.
+/// The files ship in inactive grey; the selected tab is tinted black.
 class _FigmaIcon extends StatelessWidget {
   const _FigmaIcon({required this.name, required this.active});
   final String name;
   final bool active;
-  static const size = PindNavigationBar.iconFrame;
 
-  Widget _asset(String file, double x, double y, double width, double height) =>
-      Positioned(
-        left: x,
-        top: y,
-        child: SvgPicture.asset(
-          'assets/figma/nav_$file.svg',
-          width: width,
-          height: height,
-          excludeFromSemantics: true,
-        ),
-      );
+  /// Slot name → (file, SVG root size).
+  static const files = {
+    'discover': ('discover_icon', 26.0),
+    'map': ('map_icon', 23.0),
+    'compose': ('compose_icon', 31.0),
+    'profile': ('profile_icon', 24.0),
+  };
 
   @override
   Widget build(BuildContext context) {
-    final state = active ? 'active' : 'inactive';
-    return SizedBox(
-      width: size,
-      height: size,
-      child: Stack(
-        children: switch (name) {
-          'discover' => [
-            _asset(
-              'discover_${state}_ring',
-              (size - 25.0344) / 2,
-              (size - 25.0344) / 2,
-              25.0344,
-              25.0344,
-            ),
-            _asset(
-              'discover_${state}_needle',
-              (size - 10.0115) / 2,
-              (size - 10.0115) / 2,
-              10.0115,
-              10.0115,
-            ),
-          ],
-          'map' => [_asset('map_$state', size / 8, size / 8, 22.5344, 22.5344)],
-          'compose' => [
-            _asset('compose_outline', size / 8, size / 12, 23.7863, 23.7863),
-            _asset(
-              'compose_lines',
-              size * 7 / 24,
-              size * 3 / 8,
-              10.0153,
-              10.0153,
-            ),
-          ],
-          'profile' => [
-            _asset(
-              'profile_${state}_body',
-              (size - 23.1603) / 2,
-              size * 7 / 12 - (10.6412 - size / 4) / 2,
-              23.1603,
-              10.6412,
-            ),
-            _asset(
-              'profile_${state}_head',
-              (size - 10.6412) / 2,
-              size / 6 - (10.6412 - size / 4) / 2,
-              10.6412,
-              10.6412,
-            ),
-          ],
-          _ => const [],
-        },
+    final (file, root) = files[name]!;
+    return SizedBox.square(
+      dimension: PindNavigationBar.iconFrame,
+      // The 31pt compose glyph is wider than the frame; keep its root size.
+      child: OverflowBox(
+        minWidth: 0,
+        minHeight: 0,
+        maxWidth: root,
+        maxHeight: root,
+        child: SvgPicture.asset(
+          'assets/navigation/$file.svg',
+          width: root,
+          height: root,
+          excludeFromSemantics: true,
+          colorFilter: active
+              ? const ColorFilter.mode(Colors.black, BlendMode.srcIn)
+              : null,
+        ),
       ),
     );
   }

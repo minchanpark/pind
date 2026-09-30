@@ -19,7 +19,7 @@
 
 ## 2. 앱 구조와 경로
 
-`lib`는 `model`, `view`, `controllers`, `services`로 구성한다. `model`은 데이터 정의·검증·점수 계산과 ChangeNotifier 상태, `view`는 화면·위젯·테마, `controllers`는 화면 이벤트와 조회·저장 흐름, `services`는 Supabase·기기 저장소·위치·외부 앱 접근을 담당한다. `main.dart`는 설정·초기화·의존성 연결, `view/app.dart`는 앱 화면 구성을 맡는다. 상세 구조와 수명 관리는 [MVC 아키텍처](architecture.md)를 따른다. `assets/figma`는 원본 정적 자산, `test`는 모델·서비스·컨트롤러·위젯, `integration_test`는 실제 여정이다.
+`lib`는 `model`, `view`, `controllers`, `services`로 구성한다. `model`은 데이터 정의·검증·점수 계산과 ChangeNotifier 상태, `view`는 화면·위젯·테마, `controllers`는 화면 이벤트와 조회·저장 흐름, `services`는 Supabase·기기 저장소·위치·외부 앱 접근을 담당한다. `main.dart`는 설정·초기화·의존성 연결, `view/app.dart`는 앱 화면 구성을 맡는다. 상세 구조와 수명 관리는 [MVC 아키텍처](architecture.md)를 따른다. `assets/<화면>/`은 화면별 정적 자산([목록](../assets/README.md)), `test`는 모델·서비스·컨트롤러·위젯, `integration_test`는 실제 여정이다.
 
 상태 알림은 model의 ChangeNotifier, 의존성 연결은 생성자 주입을 사용한다. API 호출은 services, 데이터 규칙은 model, 요청 순서·에러 처리·저장 흐름은 controllers로 분리한다. DI 컨테이너·코드 생성·별도 BFF는 추가하지 않는다. P0은 Navigator, 로그인/딥링크 P1에서 go_router를 도입한다.
 
@@ -48,7 +48,7 @@
 
 ### 2026-09-26 내비게이션 재설계 — 구현 단위 N1
 
-1. `view/navigation/pind_navigation_bar.dart`: Figma `531:17799`(지도), `531:19123`(Discover), `531:20050`(마이페이지) 상태를 공통 위젯으로 구현. 원본 SVG 12개를 로컬 에셋으로 보존하며 아이콘을 Material 아이콘으로 대체하거나 재색칠하지 않는다. 273×58 / radius 29 / blur 12 / rgba(244,245,248,.62) / 흰 테두리 .95 / shadow 0,4,18,.06. 아이콘 프레임은 30.0458, 좌측 좌표 35 / 87.0458 / 145.9541 / 209, 상단 14. 터치 영역만 44로 확장한다.
+1. `view/navigation/pind_navigation_bar.dart`: Figma `531:17799`(지도), `531:19123`(Discover), `531:20050`(마이페이지) 상태를 공통 위젯으로 구현. 아이콘은 `assets/navigation/`의 SVG 4개(비선택 회색 원본)를 원본 크기로 쓰며, 선택된 탭만 검정으로 틴트한다. Material 아이콘으로 대체하지 않는다. 273×58 / radius 29 / blur 12 / rgba(244,245,248,.62) / 흰 테두리 .95 / shadow 0,4,18,.06. 아이콘 프레임은 30.0458, 좌측 좌표 35 / 87.0458 / 145.9541 / 209, 상단 14. 터치 영역만 44로 확장한다.
 2. `view/navigation/main_shell.dart`: 지도 기본 선택. `IndexedStack`으로 3개 목적지 상태를 유지하고 `TickerMode`로 비활성 탭 애니메이션을 멈춘다. 작성은 `MaterialPageRoute(fullscreenDialog: true)`이며 선택 탭을 바꾸지 않는다. 작성/상세는 루트 Navigator 위로 열린다. 미구현 목적지는 명시적 안내만 제공한다.
 3. 기기 safe area와 디자인 차이: Figma 402×874 기준 하단 여백 23. 실제 기기에서는 `max(23, viewPadding.bottom)`으로 홈 인디케이터를 피한다. 폭은 273 유지. 키보드가 있으면 바를 숨긴다.
 4. 기존 지도 하단 카테고리·목록 버튼을 내비게이션 위로 올리고 Google 로고 영역도 함께 조정한다. 지도 자체 디자인·키 문제는 이번 변경 범위에서 다시 구현하지 않는다. 숨겨진 지도에서 cameraIdle 자동 요청을 막아 탭 전환이 새 조회를 유발하지 않도록 한다.
@@ -59,7 +59,7 @@
 
 ### 현재 적용: 2026-09-27 공공/Pind 우선
 
-기본 지도·검색·공공 상세는 새 `places` Edge Function → 인증된 사용자 RPC/RLS로 조회한다. Google은 명시적 추가 검색/선택한 상세에만 사용하며 일일 호출 한도를 적용한다. 상세 설계·공공 CSV 수입·출처·ID 유지·검증 범위는 [공공/Pind 우선 설계](public-first-places.md)를 따른다. iOS/Android 앱 ID는 `com.pind.app`이다.
+기본 지도·검색·공공 상세는 새 `places` Edge Function → 인증된 사용자 RPC/RLS로 조회한다. Google은 명시적 추가 검색/선택한 상세에만 사용하며 일일 호출 한도를 적용한다. 상세 설계·공공 CSV 수입·출처·ID 유지·검증 범위는 [공공/Pind 우선 설계](public-first-places.md)를 따른다. iOS 번들 ID는 `com.newdawn.pind`, Android 앱 ID는 `com.pind.app`이다.
 
 ### 이전 설계: 2026-09-26 장소 공급자 보완 (현재 자동 경로에서 비활성)
 
@@ -107,7 +107,8 @@ Edge Function은 JWT 필요. P0은 명시적으로 허용한 개발 익명 세�
 | posts 확장 | ratings jsonb(작성자 우선순위 3개 → 1..5), 구형 taste/portion/ambience_score, client_request_id, status | 기존 NULL 보존, 신규 API 평점 3개 필수 |
 | post_media | id, post_id, position 0..9, bucket/path/mime/bytes | 부모 글 권한, 소유자 쓰기, 순서 unique |
 | collections/collection_places | 제목/설명/출처, 장소 순서 | 게시된 모음만 공개, 운영자 쓰기 |
-| friendships 기존 | pending→accepted/declined/removed | 참여자 읽기, 검증 RPC 변경 |
+| follows (friendships 대체, 20260930020000) | 팔로우=행 추가, 취소=행 삭제 | 로그인 사용자 읽기, 본인 follower 행만 추가·삭제 |
+| taste_profiles | 온보딩 우선순위 3개 + 추천 동의(discoverable) | 본인 행만; 일치율은 `get_taste_matches`/`search_profiles`(definer) |
 | friend_invites | 토큰 해시/만료/소비 시각 | 서버 RPC, 중복 수락 idempotent |
 | blocks/reports | 주체/대상/사유/상태 | 본인 제출, 운영 검토, 신고자 비공개 |
 | user_badges | user_id/badge_code/awarded_at | 공개 읽기, 서버 조건 검사 |

@@ -7,6 +7,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:pind_flutter/controllers/registration_controller.dart';
 import 'package:pind_flutter/model/registration_model.dart';
 import 'package:pind_flutter/services/registration_service.dart';
+import 'package:pind_flutter/view/onboarding/registration_components.dart';
 import 'package:pind_flutter/view/onboarding/registration_screen.dart';
 import 'package:pind_flutter/view/theme.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -14,7 +15,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'support/registration_fakes.dart';
 
 void main() {
-  testWidgets('Figma SVGs keep source roots, screen slots and rendered sizes', (
+  testWidgets('setup assets keep source roots and circles render natively', (
     tester,
   ) async {
     tester.view.physicalSize = const Size(402, 874);
@@ -30,24 +31,17 @@ void main() {
       onComplete: (_) async {},
     );
     addTearDown(controller.dispose);
+    // Only the login PIN is still an SVG; circles are native SetupCircles.
     const rootsByScreen = {
-      RegistrationStep.login: {'a0e89.svg': Size(58, 78.1015)},
-      RegistrationStep.country: {'808cb.svg': Size(34, 34)},
-      RegistrationStep.handle: {
-        '22e3f.svg': Size(96, 96),
-        '37ea8.svg': Size(64, 64),
-      },
-      RegistrationStep.location: {
-        'd43d2.svg': Size(170, 140),
-        '9d337.svg': Size(150, 120),
-        'ae7d9.svg': Size(32, 32),
-        '33c00.svg': Size(120, 120),
-        'e7fea.svg': Size(88, 88),
-        'f61aa.svg': Size(72, 72),
-        'fe8cf.svg': Size(68, 68),
-        'dce83.svg': Size(72, 72),
-        '457fb.svg': Size(72, 72),
-      },
+      RegistrationStep.login: {'login/pin.svg': Size(58, 78.1015)},
+      RegistrationStep.country: <String, Size>{},
+      RegistrationStep.handle: <String, Size>{},
+      RegistrationStep.location: <String, Size>{},
+    };
+    const circles = {
+      RegistrationStep.country: 1,
+      RegistrationStep.handle: 1,
+      RegistrationStep.location: 8, // 5 map bubbles + 3 benefits
     };
     await tester.pumpWidget(
       MaterialApp(
@@ -59,7 +53,7 @@ void main() {
       controller.model.update(() => controller.model.step = screen.key);
       await tester.pumpAndSettle();
       if (screen.key == RegistrationStep.login) {
-        const path = 'assets/figma/login_path.png';
+        const path = 'assets/login/route_path.png';
         final bytes = File(path).readAsBytesSync();
         final header = ByteData.sublistView(bytes);
         expect(header.getUint32(16), 393);
@@ -73,8 +67,11 @@ void main() {
         expect(finder, findsOneWidget);
         expect(tester.getSize(finder), const Size(393, 281));
       }
+      if (circles[screen.key] case final count?) {
+        expect(find.byType(SetupCircle), findsNWidgets(count));
+      }
       for (final asset in screen.value.entries) {
-        final path = 'assets/figma/${asset.key}';
+        final path = 'assets/${asset.key}';
         final file = File(path);
         expect(file.lengthSync(), greaterThan(0));
         final root = RegExp(r'<svg\b[^>]*>')

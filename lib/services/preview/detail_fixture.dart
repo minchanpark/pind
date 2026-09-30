@@ -34,7 +34,7 @@ final detailPayload = <String, dynamic>{
   'editorialSummary': '로컬 검증용 소개입니다. 실제 운영시간·평점·친구 방문 정보가 아닙니다.',
   'gallery': [
     for (var i = 1; i <= 3; i++)
-      {'uri': 'assets/figma/detail_fixture_photo_$i.png', 'attributions': []},
+      {'uri': 'assets/preview/place_detail_photo_$i.png', 'attributions': []},
   ],
 };
 Place get detailPlace => Place.fromJson(detailPayload);
@@ -71,7 +71,7 @@ class LocalDetailContext implements PlaceContextService {
               const FriendVisit(
                 'local-test-friend',
                 'pind_test_friend',
-                'assets/figma/detail_fixture_avatar_1.png',
+                'assets/preview/place_detail_avatar.png',
               ),
             ]
           : [],

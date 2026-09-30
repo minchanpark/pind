@@ -70,6 +70,19 @@ class DetailGlass extends StatelessWidget {
   }
 }
 
+/// Opens [PlaceSheet] over the current route; resolves when it closes.
+Future<void> showPlaceSheet(
+  BuildContext context,
+  PlaceDetailController detail,
+) => showModalBottomSheet<void>(
+  context: context,
+  isScrollControlled: true,
+  useSafeArea: true,
+  backgroundColor: Colors.transparent,
+  barrierColor: Colors.black.withValues(alpha: .04),
+  builder: (_) => PlaceSheet(controller: detail),
+);
+
 class PlaceSheet extends StatefulWidget {
   const PlaceSheet({super.key, required this.controller});
 
@@ -154,7 +167,7 @@ class _PlaceSheetState extends State<PlaceSheet> {
   }
 
   Widget asset(String name, double width) => SvgPicture.asset(
-    'assets/figma/detail_$name.svg',
+    'assets/place_detail/${name}_icon.svg',
     width: width,
     height: width,
   );
@@ -193,7 +206,7 @@ class _PlaceSheetState extends State<PlaceSheet> {
                       header(),
                       if (loading) const LinearProgressIndicator(minHeight: 2),
                       if (detailError) errorRow('상세 정보를 불러오지 못했어요.'),
-                      if (contextError) errorRow('취향·친구 정보를 불러오지 못했어요.'),
+                      if (contextError) errorRow('취향·팔로잉 정보를 불러오지 못했어요.'),
                       if (photos.isNotEmpty) gallery(photos),
                       TextButton(
                         key: const ValueKey('detail-expand'),
@@ -476,7 +489,7 @@ class _PlaceSheetState extends State<PlaceSheet> {
         Expanded(
           child: Text(
             '$names${visitors.length > 2 ? ' 외 ${visitors.length - 2}명' : ''}님이 다녀갔어요'
-            '${social!.friendSaveCount > 0 ? ' · 친구 ${social!.friendSaveCount}명 저장' : ''}',
+            '${social!.friendSaveCount > 0 ? ' · 팔로잉 ${social!.friendSaveCount}명 저장' : ''}',
             style: const TextStyle(fontSize: 12, color: Color(0xFF454550)),
           ),
         ),

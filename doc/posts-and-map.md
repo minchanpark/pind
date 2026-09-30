@@ -24,7 +24,7 @@
 - `lib/view/posts/`: 작성 화면과 식당 선택 화면.
 - `lib/view/components/pind_glass.dart`, `lib/view/explore/map_filter_chip.dart`: 블러·테두리·그림자와 필터 칩.
 
-원본 SVG는 수정 없이 로컬 자산으로 사용한다. SVG의 필터는 flutter_svg가 지원하지 않으며 유리 표면 효과는 Flutter에서 렌더링한다. 원본 사진은 테스트에만 사용하고 실제 게시물에는 기기 사진을 사용한다. 자산 출처와 원본 크기는 `assets/figma/README.md`에 기록했다.
+원본 SVG는 수정 없이 로컬 자산으로 사용한다. SVG의 필터는 flutter_svg가 지원하지 않으며 유리 표면 효과는 Flutter에서 렌더링한다. 원본 사진은 테스트에만 사용하고 실제 게시물에는 기기 사진을 사용한다. 자산 위치·출처·원본 크기는 `assets/README.md`에 기록했다.
 
 ## 서버 반영
 

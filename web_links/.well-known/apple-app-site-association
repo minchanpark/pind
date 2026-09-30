@@ -1,0 +1,13 @@
+{
+  "applinks": {
+    "details": [
+      {
+        "appIDs": ["ZNNY3727TQ.com.newdawn.pind"],
+        "components": [
+          { "/": "/@*", "comment": "Profile by handle" },
+          { "/": "/u/*", "comment": "Profile by user id" }
+        ]
+      }
+    ]
+  }
+}

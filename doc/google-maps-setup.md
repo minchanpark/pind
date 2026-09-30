@@ -23,7 +23,7 @@ flutter run --dart-define-from-file=config/local.json
 
 `config/local.json`은 Git에서 제외한다. `SUPABASE_URL`, 공개 `SUPABASE_PUBLISHABLE_KEY`, OS별 제한된 `GOOGLE_MAPS_API_KEY`를 넣는다. 개발 익명 인증은 `ALLOW_ANONYMOUS_AUTH`로 명시적으로 허용한다.
 
-- iOS Maps SDK 키 제한: `com.pind.app`.
+- iOS Maps SDK 키 제한: `com.newdawn.pind` (2026-09-30 Apple Developer 등록 완료; 기존 키의 번들 제한도 이 ID를 허용해야 한다).
 - Android Maps SDK 키 제한: `com.pind.app`와 해당 서명 인증서.
 - Places API 서버 키와 service_role은 앱에 넣지 않는다.
 - 실제 Google 지도가 비어 있으면 Maps SDK 활성화, billing, OS/API 제한, 현재 bundle ID를 확인한다. PIN이 표시돼도 지도 타일 정상 로드를 증명하지 않는다.

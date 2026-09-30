@@ -184,11 +184,7 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
                       child: Stack(
                         clipBehavior: Clip.none,
                         children: [
-                          Positioned(
-                            left: -5,
-                            top: -3,
-                            child: setupAsset('808cb.svg', 34, 34),
-                          ),
+                          const Positioned.fill(child: SetupCircle.check(24)),
                           const Center(
                             child: Text(
                               '✓',
@@ -563,18 +559,40 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
           child: Stack(
             clipBehavior: Clip.none,
             children: [
-              Positioned(
+              const Positioned(
                 left: 0,
                 top: 0,
-                child: setupAsset('22e3f.svg', 96, 96),
+                width: 96,
+                height: 96,
+                child: DecoratedBox(
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: Color(0xFFE2E2E7),
+                    border: Border.fromBorderSide(
+                      BorderSide(color: Color(0xFFE8E8EC)),
+                    ),
+                  ),
+                ),
               ),
-              Center(
-                child: Text(draft.avatar, style: const TextStyle(fontSize: 34)),
-              ),
-              Positioned(
-                left: 50,
-                top: 54,
-                child: IgnorePointer(child: setupAsset('37ea8.svg', 64, 64)),
+              draft.avatarUrl == null
+                  ? Center(
+                      child: Text(
+                        draft.avatar,
+                        style: const TextStyle(fontSize: 34),
+                      ),
+                    )
+                  : ClipOval(
+                      child: Image.network(
+                        draft.avatarUrl!,
+                        width: 96,
+                        height: 96,
+                        fit: BoxFit.cover,
+                      ),
+                    ),
+              const Positioned(
+                left: 66,
+                top: 64,
+                child: IgnorePointer(child: SetupCircle.check(32)),
               ),
               Positioned(
                 left: 60,
@@ -656,6 +674,15 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
           mainAxisSize: MainAxisSize.min,
           children: [
             const Text('나를 표현하는 이모지를 골라주세요'),
+            const SizedBox(height: 16),
+            FilledButton.tonalIcon(
+              onPressed: () {
+                Navigator.pop(ctx);
+                controller.pickAvatar();
+              },
+              icon: const Icon(Icons.photo_library_outlined),
+              label: const Text('앨범에서 사진 선택'),
+            ),
             const SizedBox(height: 16),
             Wrap(
               spacing: 12,

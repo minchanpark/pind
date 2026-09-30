@@ -1,0 +1,12 @@
+[
+  {
+    "relation": ["delegate_permission/common.handle_all_urls"],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "com.pind.app",
+      "sha256_cert_fingerprints": [
+        "1E:FB:21:4E:AF:9D:5F:F0:2A:36:3E:F1:2B:7B:0F:CE:93:96:2F:2C:2C:EF:FC:AA:F0:F1:C2:9A:D8:AE:51:D9"
+      ]
+    }
+  }
+]

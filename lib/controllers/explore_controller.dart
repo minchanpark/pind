@@ -3,15 +3,17 @@ import '../model/explore_model.dart';
 import '../model/preferences.dart';
 import '../services/place_context_service.dart';
 import '../services/location_service.dart';
+import '../services/profile_service.dart';
 import 'place_detail_controller.dart';
 
 import '../services/place_service.dart';
 import '../model/places.dart';
 
 class ExploreController {
-  ExploreController(this.repository, {this.placeContext});
+  ExploreController(this.repository, {this.placeContext, this.profile});
   final PlaceService repository;
   final PlaceContextService? placeContext;
+  final ProfileService? profile;
   final model = ExploreModel();
   List<Place> get places => model.places;
   bool get loading => model.loading;
@@ -25,6 +27,7 @@ class ExploreController {
         places: repository,
         context: placeContext,
         preferences: preferences,
+        profile: profile,
       );
 
   Future<MapViewport> locate() async {

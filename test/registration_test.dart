@@ -1,12 +1,18 @@
 import 'dart:async';
+import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:pind_flutter/controllers/app_controller.dart';
 import 'package:pind_flutter/controllers/registration_controller.dart';
+import 'package:pind_flutter/model/place_search_result.dart';
+import 'package:pind_flutter/model/post_model.dart';
+import 'package:pind_flutter/model/profile_model.dart';
 import 'package:pind_flutter/model/registration_model.dart';
 import 'package:pind_flutter/model/preferences.dart';
+import 'package:pind_flutter/services/post_photo_service.dart';
 import 'package:pind_flutter/services/preference_service.dart';
+import 'package:pind_flutter/services/profile_service.dart';
 import 'package:pind_flutter/services/registration_service.dart';
 import 'package:pind_flutter/view/app.dart';
 import 'package:pind_flutter/view/explore/explore_screen.dart';
@@ -16,6 +22,44 @@ import 'package:pind_flutter/view/theme.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'support/registration_fakes.dart';
+
+class FakeProfileService implements ProfileService {
+  FakeProfileService({this.saveError});
+  final Object? saveError;
+  final saves = <(String? handle, String? displayName, String? avatarUrl)>[];
+  @override
+  Future<void> save({
+    String? handle,
+    String? displayName,
+    String? bio,
+    String? avatarUrl,
+  }) async {
+    if (saveError != null) throw saveError!;
+    saves.add((handle, displayName, avatarUrl));
+  }
+
+  @override
+  Future<String> uploadAvatar(PostPhoto photo) async =>
+      'https://cdn/avatar.png';
+  @override
+  Future<UserProfile?> load() async => null;
+  @override
+  Future<ProfileOverview> overview({String? userId}) async =>
+      const ProfileOverview(
+        profile: UserProfile(id: 'u', displayName: ''),
+      );
+  @override
+  Future<void> recordView(int placeId) async {}
+  @override
+  Future<String?> findUserId(String handle) async => null;
+}
+
+class FakePhotos implements PostPhotoService {
+  @override
+  Future<List<PostPhoto>> pick(int remaining) async => [
+    PostPhoto(bytes: Uint8List(0), mimeType: 'image/jpeg'),
+  ];
+}
 
 final validDraft = RegistrationDraft(
   name: '뉴던',
@@ -38,12 +82,16 @@ void main() {
   RegistrationController create({
     bool preview = false,
     Future<RegistrationPermission> Function()? permission,
+    ProfileService? profile,
+    PostPhotoService? photos,
   }) => RegistrationController(
     auth: auth,
     storage: RegistrationService(storage),
     allowPreview: preview,
     requestPermission: permission ?? () async => RegistrationPermission.allowed,
     onComplete: (_) async {},
+    profile: profile,
+    photos: photos,
   );
 
   test(
@@ -115,6 +163,101 @@ void main() {
     expect(validDraft.copyWith(handle: 'ab').handleValid, false);
     expect(validDraft.copyWith(handle: 'a b').handleValid, false);
     expect(validDraft.copyWith(handle: 'name_42').handleValid, true);
+  });
+
+  test('next() from handle step saves the profile and advances', () async {
+    final profile = FakeProfileService();
+    final controller = create(profile: profile, photos: FakePhotos());
+    addTearDown(controller.dispose);
+    auth.emit(const AuthIdentity('user-a'));
+    controller.model.update(() {
+      controller.model.draft = validDraft.copyWith(
+        step: RegistrationStep.handle,
+        avatarUrl: 'https://cdn/avatar.png',
+      );
+      controller.model.step = RegistrationStep.handle;
+    });
+    await controller.next();
+    expect(controller.model.step, RegistrationStep.location);
+    expect(profile.saves, [('newdawn', '뉴던', 'https://cdn/avatar.png')]);
+  });
+
+  test(
+    'taken handle keeps the handle step and shows the server error',
+    () async {
+      final profile = FakeProfileService(
+        saveError: const PlaceFailure('이미 사용 중인 아이디예요.'),
+      );
+      final controller = create(profile: profile, photos: FakePhotos());
+      addTearDown(controller.dispose);
+      auth.emit(const AuthIdentity('user-a'));
+      controller.model.update(() {
+        controller.model.draft = validDraft.copyWith(
+          step: RegistrationStep.handle,
+        );
+        controller.model.step = RegistrationStep.handle;
+      });
+      await controller.next();
+      expect(controller.model.step, RegistrationStep.handle);
+      expect(controller.model.error, '이미 사용 중인 아이디예요.');
+    },
+  );
+
+  test('development identity skips the server save', () async {
+    final profile = FakeProfileService();
+    final controller = create(
+      preview: true,
+      profile: profile,
+      photos: FakePhotos(),
+    );
+    addTearDown(controller.dispose);
+    await controller.preview();
+    expect(controller.model.identity!.development, true);
+    controller.model.update(() {
+      controller.model.draft = validDraft.copyWith(
+        step: RegistrationStep.handle,
+      );
+      controller.model.step = RegistrationStep.handle;
+    });
+    await controller.next();
+    expect(controller.model.step, RegistrationStep.location);
+    expect(profile.saves, isEmpty);
+  });
+
+  test('pickAvatar uploads the photo and stores its url', () async {
+    final controller = create(
+      profile: FakeProfileService(),
+      photos: FakePhotos(),
+    );
+    addTearDown(controller.dispose);
+    auth.emit(const AuthIdentity('user-a'));
+    await controller.pickAvatar();
+    expect(controller.model.draft.avatarUrl, 'https://cdn/avatar.png');
+    expect(controller.model.error, null);
+  });
+
+  test(
+    'pickAvatar without a wired profile service surfaces an error',
+    () async {
+      final controller = create();
+      addTearDown(controller.dispose);
+      auth.emit(const AuthIdentity('user-a'));
+      await controller.pickAvatar();
+      expect(controller.model.error, '프로필 서버에 연결하지 못했어요.');
+    },
+  );
+
+  test('draft JSON round-trips avatarUrl, tolerating a missing key', () {
+    final draft = validDraft.copyWith(avatarUrl: 'https://cdn/avatar.png');
+    expect(
+      RegistrationDraft.fromJson(draft.toJson()).avatarUrl,
+      'https://cdn/avatar.png',
+    );
+    expect(
+      RegistrationDraft.fromJson(validDraft.toJson()..remove('avatarUrl'))
+          .avatarUrl,
+      null,
+    );
   });
 
   test(

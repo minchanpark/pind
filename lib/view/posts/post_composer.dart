@@ -56,6 +56,10 @@ class _PostComposerState extends State<PostComposer> {
       context: context,
       isScrollControlled: true,
       useSafeArea: true,
+      backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
+      ),
       builder: (_) => PostPlacePicker(controller: controller),
     );
     if (mounted && selected != null) controller.selectPlace(selected);
@@ -78,7 +82,7 @@ class _PostComposerState extends State<PostComposer> {
           tooltip: '닫기',
           onPressed: model.publishing ? null : () => Navigator.pop(context),
           icon: SvgPicture.asset(
-            'assets/figma/post_close.svg',
+            'assets/post_composer/close_icon.svg',
             width: 20.6096,
             height: 20.6096,
           ),
@@ -111,226 +115,260 @@ class _PostComposerState extends State<PostComposer> {
           child: Divider(height: .7, thickness: .7, color: Color(0xFFF0F0EC)),
         ),
       ),
-      body: ListView(
-        padding: const EdgeInsets.only(top: 32, bottom: 24),
-        children: [
-          const Padding(
-            padding: EdgeInsets.symmetric(horizontal: 16),
-            child: Text(
-              '사진 추가',
-              style: TextStyle(
-                fontSize: 14,
-                height: 1.2,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-          ),
-          const SizedBox(height: 8),
-          photos(),
-          const SizedBox(height: 32),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 22),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+      body: CustomScrollView(
+        slivers: [
+          SliverPadding(
+            padding: const EdgeInsets.only(top: 32),
+            sliver: SliverList.list(
               children: [
-                section('방문한 식당'),
-                const SizedBox(height: 10),
-                place(),
-                const SizedBox(height: 28),
-                Row(
-                  children: [
-                    section('평점'),
-                    const SizedBox(width: 8),
-                    const Expanded(
-                      child: Text(
-                        '맛 · 양 · 분위기 (필수)',
-                        style: TextStyle(fontSize: 11, color: PindTheme.muted),
-                      ),
+                const Padding(
+                  padding: EdgeInsets.symmetric(horizontal: 16),
+                  child: Text(
+                    '사진 추가',
+                    style: TextStyle(
+                      fontSize: 14,
+                      height: 1.2,
+                      fontWeight: FontWeight.w600,
                     ),
-                  ],
+                  ),
                 ),
-                const SizedBox(height: 10),
-                ConstrainedBox(
-                  constraints: const BoxConstraints(minHeight: 186),
-                  child: Align(
-                    alignment: Alignment.topCenter,
-                    child: PindGlass(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 16,
-                        vertical: 4,
-                      ),
-                      child: Column(
+                const SizedBox(height: 8),
+                photos(),
+                const SizedBox(height: 32),
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 22),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      section('방문한 식당'),
+                      const SizedBox(height: 10),
+                      place(),
+                      const SizedBox(height: 28),
+                      Row(
                         children: [
-                          for (var i = 0; i < model.criteria.length; i++) ...[
-                            if (i > 0)
-                              const Divider(
-                                height: 1,
-                                thickness: 1,
-                                color: PindTheme.border,
+                          section('평점'),
+                          const SizedBox(width: 8),
+                          const Expanded(
+                            child: Text(
+                              '맛 · 양 · 분위기 (필수)',
+                              style: TextStyle(
+                                fontSize: 11,
+                                color: PindTheme.muted,
                               ),
-                            rating(model.criteria[i], i),
-                          ],
+                            ),
+                          ),
                         ],
                       ),
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 12),
-                PindGlass(
-                  tone: PindGlassTone.purple,
-                  radius: 14,
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 14,
-                    vertical: 11,
-                  ),
-                  child: Row(
-                    children: [
-                      const Expanded(
-                        child: Text(
-                          '내 평균 별점',
-                          style: TextStyle(
-                            fontSize: 12,
-                            height: 1.2,
-                            color: Colors.white,
-                            fontWeight: FontWeight.w500,
-                          ),
-                        ),
-                      ),
-                      PindGlass(
-                        tone: PindGlassTone.lime,
-                        radius: 12,
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 12,
-                          vertical: 5,
-                        ),
-                        child: Text(
-                          model.average == null ? '★' : '★ ${model.average}',
-                          style: const TextStyle(
-                            fontSize: 13,
-                            height: 1.2,
-                            fontWeight: FontWeight.w700,
-                            color: PindTheme.ink,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                const SizedBox(height: 32),
-                Row(
-                  children: [
-                    section('글 작성하기'),
-                    const SizedBox(width: 8),
-                    const Text(
-                      '선택',
-                      style: TextStyle(fontSize: 11, color: PindTheme.muted),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 10),
-                PindGlass(
-                  radius: 16,
-                  padding: const EdgeInsets.fromLTRB(16, 14, 16, 12),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.end,
-                    children: [
-                      TextField(
-                        controller: body,
-                        onChanged: controller.setBody,
-                        enabled: !model.publishing,
-                        maxLength: 200,
-                        minLines: 3,
-                        maxLines: 5,
-                        style: TextStyle(
-                          fontSize: model.body.isEmpty ? 12.536 : 13,
-                          height: model.body.isEmpty
-                              ? 23.767 / 12.536
-                              : 20 / 13,
-                          fontWeight: model.body.isEmpty
-                              ? FontWeight.w400
-                              : FontWeight.w500,
-                          color: PindTheme.ink,
-                          letterSpacing: 0,
-                        ),
-                        decoration: const InputDecoration(
-                          isDense: true,
-                          border: InputBorder.none,
-                          contentPadding: EdgeInsets.zero,
-                          counterText: '',
-                          hintText:
-                              '이 음식을 고향 음식에 비유하면? 처음 먹어본 외국인으로서 솔직한 후기를 남겨주세요.',
-                          hintStyle: TextStyle(
-                            fontSize: 12.536,
-                            height: 23.767 / 12.536,
-                            color: Color(0xFFABABAB),
-                            letterSpacing: 0,
+                      const SizedBox(height: 10),
+                      ConstrainedBox(
+                        constraints: const BoxConstraints(minHeight: 186),
+                        child: Align(
+                          alignment: Alignment.topCenter,
+                          child: PindGlass(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 16,
+                              vertical: 4,
+                            ),
+                            child: Column(
+                              children: [
+                                for (
+                                  var i = 0;
+                                  i < model.criteria.length;
+                                  i++
+                                ) ...[
+                                  if (i > 0)
+                                    const Divider(
+                                      height: 1,
+                                      thickness: 1,
+                                      color: PindTheme.border,
+                                    ),
+                                  rating(model.criteria[i], i),
+                                ],
+                              ],
+                            ),
                           ),
                         ),
                       ),
                       const SizedBox(height: 12),
-                      Text(
-                        '${model.bodyLength} / 200',
-                        style: TextStyle(
-                          fontSize: 10,
-                          height: 1.2,
-                          color: model.bodyLength > 200
-                              ? Colors.red
-                              : PindTheme.muted,
+                      PindGlass(
+                        tone: PindGlassTone.purple,
+                        radius: 14,
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 14,
+                          vertical: 11,
+                        ),
+                        child: Row(
+                          children: [
+                            const Expanded(
+                              child: Text(
+                                '내 평균 별점',
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  height: 1.2,
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.w500,
+                                ),
+                              ),
+                            ),
+                            PindGlass(
+                              tone: PindGlassTone.lime,
+                              radius: 12,
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 12,
+                                vertical: 5,
+                              ),
+                              child: Text(
+                                model.average == null
+                                    ? '★'
+                                    : '★ ${model.average}',
+                                style: const TextStyle(
+                                  fontSize: 13,
+                                  height: 1.2,
+                                  fontWeight: FontWeight.w700,
+                                  color: PindTheme.ink,
+                                ),
+                              ),
+                            ),
+                          ],
                         ),
                       ),
+                      const SizedBox(height: 32),
+                      Row(
+                        children: [
+                          section('글 작성하기'),
+                          const SizedBox(width: 8),
+                          const Text(
+                            '선택',
+                            style: TextStyle(
+                              fontSize: 11,
+                              color: PindTheme.muted,
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 10),
+                      PindGlass(
+                        radius: 16,
+                        padding: const EdgeInsets.fromLTRB(16, 14, 16, 12),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.end,
+                          children: [
+                            TextField(
+                              controller: body,
+                              onChanged: controller.setBody,
+                              enabled: !model.publishing,
+                              maxLength: 200,
+                              minLines: 3,
+                              maxLines: 5,
+                              style: TextStyle(
+                                fontSize: model.body.isEmpty ? 12.536 : 13,
+                                height: model.body.isEmpty
+                                    ? 23.767 / 12.536
+                                    : 20 / 13,
+                                fontWeight: model.body.isEmpty
+                                    ? FontWeight.w400
+                                    : FontWeight.w500,
+                                color: PindTheme.ink,
+                                letterSpacing: 0,
+                              ),
+                              decoration: const InputDecoration(
+                                isDense: true,
+                                border: InputBorder.none,
+                                contentPadding: EdgeInsets.zero,
+                                counterText: '',
+                                hintText: '이 음식을 고향 음식에 비유하면? 처음 먹어본 외국인으로서 솔직한 후기를 남겨주세요.',
+                                hintStyle: TextStyle(
+                                  fontSize: 12.536,
+                                  height: 23.767 / 12.536,
+                                  color: Color(0xFFABABAB),
+                                  letterSpacing: 0,
+                                ),
+                              ),
+                            ),
+                            const SizedBox(height: 12),
+                            Text(
+                              '${model.bodyLength} / 200',
+                              style: TextStyle(
+                                fontSize: 10,
+                                height: 1.2,
+                                color: model.bodyLength > 200
+                                    ? Colors.red
+                                    : PindTheme.muted,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      if (model.error != null) ...[
+                        const SizedBox(height: 16),
+                        Text(
+                          model.error!,
+                          style: const TextStyle(
+                            fontSize: 12,
+                            color: Colors.red,
+                          ),
+                          semanticsLabel: '오류: ${model.error}',
+                        ),
+                      ],
                     ],
                   ),
                 ),
-                if (model.error != null) ...[
-                  const SizedBox(height: 16),
-                  Text(
-                    model.error!,
-                    style: const TextStyle(fontSize: 12, color: Colors.red),
-                    semanticsLabel: '오류: ${model.error}',
-                  ),
-                ],
               ],
             ),
           ),
-        ],
-      ),
-      bottomNavigationBar: SafeArea(
-        top: false,
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(18, 10, 18, 20),
-          child: PindGlass(
-            tone: model.canPublish ? PindGlassTone.purple : PindGlassTone.dark,
-            radius: 28,
-            child: SizedBox(
-              height: 50,
-              child: TextButton(
-                key: const ValueKey('publish-post'),
-                onPressed: model.canPublish ? publish : null,
-                style: TextButton.styleFrom(
-                  foregroundColor: Colors.white,
-                  disabledForegroundColor: Colors.white,
-                ),
-                child: model.publishing
-                    ? const SizedBox(
-                        width: 20,
-                        height: 20,
-                        child: CircularProgressIndicator(
-                          strokeWidth: 2,
-                          color: Colors.white,
+          // Ends the page instead of floating: after the content on long pages,
+          // at the bottom of the screen on short ones.
+          SliverFillRemaining(
+            hasScrollBody: false,
+            child: SafeArea(
+              top: false,
+              child: Align(
+                alignment: Alignment.bottomCenter,
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(18, 32, 18, 20),
+                  child: PindGlass(
+                    // Figma 531:18203 / 531:18277: one dark-rimmed pill whose
+                    // fill turns solid purple once the post can be published.
+                    tone: PindGlassTone.dark,
+                    fillColor: model.canPublish
+                        ? const Color(0xFF893EE4)
+                        : null,
+                    radius: 22,
+                    child: SizedBox(
+                      width: double.infinity,
+                      height: 42,
+                      child: TextButton(
+                        key: const ValueKey('publish-post'),
+                        onPressed: model.canPublish ? publish : null,
+                        style: TextButton.styleFrom(
+                          foregroundColor: Colors.white,
+                          disabledForegroundColor: Colors.white,
                         ),
-                      )
-                    : const Text(
-                        '게시하기',
-                        style: TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w600,
-                          letterSpacing: 0,
-                        ),
+                        child: model.publishing
+                            ? const SizedBox(
+                                width: 20,
+                                height: 20,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                  color: Colors.white,
+                                ),
+                              )
+                            : const Text(
+                                '게시하기',
+                                style: TextStyle(
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w600,
+                                  letterSpacing: 0,
+                                ),
+                              ),
                       ),
+                    ),
+                  ),
+                ),
               ),
             ),
           ),
-        ),
+        ],
       ),
     ),
   );
@@ -378,8 +416,8 @@ class _PostComposerState extends State<PostComposer> {
                         else
                           SvgPicture.asset(
                             model.photos.isEmpty
-                                ? 'assets/figma/post_camera.svg'
-                                : 'assets/figma/post_add.svg',
+                                ? 'assets/post_composer/camera_icon.svg'
+                                : 'assets/post_composer/add_photo_icon.svg',
                             width: model.photos.isEmpty ? 22.9817 : 20,
                             height: model.photos.isEmpty ? 22.9817 : 17.8653,
                           ),
@@ -539,7 +577,7 @@ class _PostComposerState extends State<PostComposer> {
               onTap: model.publishing ? null : () => controller.rate(axis, n),
               child: SizedBox(
                 width: 30,
-                height: score == 0 ? 58 : 51,
+                height: 58,
                 child: Center(
                   child: PostStar(
                     slot: slot,
@@ -657,7 +695,7 @@ class PostStar extends StatelessWidget {
         ),
       );
     }
-    final name = 'post_${_assets[slot]}_star${filled ? '' : '_empty'}.svg';
+    final name = 'star_${_assets[slot]}${filled ? '' : '_empty'}.svg';
     return SizedBox(
       width: 24,
       height: 23,
@@ -668,7 +706,7 @@ class PostStar extends StatelessWidget {
             left: filled ? -0.8162 : 2.184,
             top: filled ? 0.0461 : 1.5459,
             child: SvgPicture.asset(
-              'assets/figma/$name',
+              'assets/post_composer/$name',
               width: filled ? 25.6324 : 19.6324,
               height: filled ? 24.1341 : 18.1341,
             ),

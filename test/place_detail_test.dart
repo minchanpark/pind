@@ -124,7 +124,7 @@ void main() {
       'directions': 15.4546,
     };
     for (final e in roots.entries) {
-      final path = 'assets/figma/detail_${e.key}.svg';
+      final path = 'assets/place_detail/${e.key}_icon.svg';
       expect(File(path).lengthSync(), greaterThan(0));
       final finder = find.byWidgetPredicate(
         (w) =>
@@ -256,7 +256,7 @@ void main() {
   testWidgets('intro tab shows AI summary and one-liners for priorities', (
     tester,
   ) async {
-    final photo = {'uri': 'assets/figma/detail_fixture_photo_1.png'};
+    final photo = {'uri': 'assets/preview/place_detail_photo_1.png'};
     await mount(
       tester,
       LocalDetailContext(),
@@ -292,8 +292,8 @@ void main() {
   testWidgets('posts tab shows author, text, fanned photos and ratings', (
     tester,
   ) async {
-    const a = 'assets/figma/detail_fixture_photo_1.png';
-    const b = 'assets/figma/detail_fixture_photo_2.png';
+    const a = 'assets/preview/place_detail_photo_1.png';
+    const b = 'assets/preview/place_detail_photo_2.png';
     await mount(
       tester,
       LocalDetailContext(),
@@ -437,14 +437,14 @@ void main() {
             ...detailPayload,
             'gallery': [
               {
-                'uri': 'assets/figma/detail_fixture_photo_1.png',
+                'uri': 'assets/preview/place_detail_photo_1.png',
                 'googleMapsUri': sourceUri,
                 'attributions': [
                   {'displayName': author, 'uri': authorUri},
                 ],
               },
               {
-                'uri': 'assets/figma/detail_fixture_photo_2.png',
+                'uri': 'assets/preview/place_detail_photo_2.png',
                 'attributions': [
                   {'displayName': 'Bob'},
                 ],

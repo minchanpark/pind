@@ -2,8 +2,8 @@ import 'dart:math' as math;
 import 'dart:ui';
 
 import 'package:flutter/material.dart';
-import 'package:flutter_svg/flutter_svg.dart';
 
+import '../components/pind_glass.dart';
 import '../theme.dart';
 
 class SetupPage extends StatelessWidget {
@@ -279,61 +279,36 @@ class SetupError extends StatelessWidget {
         );
 }
 
-/// Keep each original SVG's root dimensions, including exported shadow insets.
-Widget setupAsset(String name, double width, double height) {
-  final svg = SvgPicture.asset(
-    'assets/figma/$name',
-    width: width,
-    height: height,
-  );
-  final circle = switch (name) {
-    '808cb.svg' => (24.0, 5.0, 3.0),
-    '37ea8.svg' => (32.0, 16.0, 10.0),
-    'ae7d9.svg' => (22.0, 5.0, 3.0),
-    'e7fea.svg' => (56.0, 16.0, 10.0),
-    'f61aa.svg' || 'dce83.svg' || '457fb.svg' => (40.0, 16.0, 10.0),
-    'fe8cf.svg' => (36.0, 16.0, 10.0),
-    _ => null,
-  };
-  if (circle == null) return svg;
-  // Flutter renders the exported backdrop/shadow effects; the original vector
-  // and its root size stay intact, including transparent export insets.
-  return SizedBox(
-    width: width,
-    height: height,
-    child: Stack(
-      children: [
-        Positioned(
-          left: circle.$2,
-          top: circle.$3,
-          width: circle.$1,
-          height: circle.$1,
-          child: DecoratedBox(
-            decoration: const BoxDecoration(
-              shape: BoxShape.circle,
-              boxShadow: [
-                BoxShadow(
-                  color: Color(0x0D000000),
-                  blurRadius: 2,
-                  offset: Offset(0, 1),
-                ),
-                BoxShadow(
-                  color: Color(0x0D000000),
-                  blurRadius: 16,
-                  offset: Offset(0, 6),
-                ),
-              ],
-            ),
-            child: ClipOval(
-              child: BackdropFilter(
-                filter: ImageFilter.blur(sigmaX: 12, sigmaY: 12),
-                child: const SizedBox.expand(),
-              ),
-            ),
-          ),
-        ),
-        Positioned.fill(child: svg),
-      ],
+/// Setup-screen circles (map bubbles, check marks, avatar add button) drawn
+/// in the app's glass tones.
+class SetupCircle extends StatelessWidget {
+  const SetupCircle(
+    this.diameter, {
+    super.key,
+    this.tone = PindGlassTone.light,
+    this.fillColor,
+    this.borderColor,
+  });
+
+  /// Yellow selection mark (country, cuisine, avatar add button).
+  const SetupCircle.check(this.diameter, {super.key})
+    : tone = PindGlassTone.lime,
+      fillColor = const Color.fromRGBO(244, 255, 90, .8),
+      borderColor = null;
+
+  final double diameter;
+  final PindGlassTone tone;
+  final Color? fillColor, borderColor;
+
+  @override
+  Widget build(BuildContext context) => SizedBox.square(
+    dimension: diameter,
+    child: PindGlass(
+      tone: tone,
+      radius: diameter / 2,
+      fillColor: fillColor,
+      borderColor: borderColor,
+      child: const SizedBox.expand(),
     ),
   );
 }

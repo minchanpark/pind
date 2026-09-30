@@ -6,31 +6,32 @@ import 'package:flutter_svg/flutter_svg.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:pind_flutter/view/theme.dart';
 import 'package:pind_flutter/services/place_service.dart';
+import 'package:pind_flutter/services/profile_service.dart';
+
+import 'profile_test.dart' show FakeProfileService;
+
 import 'package:pind_flutter/view/explore/explore_screen.dart';
 import 'package:pind_flutter/view/navigation/main_shell.dart';
 import 'package:pind_flutter/view/navigation/pind_navigation_bar.dart';
 
 const roots = <String, Size>{
-  'map_active': Size(22.5344, 22.5344),
-  'map_inactive': Size(22.5344, 22.5344),
-  'discover_active_ring': Size(25.0344, 25.0344),
-  'discover_inactive_ring': Size(25.0344, 25.0344),
-  'discover_active_needle': Size(10.0115, 10.0115),
-  'discover_inactive_needle': Size(10.0115, 10.0115),
-  'profile_active_body': Size(23.1603, 10.6412),
-  'profile_inactive_body': Size(23.1603, 10.6412),
-  'profile_active_head': Size(10.6412, 10.6412),
-  'profile_inactive_head': Size(10.6412, 10.6412),
-  'compose_outline': Size(23.7863, 23.7863),
-  'compose_lines': Size(10.0153, 10.0153),
+  'discover_icon': Size(26, 26),
+  'map_icon': Size(23, 23),
+  'compose_icon': Size(31, 31),
+  'profile_icon': Size(24, 24),
 };
 
-Future<void> shell(WidgetTester tester, {PlaceService? repository}) async {
+Future<void> shell(
+  WidgetTester tester, {
+  PlaceService? repository,
+  ProfileService? profile,
+}) async {
   await tester.pumpWidget(
     MaterialApp(
       theme: PindTheme.data,
       home: MainShell(
         controller: repository == null ? null : ExploreController(repository),
+        profile: profile,
         mapsEnabled: false,
         onEditPreferences: () {},
       ),
@@ -40,12 +41,12 @@ Future<void> shell(WidgetTester tester, {PlaceService? repository}) async {
 }
 
 void main() {
-  testWidgets('all twelve original SVGs exist and retain root dimensions', (
+  testWidgets('all four nav icon SVGs exist and retain root dimensions', (
     tester,
   ) async {
     for (final asset in roots.entries) {
       final svg = await rootBundle.loadString(
-        'assets/figma/nav_${asset.key}.svg',
+        'assets/navigation/${asset.key}.svg',
       );
       final root = RegExp(r'<svg\b[^>]*>').firstMatch(svg)!.group(0)!;
       final width = double.parse(
@@ -118,12 +119,13 @@ void main() {
         for (final element in find.byType(SvgPicture).evaluate()) {
           final svg = element.widget as SvgPicture;
           final asset = (svg.bytesLoader as SvgAssetLoader).assetName;
-          final name = asset.split('/nav_').last.replaceAll('.svg', '');
+          final name = asset.split('/').last.replaceAll('.svg', '');
           expect(Size(svg.width!, svg.height!), roots[name]);
           final rendered = tester.getSize(find.byWidget(svg));
           expect(rendered.width, closeTo(roots[name]!.width, .001));
           expect(rendered.height, closeTo(roots[name]!.height, .001));
-          expect(svg.colorFilter, isNull);
+          // Only the selected tab is tinted; compose is an action, never selected.
+          expect(svg.colorFilter != null, name == '${tab.name}_icon');
         }
         await expectLater(
           find.byKey(const ValueKey('nav-capture')),
@@ -269,5 +271,19 @@ void main() {
     } finally {
       semantics.dispose();
     }
+  });
+
+  testWidgets('returning to My Page refetches the overview', (tester) async {
+    final profile = FakeProfileService();
+    await shell(tester, profile: profile);
+    await tester.tap(find.byKey(const ValueKey('nav-profile')));
+    await tester.pumpAndSettle();
+    final first = profile.overviewCalls;
+    expect(first, greaterThan(0));
+    await tester.tap(find.byKey(const ValueKey('nav-map')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const ValueKey('nav-profile')));
+    await tester.pumpAndSettle();
+    expect(profile.overviewCalls, first + 1);
   });
 }

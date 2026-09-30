@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Pind</title>
+    <style>
+      body {
+        margin: 0;
+        min-height: 100vh;
+        display: grid;
+        place-items: center;
+        font-family: -apple-system, BlinkMacSystemFont, "Apple SD Gothic Neo", sans-serif;
+        background: #fff;
+        color: #111;
+        text-align: center;
+      }
+      main { padding: 24px; max-width: 360px; }
+      h1 { font-size: 40px; margin: 0 0 8px; }
+      p { color: #666; margin: 0 0 24px; }
+      a {
+        display: block;
+        margin: 8px 0;
+        padding: 14px;
+        border-radius: 12px;
+        background: #f2f2f2;
+        color: inherit;
+        text-decoration: none;
+        font-weight: 600;
+      }
+      a.primary { background: #111; color: #fff; }
+      [hidden] { display: none; }
+    </style>
+  </head>
+  <body>
+    <main>
+      <h1>Pind</h1>
+      <p id="who">내 취향의 맛집을 친구와 나눠요.</p>
+      <a id="open" class="primary" hidden>앱에서 열기</a>
+      <!-- TODO: replace with the App Store URL once the app is published. -->
+      <a href="https://apps.apple.com/app/idTODO">App Store</a>
+      <!-- TODO: live once the app is published on Google Play. -->
+      <a href="https://play.google.com/store/apps/details?id=com.pind.app">Google Play</a>
+    </main>
+    <script>
+      // Same shapes the app accepts (ProfileLink.parse).
+      var path = location.pathname.replace(/\/$/, "");
+      var m = path.match(/^\/(@[A-Za-z0-9_]{3,20}|u\/[0-9A-Fa-f-]{36})$/);
+      if (m) {
+        var open = document.getElementById("open");
+        open.href = "com.pind.app://profile/" + m[1];
+        open.hidden = false;
+        if (m[1][0] === "@") {
+          document.getElementById("who").textContent =
+            m[1] + "님의 Pind 프로필이에요.";
+        }
+      }
+    </script>
+  </body>
+</html>

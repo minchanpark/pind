@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_svg/flutter_svg.dart';
 
 import '../theme.dart';
+import 'registration_components.dart';
 import '../../model/preferences.dart';
 import '../../controllers/onboarding_controller.dart';
 
@@ -398,7 +398,7 @@ class PhotoChoice extends StatelessWidget {
               children: [
                 if (cuisine.asset != null)
                   Image.asset(
-                    'assets/figma/${cuisine.asset}',
+                    'assets/onboarding/cuisines/${cuisine.asset}',
                     fit: BoxFit.cover,
                   ),
                 if (cuisine.asset != null)
@@ -421,7 +421,7 @@ class PhotoChoice extends StatelessWidget {
                       child: Stack(
                         alignment: Alignment.center,
                         children: [
-                          SvgPicture.asset('assets/figma/808cb.svg'),
+                          const SetupCircle.check(24),
                           const Text(
                             '✓',
                             style: TextStyle(

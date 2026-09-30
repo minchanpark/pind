@@ -94,9 +94,13 @@ class _PindAppState extends State<PindApp> {
         : MainShell(
             controller: widget.controller.explore,
             posts: widget.controller.posts,
+            profile: widget.controller.profile,
+            discover: widget.controller.discover,
+            friends: widget.controller.friends,
             preferences: preferences,
             mapsEnabled: widget.mapsEnabled,
             onEditPreferences: editPreferences,
+            pendingLink: widget.controller.link,
           ),
   );
 }

@@ -44,6 +44,7 @@ class RegistrationDraft {
     this.birthDate,
     this.handle = '',
     this.avatar = '🍚',
+    this.avatarUrl,
     this.privacyConsent = false,
     this.ageConsent = false,
     this.recommendationConsent = false,
@@ -54,6 +55,7 @@ class RegistrationDraft {
 
   final OnboardingCountry country;
   final String name, handle, avatar;
+  final String? avatarUrl;
   final ProfileGender gender;
   final DateTime? birthDate;
   final bool privacyConsent, ageConsent, recommendationConsent;
@@ -87,6 +89,7 @@ class RegistrationDraft {
     DateTime? birthDate,
     String? handle,
     String? avatar,
+    String? avatarUrl,
     bool? privacyConsent,
     bool? ageConsent,
     bool? recommendationConsent,
@@ -100,6 +103,7 @@ class RegistrationDraft {
     birthDate: birthDate ?? this.birthDate,
     handle: handle ?? this.handle,
     avatar: avatar ?? this.avatar,
+    avatarUrl: avatarUrl ?? this.avatarUrl,
     privacyConsent: privacyConsent ?? this.privacyConsent,
     ageConsent: ageConsent ?? this.ageConsent,
     recommendationConsent: recommendationConsent ?? this.recommendationConsent,
@@ -116,6 +120,7 @@ class RegistrationDraft {
     'birthDate': birthDate?.toIso8601String(),
     'handle': handle,
     'avatar': avatar,
+    'avatarUrl': avatarUrl,
     'privacyConsent': privacyConsent,
     'ageConsent': ageConsent,
     'recommendationConsent': recommendationConsent,
@@ -137,6 +142,7 @@ class RegistrationDraft {
           : DateTime.parse(json['birthDate'] as String),
       handle: json['handle'] as String,
       avatar: json['avatar'] as String,
+      avatarUrl: json['avatarUrl'] as String?,
       privacyConsent: json['privacyConsent'] == true,
       ageConsent: json['ageConsent'] == true,
       recommendationConsent: json['recommendationConsent'] == true,

@@ -33,14 +33,7 @@ class _DetailPreviewState extends State<DetailPreview> {
 
   void open(BuildContext context) {
     final detail = controller.details();
-    showModalBottomSheet<void>(
-      context: context,
-      isScrollControlled: true,
-      useSafeArea: true,
-      backgroundColor: Colors.transparent,
-      barrierColor: Colors.black.withValues(alpha: .04),
-      builder: (_) => PlaceSheet(controller: detail),
-    );
+    showPlaceSheet(context, detail);
   }
 
   @override

@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:ui';
 
 import '../model/place_detail_model.dart';
@@ -8,6 +9,7 @@ import '../services/location_service.dart';
 import '../services/place_action_service.dart';
 import '../services/place_context_service.dart';
 import '../services/place_service.dart';
+import '../services/profile_service.dart';
 
 class PlaceDetailController {
   PlaceDetailController({
@@ -15,6 +17,7 @@ class PlaceDetailController {
     required this.places,
     this.context,
     this.preferences,
+    this.profile,
     this.position = LocationService.position,
     this.shareAction,
     this.linkAction,
@@ -25,6 +28,7 @@ class PlaceDetailController {
   final PlaceService places;
   final PlaceContextService? context;
   final TastePreferences? preferences;
+  final ProfileService? profile;
   final Future<MapViewport?> Function(bool request) position;
   final Future<void> Function(String text, Rect origin)? shareAction;
   final Future<void> Function(String uri)? linkAction;
@@ -43,6 +47,10 @@ class PlaceDetailController {
     try {
       final place = await places.details(initialPlace);
       if (_disposed || request != _request) return;
+      // "Recently viewed" is best effort: never awaited, never surfaced.
+      if (place.id != null) {
+        unawaited(profile?.recordView(place.id!).catchError((_) {}));
+      }
       model.update(() {
         model.place = place;
         model.loading = false;
@@ -154,6 +162,7 @@ class PlaceDetailController {
     places: places,
     context: context,
     preferences: preferences,
+    profile: profile,
     position: position,
     shareAction: shareAction,
     linkAction: linkAction,
