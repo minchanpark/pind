@@ -3,6 +3,7 @@ import 'package:uuid/uuid.dart';
 
 import '../model/post_model.dart';
 import '../model/place_search_result.dart';
+import 'data_revision.dart';
 
 abstract class PostService {
   String? get userId;
@@ -101,6 +102,7 @@ class SupabasePostService implements PostService {
           'p_media': media,
         },
       );
+      markDataChanged();
       return PublishedPost.fromJson(Map<String, dynamic>.from(result as Map));
     } catch (error) {
       // A lost response can follow a committed transaction. Reconcile before

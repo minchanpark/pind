@@ -16,21 +16,44 @@ List<String> collectPostPhotoPaths(Iterable<dynamic> rows) => [
       for (final p in r['photos'] as List? ?? []) p as String,
 ];
 
-/// Signs [paths] in `post-media-v2` in one round-trip. A path the server
+/// Signed URLs live a day; images are cached by path (see `PindImage`), so
+/// this only has to outlast a session. A hidden post's photo stays reachable
+/// through an already-issued URL at most this long.
+const signedUrlLifetime = Duration(hours: 24);
+
+/// path → (url, reuse until). Kept an hour short of expiry so a URL handed to
+/// a screen never dies while it is shown.
+final _signed = <String, (String, DateTime)>{};
+
+/// Signs the [paths] in `post-media-v2` that this session hasn't signed
+/// recently, in one round-trip; the rest reuse their URL. A path the server
 /// failed to sign is simply absent from the result.
 Future<Map<String, String>> signPostPhotoPaths(
   SupabaseClient client,
   List<String> paths,
 ) async {
-  if (paths.isEmpty) return const {};
+  final at = DateTime.now();
+  final result = <String, String>{};
+  final missing = <String>[];
+  for (final path in paths.toSet()) {
+    if (_signed[path] case (final url, final until) when until.isAfter(at)) {
+      result[path] = url;
+    } else {
+      missing.add(path);
+    }
+  }
+  if (missing.isEmpty) return result;
   final urls = await client.storage
       .from(postMediaV2Bucket)
-      .createSignedUrlsResult(paths.toSet().toList(), 300);
-  return {
-    for (final u in urls)
-      if (u case SignedUrlSuccess(:final path, :final signedUrl))
-        path: signedUrl,
-  };
+      .createSignedUrlsResult(missing, signedUrlLifetime.inSeconds);
+  final until = at.add(signedUrlLifetime - const Duration(hours: 1));
+  for (final u in urls) {
+    if (u case SignedUrlSuccess(:final path, :final signedUrl)) {
+      _signed[path] = (signedUrl, until);
+      result[path] = signedUrl;
+    }
+  }
+  return result;
 }
 
 /// Resolves a stored photo path to a usable URL: public for the legacy

@@ -11,6 +11,7 @@ import 'login_screen.dart';
 import 'location_permission_screen.dart';
 import 'onboarding_screen.dart';
 import 'registration_components.dart';
+import '../components/pind_image.dart';
 
 class RegistrationScreen extends StatefulWidget {
   const RegistrationScreen({
@@ -582,8 +583,8 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
                       ),
                     )
                   : ClipOval(
-                      child: Image.network(
-                        draft.avatarUrl!,
+                      child: Image(
+                        image: PindImage(draft.avatarUrl!),
                         width: 96,
                         height: 96,
                         fit: BoxFit.cover,

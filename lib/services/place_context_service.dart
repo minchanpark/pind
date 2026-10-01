@@ -1,6 +1,7 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../model/place_context.dart';
+import 'data_revision.dart';
 
 abstract interface class PlaceContextService {
   Future<PlaceContext> load(int placeId);
@@ -35,5 +36,6 @@ class SupabasePlaceContextService implements PlaceContextService {
           .eq('user_id', user.id)
           .eq('place_id', placeId);
     }
+    markDataChanged();
   }
 }

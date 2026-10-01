@@ -86,8 +86,8 @@ class _MainShellState extends State<MainShell> {
     FocusManager.instance.primaryFocus?.unfocus();
     navigation.select(tab);
     // Saves, views and likes change on other tabs; the page keeps showing the
-    // old overview while this refreshes in the background.
-    if (tab == PindTab.profile) profile.load();
+    // old overview while this refreshes in the background, only after a write.
+    if (tab == PindTab.profile) profile.refresh();
   }
 
   void takeLink() {
@@ -144,7 +144,7 @@ class _MainShellState extends State<MainShell> {
       friends.dispose();
     }
     // Follower/following counts live on My Page.
-    if (mounted) profile.load();
+    if (mounted) profile.refresh();
   }
 
   /// Someone else's page; returns whether I follow them when it closes.
@@ -174,7 +174,7 @@ class _MainShellState extends State<MainShell> {
   Future<void> compose() async {
     if (!navigation.beginCompose()) return;
     // Places viewed or saved since My Page last loaded feed the place picker.
-    profile.load();
+    profile.refresh();
     FocusManager.instance.primaryFocus?.unfocus();
     try {
       final saved = await Navigator.of(context).push<PublishedPost>(

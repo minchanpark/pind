@@ -13,6 +13,7 @@ import 'profile_map_tab.dart';
 import 'profile_posts_tab.dart';
 import 'profile_saved_tab.dart';
 import 'profile_settings_sheet.dart';
+import '../components/pind_image.dart';
 
 /// Figma 531:19957 / 531:20051 / 531:20229; another user's page is 663:5337.
 /// Tabs pad themselves so the post dividers can run edge to edge.
@@ -43,8 +44,8 @@ String placeArea(String address) {
 
 Widget placeImage(String? url) => url == null
     ? const ColoredBox(color: Color(0xFFD9D9D9))
-    : Image.network(
-        url,
+    : Image(
+        image: PindImage(url),
         fit: BoxFit.cover,
         errorBuilder: (_, _, _) => const ColoredBox(color: Color(0xFFD9D9D9)),
       );
@@ -103,8 +104,8 @@ class ProfileAvatar extends StatelessWidget {
         height: size,
         child: url == null
             ? fallback
-            : Image.network(
-                url!,
+            : Image(
+                image: PindImage(url!),
                 fit: BoxFit.cover,
                 errorBuilder: (_, _, _) => fallback,
               ),
@@ -166,7 +167,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     final detail = explore.details(card.place, widget.preferences);
     await showPlaceSheet(context, detail);
     // Saves and "recently viewed" may have changed inside the sheet.
-    if (mounted) controller.load();
+    if (mounted) controller.refresh();
   }
 
   /// From the saved page's bookmark; reloads so counts and the tab follow.

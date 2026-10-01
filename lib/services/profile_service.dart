@@ -7,6 +7,7 @@ import '../model/post_model.dart';
 import '../model/preferences.dart';
 import '../model/profile_model.dart';
 import 'post_media_urls.dart';
+import 'data_revision.dart';
 
 /// Server profile: `public.profiles` row, `avatars` bucket, and the
 /// `get_my_profile_overview` / `get_profile_overview` / `record_place_view`
@@ -106,6 +107,7 @@ class SupabaseProfileService implements ProfileService {
     if (patch.isEmpty) return;
     try {
       await client.from('profiles').update(patch).eq('id', _uid);
+      markDataChanged();
     } on PostgrestException catch (e) {
       if (e.code == '23505') throw const PlaceFailure('이미 사용 중인 아이디예요.');
       if (e.message.contains('handle is immutable')) {
@@ -129,8 +131,10 @@ class SupabaseProfileService implements ProfileService {
   }
 
   @override
-  Future<void> recordView(int placeId) =>
-      client.rpc('record_place_view', params: {'p_place_id': placeId});
+  Future<void> recordView(int placeId) async {
+    await client.rpc('record_place_view', params: {'p_place_id': placeId});
+    markDataChanged();
+  }
 
   @override
   Future<String?> findUserId(String handle) async {

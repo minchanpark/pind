@@ -5,6 +5,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:pind_flutter/model/places.dart';
 import 'package:pind_flutter/model/profile_model.dart';
 import 'package:pind_flutter/view/components/pind_glass.dart';
+import 'package:pind_flutter/view/components/pind_image.dart';
 import 'package:pind_flutter/view/components/post_card.dart';
 import 'package:pind_flutter/view/theme.dart';
 
@@ -71,8 +72,7 @@ void main() {
     // A fanned pair: tilted opposite ways, the first photo in front and purple.
     double angle(int i) {
       final image = find.byWidgetPredicate(
-        (w) =>
-            w is Image && (w.image as NetworkImage).url == 'https://x/$i.jpg',
+        (w) => w is Image && (w.image as PindImage).url == 'https://x/$i.jpg',
       );
       final m = tester
           .widget<Transform>(

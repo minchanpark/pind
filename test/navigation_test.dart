@@ -13,6 +13,7 @@ import 'profile_test.dart' show FakeProfileService;
 import 'package:pind_flutter/view/explore/explore_screen.dart';
 import 'package:pind_flutter/view/navigation/main_shell.dart';
 import 'package:pind_flutter/view/navigation/pind_navigation_bar.dart';
+import 'package:pind_flutter/services/data_revision.dart';
 
 const roots = <String, Size>{
   'discover_icon': Size(26, 26),
@@ -273,17 +274,26 @@ void main() {
     }
   });
 
-  testWidgets('returning to My Page refetches the overview', (tester) async {
+  testWidgets('returning to My Page refetches only after a write', (
+    tester,
+  ) async {
     final profile = FakeProfileService();
     await shell(tester, profile: profile);
+    Future<void> visit() async {
+      await tester.tap(find.byKey(const ValueKey('nav-map')));
+      await tester.pumpAndSettle();
+      await tester.tap(find.byKey(const ValueKey('nav-profile')));
+      await tester.pumpAndSettle();
+    }
+
     await tester.tap(find.byKey(const ValueKey('nav-profile')));
     await tester.pumpAndSettle();
     final first = profile.overviewCalls;
     expect(first, greaterThan(0));
-    await tester.tap(find.byKey(const ValueKey('nav-map')));
-    await tester.pumpAndSettle();
-    await tester.tap(find.byKey(const ValueKey('nav-profile')));
-    await tester.pumpAndSettle();
+    await visit();
+    expect(profile.overviewCalls, first); // nothing changed: no request
+    markDataChanged(); // e.g. a save on the map tab
+    await visit();
     expect(profile.overviewCalls, first + 1);
   });
 }

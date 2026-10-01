@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
 
+import '../components/pind_image.dart';
+
 /// Asset URIs are local QA fixtures; everything else is a signed network URL.
 Widget placePhoto(String uri, BoxFit fit) => uri.startsWith('assets/')
     ? Image.asset(uri, fit: fit)
-    : Image.network(
-        uri,
+    : Image(
+        image: PindImage(uri),
         fit: fit,
         errorBuilder: (_, error, stack) =>
             const Center(child: Icon(Icons.image_not_supported_outlined)),

@@ -15,6 +15,7 @@ import '../../controllers/explore_controller.dart';
 import 'place_sheet.dart';
 import 'map_filter_chip.dart';
 import 'nearby_ranking_sheet.dart';
+import '../components/pind_image.dart';
 
 class ExploreScreen extends StatefulWidget {
   const ExploreScreen({
@@ -281,8 +282,8 @@ class _ExploreScreenState extends State<ExploreScreen> {
                     ? const Icon(Icons.restaurant)
                     : ClipRRect(
                         borderRadius: BorderRadius.circular(12),
-                        child: Image.network(
-                          place.imageUrl!,
+                        child: Image(
+                          image: PindImage(place.imageUrl!),
                           width: 56,
                           height: 56,
                           fit: BoxFit.cover,

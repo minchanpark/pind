@@ -4,6 +4,7 @@ import '../model/discover_model.dart';
 import '../model/place_search_result.dart';
 import '../model/profile_model.dart';
 import 'post_media_urls.dart';
+import 'data_revision.dart';
 
 /// Public posts from every user, newest first (`get_discover_feed`), and
 /// per-user likes (`toggle_post_like`).
@@ -89,6 +90,7 @@ class SupabaseDiscoverService implements DiscoverService {
         'toggle_post_like',
         params: {'p_post_id': postId, 'p_liked': liked},
       );
+      markDataChanged();
       return result == true;
     } on PostgrestException {
       throw const PlaceFailure('로그인 후 좋아요를 누를 수 있어요.');

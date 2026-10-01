@@ -6,6 +6,7 @@ import '../services/friends_service.dart';
 import '../services/place_action_service.dart';
 import '../services/post_photo_service.dart';
 import '../services/profile_service.dart';
+import '../services/data_revision.dart';
 
 class ProfileController {
   ProfileController({required this.profile, this.userId, this.friends});
@@ -21,8 +22,16 @@ class ProfileController {
 
   ProfileService get _service => profile ?? UnavailableProfileService();
 
+  int? _loadedRevision;
+
+  /// [load] only if a write happened since the last successful load.
+  Future<void> refresh() async {
+    if (_loadedRevision != dataRevision || model.overview == null) await load();
+  }
+
   Future<void> load() async {
     final request = ++_request;
+    final revision = dataRevision;
     model.update(() {
       model.loading = true;
       model.error = null;
@@ -30,6 +39,7 @@ class ProfileController {
     try {
       final overview = await _service.overview(userId: userId);
       if (_disposed || request != _request) return;
+      _loadedRevision = revision;
       model.update(() {
         model.overview = overview;
         model.loading = false;

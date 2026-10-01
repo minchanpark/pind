@@ -3,6 +3,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import '../model/friends_model.dart';
 import '../model/place_search_result.dart';
 import '../model/preferences.dart';
+import 'data_revision.dart';
 
 /// Follows (`public.follows`), taste recommendations (`get_taste_matches`),
 /// user search (`search_profiles`) and the server copy of the onboarding
@@ -91,6 +92,7 @@ class SupabaseFriendsService implements FriendsService {
           'followee_id': userId,
         });
       }
+      markDataChanged();
     } on PostgrestException catch (e) {
       if (e.code == '23505') return; // already following
       throw PlaceFailure(following ? '팔로우하지 못했어요.' : '팔로우를 취소하지 못했어요.');
@@ -109,5 +111,6 @@ class SupabaseFriendsService implements FriendsService {
       'priorities': [for (final p in preferences.priorities) p.name],
       'discoverable': discoverable,
     });
+    markDataChanged();
   }
 }
