@@ -1,8 +1,11 @@
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:pind_flutter/model/places.dart';
 import 'package:pind_flutter/model/profile_model.dart';
 import 'package:pind_flutter/view/components/post_card.dart';
+import 'package:pind_flutter/view/theme.dart';
 
 void main() {
   Future<List<Rect>> frames(WidgetTester tester, int count) async {
@@ -50,23 +53,61 @@ void main() {
     ];
   }
 
-  testWidgets(
-    'one large, two medium side by side and centered, three as before',
-    (tester) async {
-      final one = await frames(tester, 1);
-      expect(one.single.size, const Size(214, 262));
+  testWidgets('one large, two fanned and centered, three as before', (
+    tester,
+  ) async {
+    final one = await frames(tester, 1);
+    expect(one.single.size, const Size(214, 262));
 
-      final two = await frames(tester, 2);
-      expect(two.map((r) => r.size), everyElement(const Size(140, 190)));
-      expect(two[0].top, two[1].top); // same row
-      expect(two[1].left - two[0].right, 10);
-      final screen = tester.getRect(find.byType(PostCard)).center.dx;
-      expect((two[0].left + two[1].right) / 2, closeTo(screen, .01));
+    await frames(tester, 2);
+    // A fanned pair: tilted opposite ways, the first photo in front and purple.
+    double angle(int i) {
+      final image = find.byWidgetPredicate(
+        (w) =>
+            w is Image && (w.image as NetworkImage).url == 'https://x/$i.jpg',
+      );
+      final m = tester
+          .widget<Transform>(
+            find.ancestor(of: image, matching: find.byType(Transform)).first,
+          )
+          .transform;
+      return math.atan2(m.entry(1, 0), m.entry(0, 0)) * 180 / math.pi;
+    }
 
-      final three = await frames(tester, 3);
-      // Unchanged trio: an upright center card between two tilted ones.
-      expect(three, hasLength(3));
-      expect(three.where((r) => r.size == const Size(109, 165)), hasLength(1));
-    },
-  );
+    expect(angle(0), closeTo(-5, .01));
+    expect(angle(1), closeTo(7, .01));
+    // The pair's own stack, not the one inside each card.
+    final stack = find.ancestor(
+      of: find.byType(Image).first,
+      matching: find.byWidgetPredicate(
+        (w) =>
+            w is Stack && w.clipBehavior == Clip.none && w.children.length == 2,
+      ),
+    );
+    final cards = tester.widget<Stack>(stack).children;
+    expect(cards, hasLength(2));
+    final front = find.descendant(
+      of: find.byWidget(cards.last),
+      matching: find.byType(Container),
+    );
+    final border =
+        (tester.widget<Container>(front.first).foregroundDecoration!
+                as BoxDecoration)
+            .border!
+            .top
+            .color;
+    expect(border, PindTheme.purple);
+    expect(find.byType(Image).evaluate().length, 2);
+    final box = tester.getRect(stack);
+    expect(box.size, const Size(260, 180));
+    expect(
+      box.center.dx,
+      closeTo(tester.getRect(find.byType(PostCard)).center.dx, .01),
+    );
+
+    final three = await frames(tester, 3);
+    // Unchanged trio: an upright center card between two tilted ones.
+    expect(three, hasLength(3));
+    expect(three.where((r) => r.size == const Size(109, 165)), hasLength(1));
+  });
 }

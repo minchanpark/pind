@@ -116,41 +116,59 @@ class PostCard extends StatelessWidget {
   }
 
   Widget photos(List<String> urls) {
+    Widget tilted(
+      String url,
+      Offset at,
+      double degrees, {
+      double w = 109,
+      double h = 165,
+      Color border = yellow,
+      Widget? overlay,
+    }) => Transform.translate(
+      offset: at,
+      child: Transform.rotate(
+        angle: degrees * math.pi / 180,
+        child: frame(
+          url,
+          w,
+          h,
+          radius: 12,
+          border: border,
+          width: 2,
+          overlay: overlay,
+        ),
+      ),
+    );
     switch (urls.length) {
       case 0:
         return const SizedBox(height: 24);
       case 1:
         return frame(urls[0], 214, 262, radius: 17, border: yellow, width: 4.5);
       case 2:
-        // Medium cards side by side: between the single card and the trio.
-        return Row(
-          mainAxisSize: MainAxisSize.min,
-          spacing: 10,
-          children: [
-            for (final url in urls)
-              frame(url, 140, 190, radius: 14, border: yellow, width: 3),
-          ],
+        // A fanned pair in the trio's style: the first photo in front.
+        return SizedBox(
+          width: 260,
+          height: 180,
+          child: Stack(
+            clipBehavior: Clip.none,
+            alignment: Alignment.center,
+            children: [
+              tilted(urls[1], const Offset(52, -4), 7, w: 126, h: 180),
+              tilted(
+                urls[0],
+                const Offset(-52, 2),
+                -5,
+                w: 126,
+                h: 180,
+                border: PindTheme.purple,
+              ),
+            ],
+          ),
         );
       default:
         // Card-center offsets from the upright center card, Figma 599:23885.
         const left = Offset(-92.8, -6.6), right = Offset(95.1, -8.4);
         final more = urls.length - 3;
-        Widget side(String url, Offset at, double degrees, {Widget? overlay}) =>
-            Transform.translate(
-              offset: at,
-              child: Transform.rotate(
-                angle: degrees * math.pi / 180,
-                child: frame(
-                  url,
-                  109,
-                  165,
-                  radius: 12,
-                  border: yellow,
-                  width: 2,
-                  overlay: overlay,
-                ),
-              ),
-            );
         return SizedBox(
           width: 318,
           height: 165,
@@ -158,7 +176,7 @@ class PostCard extends StatelessWidget {
             clipBehavior: Clip.none,
             alignment: Alignment.center,
             children: [
-              side(
+              tilted(
                 urls[2],
                 right,
                 6.51,
@@ -166,7 +184,7 @@ class PostCard extends StatelessWidget {
                     ? const ColoredBox(color: Color.fromRGBO(0, 0, 0, .2))
                     : null,
               ),
-              side(urls[1], left, -8.21),
+              tilted(urls[1], left, -8.21),
               frame(
                 urls[0],
                 109,
