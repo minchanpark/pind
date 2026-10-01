@@ -301,16 +301,34 @@ void main() {
     expect(find.text('성수동 · 리뷰 12'), findsOneWidget);
     expect(find.byType(ProfileAvatar), findsNWidgets(2));
     double top(String name) => tester.getTopLeft(find.text(name)).dy;
-    // 최근 저장순: newest save first.
+    // Rating chips by emoji, and the match chip, inside the saved page.
+    int chips(String emoji) => find
+        .descendant(
+          of: find.byType(SavedPlacesPage),
+          matching: find.textContaining(emoji, findRichText: true),
+        )
+        .evaluate()
+        .length;
+    int matches() => find
+        .descendant(
+          of: find.byType(SavedPlacesPage),
+          matching: find.textContaining(RegExp(r'^\d+%$')),
+        )
+        .evaluate()
+        .length;
+    // 최근 저장순: newest save first; the match and every rating show.
     expect(top('저장 식당'), lessThan(top('저장 카페')));
-    // 양: 저장 카페 has 5 against 4.
+    expect((matches(), chips('😋'), chips('🍚'), chips('🕯️')), (1, 2, 2, 1));
+    // 양: 저장 카페 has 5 against 4; only 양 ratings show.
     await tester.tap(find.text('양'));
     await tester.pumpAndSettle();
     expect(top('저장 카페'), lessThan(top('저장 식당')));
-    // 내 취향순: only 저장 식당 has every priority scored.
+    expect((matches(), chips('😋'), chips('🍚'), chips('🕯️')), (0, 0, 2, 0));
+    // 내 취향순: only 저장 식당 has every priority scored; only the match shows.
     await tester.tap(find.text('내 취향순'));
     await tester.pumpAndSettle();
     expect(top('저장 식당'), lessThan(top('저장 카페')));
+    expect((matches(), chips('😋'), chips('🍚'), chips('🕯️')), (1, 0, 0, 0));
     expect(tester.takeException(), isNull);
   });
 

@@ -126,6 +126,15 @@ class _SavedPlacesPageState extends State<SavedPlacesPage> {
     final cards = score == null
         ? widget.cards
         : rankSaved(widget.cards, score!);
+    // Chips follow the sort: 내 취향순 shows only the match, a criterion
+    // only its rating, 최근 저장순 everything.
+    final byTaste = sort == '내 취향순';
+    final picked = criteria.where((c) => c.label == sort).toList();
+    final shown = byTaste
+        ? const <PreferenceCriterion>[]
+        : picked.isEmpty
+        ? criteria
+        : picked;
     return Scaffold(
       backgroundColor: Colors.white,
       body: SafeArea(
@@ -169,11 +178,11 @@ class _SavedPlacesPageState extends State<SavedPlacesPage> {
                 padding: const EdgeInsets.only(bottom: 12),
                 child: _SavedRow(
                   card: card,
-                  match: match(card),
+                  match: byTaste || shown.length > 1 ? match(card) : null,
                   meters: here == null
                       ? null
                       : LocationService.distance(here!, card.place),
-                  criteria: criteria,
+                  criteria: shown,
                   saved: !unsaved.contains(card.place.id),
                   onTap: widget.onOpen == null
                       ? null
