@@ -5,6 +5,7 @@ import 'package:flutter/foundation.dart';
 import '../model/app_model.dart';
 import '../model/profile_link.dart';
 import '../model/preferences.dart';
+import '../services/nearby_ranking_service.dart';
 import '../services/discover_service.dart';
 import '../services/friends_service.dart';
 import '../services/place_context_service.dart';
@@ -23,6 +24,7 @@ class AppController {
     this.preferences, {
     PlaceService? places,
     PlaceContextService? placeContext,
+    NearbyRanking? nearby,
     this.posts,
     this.profile,
     this.discover,
@@ -39,6 +41,7 @@ class AppController {
                places,
                placeContext: placeContext,
                profile: profile,
+               nearby: nearby,
              ) {
     if (registrationService != null) {
       registration = RegistrationController(

@@ -14,6 +14,7 @@ import '../../model/places.dart';
 import '../../controllers/explore_controller.dart';
 import 'place_sheet.dart';
 import 'map_filter_chip.dart';
+import 'nearby_ranking_sheet.dart';
 
 class ExploreScreen extends StatefulWidget {
   const ExploreScreen({
@@ -210,6 +211,35 @@ class _ExploreScreenState extends State<ExploreScreen> {
     setState(() => placeOpen = true);
     await showPlaceSheet(context, detail);
     if (mounted) setState(() => placeOpen = false);
+  }
+
+  /// The chip's places within 10km, ranked (Figma 671:33852).
+  Future<void> showRanking(String label) async {
+    final explore = controller;
+    if (explore == null || explore.nearby == null) return;
+    final pattern = categories[label]!;
+    await showNearbyRanking(
+      context,
+      title: label,
+      load: () async => explore.nearbyRanking(await mapCenter()),
+      include: (p) => pattern.isEmpty || _inCategory(pattern, p),
+      preferences: widget.preferences,
+      onOpen: showPlace,
+      onSetSaved: explore.placeContext?.setSaved,
+    );
+  }
+
+  /// Fallback origin when my location is unavailable.
+  Future<MapViewport> mapCenter() async {
+    try {
+      final b = await map!.getVisibleRegion();
+      return MapViewport(
+        (b.northeast.latitude + b.southwest.latitude) / 2,
+        (b.northeast.longitude + b.southwest.longitude) / 2,
+      );
+    } catch (_) {
+      return controller!.viewport;
+    }
   }
 
   void showResults() {
@@ -547,6 +577,7 @@ class _ExploreScreenState extends State<ExploreScreen> {
                                   onTap: () {
                                     setState(() => category = label);
                                     updateMarkers();
+                                    showRanking(label);
                                   },
                                 ),
                               ),

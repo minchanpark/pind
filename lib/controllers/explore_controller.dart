@@ -1,8 +1,10 @@
 import '../model/place_search_result.dart';
 import '../model/explore_model.dart';
+import '../model/nearby_ranking.dart';
 import '../model/preferences.dart';
 import '../services/place_context_service.dart';
 import '../services/location_service.dart';
+import '../services/nearby_ranking_service.dart';
 import '../services/profile_service.dart';
 import 'place_detail_controller.dart';
 
@@ -10,10 +12,20 @@ import '../services/place_service.dart';
 import '../model/places.dart';
 
 class ExploreController {
-  ExploreController(this.repository, {this.placeContext, this.profile});
+  ExploreController(
+    this.repository, {
+    this.placeContext,
+    this.profile,
+    this.nearby,
+    this.position = LocationService.position,
+  });
   final PlaceService repository;
   final PlaceContextService? placeContext;
   final ProfileService? profile;
+
+  /// Category list source; null hides the list.
+  final NearbyRanking? nearby;
+  final Future<MapViewport?> Function(bool request) position;
   final model = ExploreModel();
   List<Place> get places => model.places;
   bool get loading => model.loading;
@@ -37,6 +49,18 @@ class ExploreController {
     } finally {
       if (!_disposed) model.update(() => model.locating = false);
     }
+  }
+
+  /// Places within 10km of me, or of [fallback] (the map center) when my
+  /// location is off; `nearMe` says which. Never prompts for permission.
+  Future<({List<RankedPlace> places, bool nearMe})> nearbyRanking(
+    MapViewport fallback,
+  ) async {
+    MapViewport? here;
+    try {
+      here = await position(false);
+    } catch (_) {}
+    return (places: await nearby!(here ?? fallback), nearMe: here != null);
   }
 
   String? _searchQuery;

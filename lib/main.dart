@@ -9,6 +9,7 @@ import 'controllers/app_controller.dart';
 import 'services/config.dart';
 import 'services/discover_service.dart';
 import 'services/friends_service.dart';
+import 'services/nearby_ranking_service.dart';
 import 'services/place_service.dart';
 import 'services/place_context_service.dart';
 import 'services/preference_service.dart';
@@ -24,6 +25,7 @@ Future<void> main() async {
   AuthService auth = UnavailableAuthService();
   PlaceService? places;
   PlaceContextService? placeContext;
+  NearbyRanking? nearby;
   PostService? posts;
   ProfileService? profile;
   DiscoverService? discover;
@@ -39,6 +41,7 @@ Future<void> main() async {
     );
     places = PlaceService(gateway.call);
     placeContext = SupabasePlaceContextService(Supabase.instance.client);
+    nearby = supabaseNearbyRanking(Supabase.instance.client);
     posts = SupabasePostService(Supabase.instance.client);
     profile = SupabaseProfileService(Supabase.instance.client);
     discover = SupabaseDiscoverService(Supabase.instance.client);
@@ -55,6 +58,7 @@ Future<void> main() async {
         preferences,
         places: places,
         placeContext: placeContext,
+        nearby: nearby,
         posts: posts,
         profile: profile,
         discover: discover,
