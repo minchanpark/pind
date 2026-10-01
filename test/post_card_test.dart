@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:pind_flutter/model/places.dart';
 import 'package:pind_flutter/model/profile_model.dart';
+import 'package:pind_flutter/view/components/pind_glass.dart';
 import 'package:pind_flutter/view/components/post_card.dart';
 import 'package:pind_flutter/view/theme.dart';
 
@@ -58,6 +59,13 @@ void main() {
   ) async {
     final one = await frames(tester, 1);
     expect(one.single.size, const Size(214, 262));
+    // The place pill overlaps the photo's top edge by about half its height.
+    final pill = tester.getRect(
+      find
+          .ancestor(of: find.text('📍가게'), matching: find.byType(PindGlass))
+          .first,
+    );
+    expect(pill.bottom - one.single.top, 15);
 
     await frames(tester, 2);
     // A fanned pair: tilted opposite ways, the first photo in front and purple.

@@ -90,7 +90,9 @@ class PostCard extends StatelessWidget {
               child: photos(post.photos),
             ),
             Positioned(
-              top: 0,
+              // A lone upright photo would only graze the pill; sink it about
+              // halfway in, as the tilted cards do.
+              top: post.photos.length == 1 ? 10 : 0,
               child: onPlace == null
                   ? pill
                   : Semantics(
