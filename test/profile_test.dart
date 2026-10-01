@@ -46,6 +46,11 @@ final canned = ProfileOverview(
     ProfilePlaceCard(
       place: place(2, '저장 식당', '서울특별시 성동구 성수동 1'),
       averages: averages,
+      ratingCounts: const {
+        PreferenceCriterion.taste: 2,
+        PreferenceCriterion.portion: 1,
+        PreferenceCriterion.ambience: 3,
+      },
       savedAt: DateTime.now().subtract(const Duration(days: 2)),
       reviewCount: 12,
       savers: const [null, 'https://example.com/b.png'],
@@ -249,7 +254,7 @@ void main() {
     expect(find.text('최근 카페'), findsOneWidget);
     expect(find.text('📍 연남동'), findsOneWidget);
     expect(find.text('저장 식당'), findsOneWidget);
-    expect(find.text('94%'), findsOneWidget);
+    expect(find.text('93%'), findsOneWidget);
     expect(find.text('나의 취향'), findsNothing);
     await tester.tap(find.text('더보기 ›').first);
     await tester.pumpAndSettle();

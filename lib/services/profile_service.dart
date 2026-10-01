@@ -177,6 +177,7 @@ class SupabaseProfileService implements ProfileService {
               json['pindPhotoPath'] as String?,
             ),
         averages: parseCriteria(json['averages'], (n) => n.toDouble()),
+        ratingCounts: parseCriteria(json['ratingCounts'], (n) => n.toInt()),
         savedAt: DateTime.tryParse(json['savedAt'] as String? ?? ''),
         reviewCount: (json['reviewCount'] as num?)?.toInt() ?? 0,
         savers: [for (final a in json['savers'] as List? ?? []) a as String?],

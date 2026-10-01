@@ -96,20 +96,6 @@ class _PostComposerState extends State<PostComposer> {
           ),
         ),
         centerTitle: true,
-        actions: [
-          TextButton(
-            onPressed: model.canPublish ? publish : null,
-            style: TextButton.styleFrom(
-              foregroundColor: Colors.black,
-              disabledForegroundColor: Colors.black,
-            ),
-            child: const Text(
-              '게시',
-              style: TextStyle(fontSize: 14.431, fontWeight: FontWeight.w600),
-            ),
-          ),
-          const SizedBox(width: 4),
-        ],
         bottom: const PreferredSize(
           preferredSize: Size.fromHeight(.7),
           child: Divider(height: .7, thickness: .7, color: Color(0xFFF0F0EC)),

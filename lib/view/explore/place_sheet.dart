@@ -445,7 +445,9 @@ class _PlaceSheetState extends State<PlaceSheet> {
             crossAxisAlignment: WrapCrossAlignment.center,
             children: [
               Tooltip(
-                message: '1·2·3순위 50·30·20%. 내 평가가 있으면 가게 평균과 절반씩 반영해요.',
+                message:
+                    '전체 공개 평균을 1·2·3순위 50·30·20%로 반영해요. '
+                    '1점은 해당 기준의 0%, 5점은 100%를 받아요.',
                 child: DetailGlass(
                   radius: 16,
                   purple: true,
@@ -490,15 +492,15 @@ class _PlaceSheetState extends State<PlaceSheet> {
   ];
   String average(PreferenceCriterion axis) {
     final value = social?.averages[axis];
-    return value == null
-        ? '—'
-        : value.toStringAsFixed(value == value.roundToDouble() ? 0 : 1);
+    return value == null ? '—' : value.toStringAsFixed(1);
   }
 
   Widget ratingChip(PreferenceCriterion axis, int index) {
     final color = axisColors[index % 3], text = average(axis);
     return Tooltip(
-      message: '${axis.label} · 가게 평균 $text / 5',
+      message: text == '—'
+          ? '${axis.label} · 아직 평가가 없어요'
+          : '${axis.label} · 가게 평균 $text / 5',
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
         decoration: BoxDecoration(
@@ -507,7 +509,9 @@ class _PlaceSheetState extends State<PlaceSheet> {
           borderRadius: BorderRadius.circular(12),
         ),
         child: Semantics(
-          label: '${axis.label} 가게 평균 $text점',
+          label: text == '—'
+              ? '${axis.label} 아직 평가가 없어요'
+              : '${axis.label} 가게 평균 $text점',
           child: Text(
             '${axis.emoji} ★ $text',
             style: TextStyle(

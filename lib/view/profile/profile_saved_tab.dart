@@ -75,8 +75,11 @@ class ProfileSavedTab extends StatelessWidget {
                       scrollDirection: Axis.horizontal,
                       itemCount: saved.length,
                       separatorBuilder: (_, _) => const SizedBox(width: 10),
-                      itemBuilder: (_, i) =>
-                          _SavedCard(saved[i], preferences, onOpen),
+                      // Cards hug their content instead of stretching.
+                      itemBuilder: (_, i) => Align(
+                        alignment: Alignment.topCenter,
+                        child: _SavedCard(saved[i], preferences, onOpen),
+                      ),
                     ),
                   ),
             trailing: '더보기 ›',
@@ -188,6 +191,7 @@ class _SavedCard extends StatelessWidget {
         child: PindGlass(
           radius: 18,
           child: Column(
+            mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               SizedBox(
@@ -196,7 +200,7 @@ class _SavedCard extends StatelessWidget {
                 child: placeImage(card.imageUrl),
               ),
               Padding(
-                padding: const EdgeInsets.fromLTRB(10, 8, 10, 10),
+                padding: const EdgeInsets.fromLTRB(10, 6, 10, 10),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   spacing: 4,
@@ -218,37 +222,44 @@ class _SavedCard extends StatelessWidget {
                         color: PindTheme.ink,
                       ),
                     ),
-                    Row(
-                      spacing: 4,
-                      children: [
-                        if (match != null)
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 6,
-                              vertical: 2,
-                            ),
-                            decoration: BoxDecoration(
-                              color: PindTheme.purple,
-                              borderRadius: BorderRadius.circular(9),
-                            ),
-                            child: Text(
-                              '$match%',
-                              style: const TextStyle(
-                                fontSize: 9,
-                                fontWeight: FontWeight.w700,
-                                color: Colors.white,
+                    // One line always: shrinks rather than wraps on large text.
+                    FittedBox(
+                      fit: BoxFit.scaleDown,
+                      alignment: Alignment.centerLeft,
+                      child: Row(
+                        spacing: 5,
+                        children: [
+                          if (match != null)
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 6,
+                                vertical: 2,
+                              ),
+                              decoration: BoxDecoration(
+                                color: PindTheme.purple.withValues(alpha: .7),
+                                borderRadius: BorderRadius.circular(9),
+                              ),
+                              child: Text(
+                                '$match%',
+                                style: const TextStyle(
+                                  fontSize: 9,
+                                  fontWeight: FontWeight.w700,
+                                  color: Colors.white,
+                                ),
                               ),
                             ),
-                          ),
-                        for (final c in criteria)
-                          if (card.averages[c] case final avg?)
-                            Text.rich(
-                              TextSpan(
-                                text: c.emoji,
-                                style: const TextStyle(fontSize: 8),
+                          for (final c in criteria)
+                            if (card.averages[c] case final avg?)
+                              Row(
+                                mainAxisSize: MainAxisSize.min,
+                                spacing: 1,
                                 children: [
-                                  TextSpan(
-                                    text: '${avg.round()}',
+                                  Text(
+                                    c.emoji,
+                                    style: const TextStyle(fontSize: 8),
+                                  ),
+                                  Text(
+                                    avg.toStringAsFixed(1),
                                     style: TextStyle(
                                       fontSize: 9,
                                       fontWeight: FontWeight.w700,
@@ -257,8 +268,8 @@ class _SavedCard extends StatelessWidget {
                                   ),
                                 ],
                               ),
-                            ),
-                      ],
+                        ],
+                      ),
                     ),
                   ],
                 ),

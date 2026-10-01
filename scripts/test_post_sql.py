@@ -1,12 +1,17 @@
 """Run migrations and post/catalog/social SQL assertions in disposable Postgres."""
 import pathlib
 import subprocess
+import sys
 import time
 import uuid
 
 ROOT = pathlib.Path(__file__).resolve().parents[1]
 CONTAINER = 'pind-post-qa-' + uuid.uuid4().hex[:12]
 IMAGE = 'public.ecr.aws/supabase/postgres:17.6.1.132'
+MIGRATIONS = sorted((ROOT / 'supabase/migrations').glob('*.sql'))
+versions = [path.name.split('_', 1)[0] for path in MIGRATIONS]
+if len(set(versions)) != len(versions):
+    raise RuntimeError('Migration versions must be unique before running SQL tests')
 
 
 def run(*args, **kwargs):
@@ -37,10 +42,12 @@ try:
     else:
         raise RuntimeError('Isolated Postgres did not become ready')
     sql(ROOT / 'supabase/tests/post_storage_bootstrap.sql')
-    for path in sorted((ROOT / 'supabase/migrations').glob('*.sql')):
+    for path in MIGRATIONS:
         sql(path)
-    for name in ['public_first_places.sql', 'place_detail_context.sql', 'published_posts_map.sql', 'profile_page.sql', 'discover_feed.sql', 'follows_taste.sql', 'other_profiles.sql', 'saved_places_page.sql', 'place_insight_refresh.sql', 'nearby_ranking.sql']:
+    for name in ['public_first_places.sql', 'place_detail_context.sql', 'published_posts_map.sql', 'profile_page.sql', 'discover_feed.sql', 'follows_taste.sql', 'other_profiles.sql', 'saved_places_page.sql', 'place_insight_refresh.sql', 'place_rating_stats.sql', 'nearby_ranking.sql']:
         sql(ROOT / 'supabase/tests' / name)
+    concurrent = run(sys.executable, str(ROOT / 'scripts/test_rating_stats_concurrency.py'), CONTAINER)
+    print(concurrent.stdout.decode().strip(), flush=True)
 except subprocess.CalledProcessError as error:
     print((error.stderr or b'').decode(), flush=True)
     raise

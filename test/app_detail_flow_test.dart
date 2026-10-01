@@ -114,7 +114,7 @@ void main() {
           ),
           findsOneWidget,
         );
-        expect(find.text('내 취향 94%'), findsOneWidget);
+        expect(find.text('내 취향 93%'), findsOneWidget);
         expect(
           find.text(provider == 'sbiz' ? 'Pind 게시물 3개' : '리뷰 12개'),
           findsOneWidget,

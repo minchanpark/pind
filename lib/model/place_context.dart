@@ -6,11 +6,13 @@ class PlaceContext {
   const PlaceContext({
     this.averages = const {},
     this.mine = const {},
+    this.ratingCounts = const {},
     this.visitors = const [],
     this.friendSaveCount = 0,
     this.saved = false,
   });
   final Map<PreferenceCriterion, double> averages, mine;
+  final Map<PreferenceCriterion, int> ratingCounts;
   final List<FriendVisit> visitors;
   final int friendSaveCount;
   final bool saved;
@@ -24,6 +26,11 @@ class PlaceContext {
     return PlaceContext(
       averages: ratings(json['averages']),
       mine: ratings(json['mine']),
+      ratingCounts: {
+        for (final entry in (json['ratingCounts'] as Map? ?? {}).entries)
+          PreferenceCriterion.values.byName(entry.key as String):
+              (entry.value as num).toInt(),
+      },
       visitors: [
         for (final v in json['visitors'] as List? ?? [])
           FriendVisit(
@@ -53,15 +60,14 @@ int? tasteMatch(TastePreferences? preferences, PlaceContext data) {
   double result = 0;
   for (var i = 0; i < 3; i++) {
     final axis = preferences.priorities[i];
-    final average = data.averages[axis], mine = data.mine[axis];
-    for (final rating in [average, mine]) {
-      if (rating != null && (!rating.isFinite || rating < 1 || rating > 5)) {
-        throw const FormatException('Rating outside 1–5');
-      }
-    }
+    final average = data.averages[axis];
     if (average == null) return null;
-    final score = mine == null ? average : (average + mine) / 2;
-    result += score / 5 * tasteWeights[i];
+    if (!average.isFinite || average < 1 || average > 5) {
+      throw const FormatException('Rating outside 1–5');
+    }
+    // Everyone's public rating, including mine, is already in the average.
+    // Each criterion can lose at most its own 50/30/20 share of the score.
+    result += (average - 1) / 4 * tasteWeights[i];
   }
   return (result * 100).round().clamp(0, 100);
 }

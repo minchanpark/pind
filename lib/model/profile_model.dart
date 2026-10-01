@@ -61,6 +61,7 @@ class ProfilePlaceCard {
     required this.place,
     this.imageUrl,
     this.averages = const {},
+    this.ratingCounts = const {},
     this.savedAt,
     this.reviewCount = 0,
     this.savers = const [],
@@ -68,6 +69,7 @@ class ProfilePlaceCard {
   final Place place;
   final String? imageUrl;
   final Map<PreferenceCriterion, double> averages;
+  final Map<PreferenceCriterion, int> ratingCounts;
 
   /// Saved cards only: when it was saved, public posts there, and avatars
   /// (null = no photo) of up to 3 people I follow who saved it too.

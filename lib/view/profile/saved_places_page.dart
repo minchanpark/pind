@@ -363,7 +363,7 @@ class _SavedRow extends StatelessWidget {
   Widget rating(PreferenceCriterion c, double avg) {
     final color = criterionColor(c);
     return Semantics(
-      label: '${c.label} ${avg.round()}점',
+      label: '${c.label} ${avg.toStringAsFixed(1)}점',
       excludeSemantics: true,
       child: Container(
         padding: const EdgeInsets.fromLTRB(6, 4, 7, 4),
@@ -377,7 +377,7 @@ class _SavedRow extends StatelessWidget {
             text: '${c.emoji} ',
             children: [
               TextSpan(
-                text: '★ ${avg.round()}',
+                text: '★ ${avg.toStringAsFixed(1)}',
                 style: TextStyle(fontWeight: FontWeight.w700, color: color),
               ),
             ],

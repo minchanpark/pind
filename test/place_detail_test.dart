@@ -10,9 +10,27 @@ import 'package:pind_flutter/view/theme.dart';
 import 'package:pind_flutter/services/place_service.dart';
 import 'package:pind_flutter/services/preview/detail_fixture.dart';
 import 'package:pind_flutter/model/place_context.dart';
+import 'package:pind_flutter/model/preferences.dart';
 import 'package:pind_flutter/model/places.dart';
 import 'package:pind_flutter/view/explore/place_sheet.dart';
 import 'package:pind_flutter/view/explore/post_photo_viewer.dart';
+
+class SharedAverageContext extends LocalDetailContext {
+  @override
+  Future<PlaceContext> load(int placeId) async => const PlaceContext(
+    averages: {
+      PreferenceCriterion.taste: 4,
+      PreferenceCriterion.portion: 3,
+      PreferenceCriterion.ambience: 2,
+    },
+    mine: {PreferenceCriterion.taste: 1},
+    ratingCounts: {
+      PreferenceCriterion.taste: 2,
+      PreferenceCriterion.portion: 1,
+      PreferenceCriterion.ambience: 3,
+    },
+  );
+}
 
 Future<void> mount(
   WidgetTester tester,
@@ -110,7 +128,7 @@ void main() {
     tester,
   ) async {
     await mount(tester, LocalDetailContext());
-    expect(find.text('내 취향 94%'), findsOneWidget);
+    expect(find.text('내 취향 93%'), findsOneWidget);
     expect(find.textContaining('11:30 – 21:00'), findsWidgets);
     expect(find.text('1.8km'), findsOneWidget);
     expect(find.text('리뷰 87개'), findsOneWidget);
@@ -138,6 +156,23 @@ void main() {
     }
     expect(tester.takeException(), isNull);
   });
+  testWidgets(
+    'shared averages omit counts and 4/3/2 yields 58 without remixing mine',
+    (tester) async {
+      await mount(
+        tester,
+        SharedAverageContext(),
+        size: const Size(320, 874),
+        scale: 2,
+      );
+      expect(find.text('내 취향 58%'), findsOneWidget);
+      expect(find.text('😋 ★ 4.0'), findsOneWidget);
+      expect(find.text('🍚 ★ 3.0'), findsOneWidget);
+      expect(find.text('🕯️ ★ 2.0'), findsOneWidget);
+      expect(tester.takeException(), isNull);
+    },
+  );
+
   testWidgets(
     'no friends and no ratings do not fabricate social proof or score',
     (tester) async {
