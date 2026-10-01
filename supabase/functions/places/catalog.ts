@@ -36,21 +36,37 @@ export async function catalogRequest(
   }
   // Errors stay errors. This function has no Google/network fallback dependency.
   const result = await query(args);
-  const places = await Promise.all(((result.places ?? []) as Payload[])
-    .filter(p => (body.action !== 'nearby' && body.action !== 'posted') || (typeof p.pindPostCount === 'number' && p.pindPostCount > 0))
-    .map(async p => {
+  const rows = ((result.places ?? []) as Payload[])
+    .filter(p => (body.action !== 'nearby' && body.action !== 'posted') || (typeof p.pindPostCount === 'number' && p.pindPostCount > 0));
+  // One signing call per bucket for the whole response, not one per place/post.
+  const coverBucket = (p: Payload) => typeof p.pindPhotoBucket === 'string' ? p.pindPhotoBucket : 'post-media';
+  const postPaths = (p: Payload) => Array.isArray(p.photos) ? p.photos as string[] : [];
+  const wanted = new Map<string, Set<string>>();
+  const want = (bucket: string, path: string) => wanted.set(bucket, (wanted.get(bucket) ?? new Set()).add(path));
+  for (const p of rows) {
+    if (!p.heroImageUrl && typeof p.pindPhotoPath === 'string') want(coverBucket(p), p.pindPhotoPath);
+    for (const post of Array.isArray(p.pindPosts) ? p.pindPosts as Payload[] : []) {
+      for (const path of postPaths(post)) want(String(post.bucket), path);
+    }
+  }
+  const signed = new Map<string, string | null>();
+  await Promise.all([...wanted].map(async ([bucket, set]) => {
+    const paths = [...set], urls = await photoUrls(paths, bucket);
+    paths.forEach((path, i) => signed.set(`${bucket}\n${path}`, urls[i] ?? null));
+  }));
+  const url = (bucket: string, path: string) => signed.get(`${bucket}\n${path}`) ?? null;
+  const places = rows.map(p => {
     const place: Payload = {...p, googleSearchEnabled:googleEnabled};
     if (!place.heroImageUrl && typeof place.pindPhotoPath === 'string') {
-      [place.heroImageUrl] = await photoUrls([place.pindPhotoPath], typeof place.pindPhotoBucket === 'string' ? place.pindPhotoBucket : 'post-media');
+      place.heroImageUrl = url(coverBucket(place), place.pindPhotoPath);
       place.photoAttributions = [{displayName:place.pindPhotoAuthor ?? 'Pind 사용자'}];
     }
     if (Array.isArray(place.pindPosts)) {
-      // All photos are signed (one batch per post) so the viewer can page through them.
-      place.posts = await Promise.all((place.pindPosts as Payload[]).map(async p => {
-        const paths = Array.isArray(p.photos) ? p.photos as string[] : [];
-        const photos = paths.length ? await photoUrls(paths,String(p.bucket)) : [];
+      // All photos are signed so the viewer can page through them.
+      place.posts = (place.pindPosts as Payload[]).map(p => {
+        const photos = postPaths(p).map(path => url(String(p.bucket), path));
         return {id:p.id,author:p.author,handle:p.handle,avatar:p.avatar,body:p.body,ratings:p.ratings,photos:photos.filter(Boolean)};
-      }));
+      });
       place.gallery = (place.posts as Payload[]).flatMap(p => (p.photos as string[]).map(uri =>
         ({uri,attributions:[{displayName:p.author ?? 'Pind 사용자'}]}))).slice(0,5);
     }
@@ -68,7 +84,7 @@ export async function catalogRequest(
     delete place.pindPhotoAuthor;
     delete place.pindPhotoBucket;
     return place;
-  }));
+  });
   if (body.action === 'catalog_detail') {
     if (!places.length) throw new CatalogError(404,'PLACE_NOT_FOUND','공개된 장소를 찾지 못했어요.');
     return {place:places[0],googleSearchEnabled:googleEnabled};

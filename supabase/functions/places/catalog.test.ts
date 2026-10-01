@@ -72,3 +72,15 @@ test('detail posts sign every photo, gallery takes five, stale insight refreshes
   assert.deepEqual(fresh.insight,{summary:'소개',criteria:{taste:'맛있어요'}});
   assert.deepEqual(refreshed,[7]);
 });
+
+test('the whole response signs once per bucket',async()=>{
+  const calls:[string,string[]][]=[];
+  await catalogRequest({action:'catalog_detail',internalPlaceId:7},async()=>({places:[{
+    internalId:7,pindPostCount:3,pindPhotoPath:'a',pindPhotoBucket:'post-media-v2',pindPosts:[
+      {id:3,bucket:'post-media-v2',photos:['a','b']},
+      {id:2,bucket:'post-media-v2',photos:['c']},
+      {id:1,bucket:'post-media',photos:['old']},
+    ],
+  }]}),async(paths,bucket)=>{calls.push([bucket,paths]);return paths.map(p=>`https://s/${p}`);},true);
+  assert.deepEqual(calls.sort(),[['post-media',['old']],['post-media-v2',['a','b','c']]]);
+});

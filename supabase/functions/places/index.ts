@@ -10,6 +10,9 @@ const headers = {
   'Access-Control-Allow-Methods':'POST, OPTIONS',
   'Content-Type':'application/json; charset=utf-8',
 };
+// Clients cache images by storage path, so a long-lived URL only needs to
+// outlast one session; a hidden post's photo stays reachable at most this long.
+const SIGNED_URL_SECONDS = 24 * 60 * 60;
 const json = (body:unknown,status=200) => new Response(JSON.stringify(body),{status,headers});
 declare const EdgeRuntime: {waitUntil(promise: Promise<unknown>): void};
 const geminiKey = Deno.env.get('GEMINI_API_KEY');
@@ -89,7 +92,7 @@ Deno.serve(async request => {
     },async (paths,bucket) => {
       if(bucket==='post-media')return paths.map(path => client.storage.from(bucket).getPublicUrl(path).data.publicUrl);
       if(bucket!=='post-media-v2')return paths.map(() => null);
-      const {data,error}=await client.storage.from(bucket).createSignedUrls(paths,300);
+      const {data,error}=await client.storage.from(bucket).createSignedUrls(paths,SIGNED_URL_SECONDS);
       return error ? paths.map(() => null) : data.map(item => item.error ? null : item.signedUrl);
     },
     Deno.env.get('GOOGLE_FALLBACK_ENABLED') !== 'false',
