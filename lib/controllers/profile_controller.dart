@@ -148,7 +148,9 @@ class ProfileController {
   void _patch(UserProfile Function(UserProfile) change) {
     final o = model.overview;
     if (o == null) return;
-    model.overview = o.copyWith(profile: change(o.profile));
+    final profile = change(o.profile);
+    model.overview = o.copyWith(profile: profile);
+    if (isMe) myProfileEdits.add(profile);
   }
 
   String _message(Object caught, String fallback) =>

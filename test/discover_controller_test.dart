@@ -6,6 +6,7 @@ import 'package:pind_flutter/model/discover_model.dart';
 import 'package:pind_flutter/model/place_search_result.dart';
 import 'package:pind_flutter/model/places.dart';
 import 'package:pind_flutter/model/profile_model.dart';
+import 'package:pind_flutter/services/data_revision.dart';
 import 'package:pind_flutter/services/discover_service.dart';
 import 'package:pind_flutter/services/post_media_urls.dart';
 
@@ -192,4 +193,34 @@ void main() {
       expect(parsed.photos, ['https://signed/signed.jpg']);
     });
   });
+
+  test(
+    'my profile edit swaps my posts\' author in place, no refetch',
+    () async {
+      final service = FakeDiscoverService()
+        ..feedQueue.add(FeedPage([post(1), post(2), post(3)], hasMore: false));
+      final c = DiscoverController(service: service);
+      await c.load();
+      final me = c.model.posts[1].author.copyWith(
+        displayName: '새 이름',
+        avatarUrl: 'https://x/new.png',
+      );
+      var notified = 0;
+      c.model.addListener(() => notified++);
+      myProfileEdits.add(me);
+      await Future<void>.delayed(Duration.zero); // broadcast delivery
+      expect(
+        [for (final p in c.model.posts) p.author.avatarUrl],
+        [null, 'https://x/new.png', null],
+      );
+      expect(c.model.posts[1].author.displayName, '새 이름');
+      expect(c.model.posts[1].post.id, 2); // same post, likes kept
+      expect(notified, 1);
+      expect(service.feedQueue, isEmpty); // no second feed request was needed
+      // After dispose the subscription is gone; an edit must not touch it.
+      c.dispose();
+      myProfileEdits.add(me);
+      await Future<void>.delayed(Duration.zero);
+    },
+  );
 }

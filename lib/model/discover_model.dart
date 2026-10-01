@@ -15,6 +15,9 @@ class FeedPost {
   final int likeCount;
   final bool liked;
 
+  FeedPost withAuthor(UserProfile value) =>
+      FeedPost(post: post, author: value, likeCount: likeCount, liked: liked);
+
   FeedPost withLike(bool value) => FeedPost(
     post: post,
     author: author,

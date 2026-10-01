@@ -7,6 +7,7 @@ import 'package:pind_flutter/model/post_model.dart';
 import 'package:pind_flutter/model/preferences.dart';
 import 'package:pind_flutter/model/profile_model.dart';
 import 'package:pind_flutter/model/friends_model.dart';
+import 'package:pind_flutter/services/data_revision.dart';
 import 'package:pind_flutter/services/friends_service.dart';
 import 'package:pind_flutter/services/profile_service.dart';
 import 'package:pind_flutter/view/profile/profile_follow.dart';
@@ -375,6 +376,32 @@ void main() {
     expect(find.bySemanticsLabel('맛 3점'), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
+
+  test(
+    'saving my profile publishes it for screens that show my posts',
+    () async {
+      final controller = ProfileController(profile: FakeProfileService());
+      addTearDown(controller.dispose);
+      await controller.load();
+      final edits = <UserProfile>[];
+      final sub = myProfileEdits.stream.listen(edits.add);
+      addTearDown(sub.cancel);
+      expect(await controller.saveProfile(displayName: '새 이름'), isTrue);
+      await Future<void>.delayed(Duration.zero);
+      expect(edits.single.id, canned.profile.id);
+      expect(edits.single.displayName, '새 이름');
+      // Someone else's page never broadcasts as "me".
+      final other = ProfileController(
+        profile: FakeProfileService(other: canned),
+        userId: 'u2',
+      );
+      addTearDown(other.dispose);
+      await other.load();
+      await other.saveProfile(displayName: '남의 이름');
+      await Future<void>.delayed(Duration.zero);
+      expect(edits, hasLength(1));
+    },
+  );
 
   testWidgets('settings sheet saves display name and bio', (tester) async {
     final service = FakeProfileService();

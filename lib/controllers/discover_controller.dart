@@ -1,10 +1,29 @@
+import 'dart:async';
+
 import '../model/discover_model.dart';
 import '../model/place_search_result.dart';
+import '../model/profile_model.dart';
+import '../services/data_revision.dart';
 import '../services/discover_service.dart';
 
 class DiscoverController {
   DiscoverController({required DiscoverService? service})
-    : _service = service ?? UnavailableDiscoverService();
+    : _service = service ?? UnavailableDiscoverService() {
+    _edits = myProfileEdits.stream.listen(_authorChanged);
+  }
+  late final StreamSubscription<UserProfile> _edits;
+
+  /// My new photo/name on my posts already in the feed, without a refetch.
+  void _authorChanged(UserProfile me) {
+    if (!model.posts.any((p) => p.author.id == me.id)) return;
+    model.update(() {
+      model.posts = [
+        for (final p in model.posts)
+          p.author.id == me.id ? p.withAuthor(me) : p,
+      ];
+    });
+  }
+
   final DiscoverService _service;
   final model = DiscoverModel();
   bool _disposed = false;
@@ -97,6 +116,7 @@ class DiscoverController {
       caught is PlaceFailure ? caught.message : '피드를 불러오지 못했어요.';
 
   void dispose() {
+    _edits.cancel();
     _disposed = true;
     _request++;
     model.dispose();
