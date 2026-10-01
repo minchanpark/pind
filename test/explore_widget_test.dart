@@ -15,6 +15,8 @@ import 'package:pind_flutter/view/explore/explore_screen.dart';
 import 'package:pind_flutter/view/explore/place_sheet.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import 'support/map_search.dart';
+
 void main() {
   test(
     'map pins use the category emoji from public-data and Google categories',
@@ -68,11 +70,9 @@ void main() {
       );
       await tester.pumpAndSettle();
       expect(find.textContaining('곳 보기'), findsNothing);
-      await tester.enterText(find.byType(TextField), '먼저 검색');
-      await tester.testTextInput.receiveAction(TextInputAction.search);
+      await mapSearch(tester, '먼저 검색');
       await tester.pump();
-      await tester.enterText(find.byType(TextField), '나중 검색');
-      await tester.testTextInput.receiveAction(TextInputAction.search);
+      await mapSearch(tester, '나중 검색');
       await tester.pump();
       pending['나중 검색']!.complete({
         'places': [
@@ -104,7 +104,7 @@ void main() {
       expect(tester.takeException(), isNull);
     },
   );
-  testWidgets('unconfigured backend handles keyboard search without crashing', (
+  testWidgets('unconfigured backend: search button is inert, no crash', (
     tester,
   ) async {
     await tester.pumpWidget(
@@ -116,9 +116,10 @@ void main() {
         ),
       ),
     );
-    await tester.enterText(find.byType(TextField), '서울');
-    await tester.testTextInput.receiveAction(TextInputAction.search);
+    // No backend: the search button is inert rather than opening a page.
+    await tester.tap(find.byKey(const ValueKey('map-search-button')));
     await tester.pumpAndSettle();
+    expect(find.text('개인 맞춤형 음식 검색'), findsNothing);
     expect(tester.takeException(), isNull);
   });
 

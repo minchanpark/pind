@@ -13,6 +13,7 @@ import '../../model/preferences.dart';
 import '../../model/places.dart';
 import '../../controllers/explore_controller.dart';
 import 'place_sheet.dart';
+import 'agent_search_page.dart';
 import 'map_filter_chip.dart';
 import 'nearby_ranking_sheet.dart';
 import '../components/pind_image.dart';
@@ -170,6 +171,19 @@ class _ExploreScreenState extends State<ExploreScreen> {
     } else {
       await controller?.load();
     }
+  }
+
+  /// Figma 617:23469; runs whatever the page returns.
+  Future<void> openSearch() async {
+    final text = await Navigator.of(context).push<String>(
+      MaterialPageRoute(
+        fullscreenDialog: true,
+        builder: (_) => const AgentSearchPage(),
+      ),
+    );
+    if (!mounted || text == null) return;
+    query.text = text;
+    await search();
   }
 
   Future<void> searchGoogle() async {
@@ -366,25 +380,32 @@ class _ExploreScreenState extends State<ExploreScreen> {
                             width: 15.4927,
                             height: 15.4927,
                           ),
-                          onPressed: controller == null ? null : search,
+                          onPressed: controller == null ? null : openSearch,
                         ),
                       ),
+                      // One button: the query is typed on the agent page.
                       Expanded(
-                        child: TextField(
-                          controller: query,
-                          onSubmitted: (_) => search(),
-                          textInputAction: TextInputAction.search,
-                          textAlignVertical: TextAlignVertical.center,
-                          style: textStyle.copyWith(color: PindTheme.ink),
-                          decoration: InputDecoration(
-                            isDense: true,
-                            hintText: '장소, 메뉴, 분위기 검색',
-                            hintStyle: textStyle.copyWith(
-                              color: const Color(0xFFABABAB),
-                            ),
-                            border: InputBorder.none,
-                            contentPadding: const EdgeInsets.symmetric(
-                              vertical: (height - 14.4667 * 1.5) / 2,
+                        child: Semantics(
+                          button: true,
+                          label: '검색 열기',
+                          excludeSemantics: true,
+                          child: InkWell(
+                            key: const ValueKey('map-search-button'),
+                            onTap: controller == null ? null : openSearch,
+                            child: Align(
+                              alignment: Alignment.centerLeft,
+                              child: Text(
+                                query.text.trim().isEmpty
+                                    ? '무엇을 먹고 싶나요?'
+                                    : query.text.trim(),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: textStyle.copyWith(
+                                  color: query.text.trim().isEmpty
+                                      ? const Color(0xFFABABAB)
+                                      : PindTheme.ink,
+                                ),
+                              ),
                             ),
                           ),
                         ),

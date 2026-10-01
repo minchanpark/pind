@@ -11,6 +11,8 @@ import 'package:pind_flutter/model/preferences.dart';
 import 'package:pind_flutter/view/explore/place_sheet.dart';
 import 'package:pind_flutter/view/navigation/pind_navigation_bar.dart';
 
+import 'support/map_search.dart';
+
 class _Context implements PlaceContextService {
   int? requestedId;
   @override
@@ -90,8 +92,7 @@ void main() {
         expect(find.byType(PindNavigationBar), findsOneWidget);
         expect(find.text('가게 상세 · 로컬 QA'), findsNothing);
         expect(find.textContaining('곳 보기'), findsNothing);
-        await tester.enterText(find.byType(TextField), '연결 검증 가게');
-        await tester.testTextInput.receiveAction(TextInputAction.search);
+        await mapSearch(tester, '연결 검증 가게');
         await tester.pumpAndSettle();
         await tester.tap(find.byType(ListTile).first);
         await tester.pumpAndSettle();

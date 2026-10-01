@@ -15,6 +15,8 @@ import 'package:pind_flutter/view/navigation/main_shell.dart';
 import 'package:pind_flutter/view/navigation/pind_navigation_bar.dart';
 import 'package:pind_flutter/services/data_revision.dart';
 
+import 'support/map_search.dart';
+
 const roots = <String, Size>{
   'discover_icon': Size(26, 26),
   'map_icon': Size(23, 23),
@@ -157,18 +159,15 @@ void main() {
         PindTab.map,
       );
       final mapState = tester.state(find.byType(ExploreScreen));
-      await tester.enterText(find.byType(TextField), '서울 카페');
-      await tester.testTextInput.receiveAction(TextInputAction.search);
+      await mapSearch(tester, '서울 카페');
       await tester.pumpAndSettle();
       for (final name in ['discover', 'profile', 'map', 'map']) {
         await tester.tap(find.byKey(ValueKey('nav-$name')));
         await tester.pumpAndSettle();
       }
       expect(tester.state(find.byType(ExploreScreen)), same(mapState));
-      expect(
-        tester.widget<TextField>(find.byType(TextField)).controller!.text,
-        '서울 카페',
-      );
+      // The search button still shows the last query.
+      expect(find.text('서울 카페'), findsOneWidget);
       expect(calls, ['posted', 'search']);
     },
   );
