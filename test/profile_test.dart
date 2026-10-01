@@ -179,7 +179,7 @@ void main() {
     expect(find.text('팔로잉'), findsOneWidget);
     expect(find.text('맛 중시형'), findsOneWidget);
     expect(find.text('맛 먼저, 그다음 양·분위기·공간을 봐요.'), findsOneWidget);
-    expect(find.text('더보기 ›'), findsNWidgets(2)); // badges, my map
+    expect(find.text('더보기 ›'), findsOneWidget); // badges only
     // The map centers on the newest post; saved-only places stay off it.
     expect(canned.mapPlaces.first.id, canned.posts.first.place.id);
     expect(

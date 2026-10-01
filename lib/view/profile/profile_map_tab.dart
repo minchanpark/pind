@@ -57,10 +57,6 @@ class ProfileMapTab extends StatelessWidget {
           profileSection(
             mine ? '나의 지도' : '지도',
             map(places),
-            trailing: '더보기 ›',
-            onTrailing: mine && onShowMap != null
-                ? () => onShowMap!(places.firstOrNull?.id)
-                : null,
           ),
         ],
       ),
@@ -191,7 +187,6 @@ class _PostsMapState extends State<_PostsMap> {
           markerId: MarkerId('${p.id}'),
           position: LatLng(p.latitude, p.longitude),
           icon: await placeMarkerIcon(p),
-          infoWindow: InfoWindow(title: p.name),
           onTap: widget.onOpen == null ? null : () => widget.onOpen!(p),
         ),
       ),

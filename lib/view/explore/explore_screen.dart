@@ -124,7 +124,6 @@ class _ExploreScreenState extends State<ExploreScreen> {
               markerId: MarkerId(p.key),
               position: LatLng(p.latitude, p.longitude),
               icon: await placeMarkerIcon(p),
-              infoWindow: InfoWindow(title: p.name),
               onTap: () => showPlace(p),
             ),
           ),
