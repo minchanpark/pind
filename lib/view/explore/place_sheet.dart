@@ -739,14 +739,22 @@ class _PlaceSheetState extends State<PlaceSheet> {
                   ),
                 ),
               ),
-              if (post.mine &&
-                  post.id != null &&
-                  controller.deletePost != null) ...[
-                deleteButton(post),
-                const SizedBox(width: 6),
-              ],
-              if (post.id != null && controller.setLiked != null)
-                likeButton(post),
+              Row(
+                spacing: 10,
+                children: [
+                  if (post.mine &&
+                      post.id != null &&
+                      controller.deletePost != null)
+                    PostDeleteButton(
+                      onConfirmed: () async {
+                        final error = await controller.delete(post);
+                        if (mounted) message(error ?? '게시물을 삭제했어요.');
+                      },
+                    ),
+                  if (post.id != null && controller.setLiked != null)
+                    likeButton(post),
+                ],
+              ),
             ],
           ),
           Padding(
@@ -795,17 +803,6 @@ class _PlaceSheetState extends State<PlaceSheet> {
       ),
     );
   }
-
-  /// Mine only; asks first, since a deleted post can't come back.
-  Widget deleteButton(PlacePost post) => PostCardButton(
-    label: '게시물 삭제',
-    icon: const Icon(Icons.delete_outline, size: 12),
-    onTap: (_) async {
-      if (!await confirmDelete(context)) return;
-      final error = await controller.delete(post);
-      if (mounted) message(error ?? '게시물을 삭제했어요.');
-    },
-  );
 
   /// The feed's heart, same look and count.
   Widget likeButton(PlacePost post) => PostCardButton(
@@ -1205,57 +1202,3 @@ class _ClipTop extends CustomClipper<Rect> {
   @override
   bool shouldReclip(_ClipTop old) => old.top != top;
 }
-
-/// True when the user chose 삭제. Same sheet as 팔로우 취소 (Figma 663:5621).
-Future<bool> confirmDelete(BuildContext context) async =>
-    await showModalBottomSheet<bool>(
-      context: context,
-      backgroundColor: const Color(0xFFF7F7F9),
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
-      ),
-      showDragHandle: true,
-      builder: (context) => SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(20, 0, 20, 12),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            spacing: 10,
-            children: [
-              const Text(
-                '게시물을 삭제할까요?',
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w700,
-                  color: PindTheme.ink,
-                ),
-              ),
-              const Text(
-                '사진과 별점도 함께 지워지고, 되돌릴 수 없어요.',
-                textAlign: TextAlign.center,
-                style: TextStyle(fontSize: 12, color: PindTheme.muted),
-              ),
-              const SizedBox(height: 8),
-              FilledButton(
-                style: FilledButton.styleFrom(
-                  backgroundColor: const Color(0xFFE8336E),
-                  minimumSize: const Size.fromHeight(44),
-                ),
-                onPressed: () => Navigator.pop(context, true),
-                child: const Text('삭제'),
-              ),
-              TextButton(
-                style: TextButton.styleFrom(
-                  minimumSize: const Size.fromHeight(44),
-                ),
-                onPressed: () => Navigator.pop(context, false),
-                child: const Text('닫기', style: TextStyle(color: PindTheme.ink)),
-              ),
-            ],
-          ),
-        ),
-      ),
-    ) ??
-    false;

@@ -223,4 +223,30 @@ void main() {
       await Future<void>.delayed(Duration.zero);
     },
   );
+
+  test(
+    'delete drops my post; a failure keeps it; deletions elsewhere drop too',
+    () async {
+      var fail = false;
+      final service = FakeDiscoverService()
+        ..feedQueue.add(FeedPage([post(1), post(2), post(3)], hasMore: false));
+      final c = DiscoverController(
+        service: service,
+        deletePost: (id) async {
+          if (fail) throw const PlaceFailure('삭제 실패');
+        },
+      );
+      addTearDown(c.dispose);
+      await c.load();
+      expect(await c.delete(c.model.posts[1]), isNull);
+      expect([for (final p in c.model.posts) p.post.id], [1, 3]);
+      fail = true;
+      expect(await c.delete(c.model.posts[0]), '삭제 실패');
+      expect([for (final p in c.model.posts) p.post.id], [1, 3]);
+      // Deleted from the place detail sheet.
+      postDeletions.add(3);
+      await Future<void>.delayed(Duration.zero);
+      expect([for (final p in c.model.posts) p.post.id], [1]);
+    },
+  );
 }

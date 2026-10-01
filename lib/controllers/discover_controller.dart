@@ -7,11 +7,39 @@ import '../services/data_revision.dart';
 import '../services/discover_service.dart';
 
 class DiscoverController {
-  DiscoverController({required DiscoverService? service})
+  DiscoverController({required DiscoverService? service, this.deletePost})
     : _service = service ?? UnavailableDiscoverService() {
     _edits = myProfileEdits.stream.listen(_authorChanged);
+    _deletions = postDeletions.stream.listen(_drop);
   }
   late final StreamSubscription<UserProfile> _edits;
+  late final StreamSubscription<int> _deletions;
+
+  /// Deletes one of my posts; null hides 삭제.
+  final Future<void> Function(int postId)? deletePost;
+
+  /// Drops a post deleted here or anywhere else (place detail).
+  void _drop(int postId) {
+    if (_disposed || !model.posts.any((p) => p.post.id == postId)) return;
+    model.update(
+      () => model.posts = [
+        for (final p in model.posts)
+          if (p.post.id != postId) p,
+      ],
+    );
+  }
+
+  /// Null on success; otherwise the message to show.
+  Future<String?> delete(FeedPost post) async {
+    if (deletePost == null) return null;
+    try {
+      await deletePost!(post.post.id);
+    } catch (caught) {
+      return caught is PlaceFailure ? caught.message : '게시물을 삭제하지 못했어요.';
+    }
+    _drop(post.post.id);
+    return null;
+  }
 
   /// My new photo/name on my posts already in the feed, without a refetch.
   void _authorChanged(UserProfile me) {
@@ -117,6 +145,7 @@ class DiscoverController {
 
   void dispose() {
     _edits.cancel();
+    _deletions.cancel();
     _disposed = true;
     _request++;
     model.dispose();

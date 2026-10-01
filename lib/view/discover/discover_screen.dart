@@ -20,8 +20,12 @@ class DiscoverScreen extends StatefulWidget {
     this.preferences,
     this.bottomClearance = 0,
     this.onFindFriends,
+    this.myId,
   });
   final DiscoverController controller;
+
+  /// Signed-in user; their own posts get 삭제 next to the heart.
+  final String? myId;
   final ExploreController? explore;
   final TastePreferences? preferences;
   final double bottomClearance;
@@ -303,21 +307,39 @@ class _DiscoverScreenState extends State<DiscoverScreen> {
     author: p.author,
     preferences: widget.preferences,
     onPlace: widget.explore == null ? null : () => openPlace(p),
-    action: PostCardButton(
-      label: p.liked ? '좋아요 취소' : '좋아요',
-      selected: p.liked,
-      leading: p.likeCount > 0
-          ? Text(
-              '${p.likeCount}',
-              style: const TextStyle(fontSize: 10, color: PindTheme.muted),
-            )
-          : null,
-      icon: Icon(
-        p.liked ? Icons.favorite : Icons.favorite_border,
-        size: 12,
-        color: p.liked ? PindTheme.purple : null,
-      ),
-      onTap: (_) => controller.toggleLike(p),
+    action: Row(
+      mainAxisSize: MainAxisSize.min,
+      spacing: 10,
+      children: [
+        if (widget.myId != null &&
+            p.author.id == widget.myId &&
+            controller.deletePost != null)
+          PostDeleteButton(
+            onConfirmed: () async {
+              final error = await controller.delete(p);
+              if (!mounted) return;
+              ScaffoldMessenger.of(
+                context,
+              ).showSnackBar(SnackBar(content: Text(error ?? '게시물을 삭제했어요.')));
+            },
+          ),
+        PostCardButton(
+          label: p.liked ? '좋아요 취소' : '좋아요',
+          selected: p.liked,
+          leading: p.likeCount > 0
+              ? Text(
+                  '${p.likeCount}',
+                  style: const TextStyle(fontSize: 10, color: PindTheme.muted),
+                )
+              : null,
+          icon: Icon(
+            p.liked ? Icons.favorite : Icons.favorite_border,
+            size: 12,
+            color: p.liked ? PindTheme.purple : null,
+          ),
+          onTap: (_) => controller.toggleLike(p),
+        ),
+      ],
     ),
   );
 }

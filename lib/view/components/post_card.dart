@@ -321,3 +321,72 @@ class PostCardButton extends StatelessWidget {
     ),
   );
 }
+
+/// 휴지통 for my own posts, next to the heart: confirms, then [onConfirmed].
+class PostDeleteButton extends StatelessWidget {
+  const PostDeleteButton({super.key, required this.onConfirmed});
+  final Future<void> Function() onConfirmed;
+
+  @override
+  Widget build(BuildContext context) => PostCardButton(
+    label: '게시물 삭제',
+    icon: const Icon(Icons.delete_outline, size: 12),
+    onTap: (button) async {
+      if (await confirmDelete(button)) await onConfirmed();
+    },
+  );
+}
+
+/// True when the user chose 삭제. Same sheet as 팔로우 취소 (Figma 663:5621).
+Future<bool> confirmDelete(BuildContext context) async =>
+    await showModalBottomSheet<bool>(
+      context: context,
+      backgroundColor: const Color(0xFFF7F7F9),
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
+      ),
+      showDragHandle: true,
+      builder: (context) => SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(20, 0, 20, 12),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            spacing: 10,
+            children: [
+              const Text(
+                '게시물을 삭제할까요?',
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w700,
+                  color: PindTheme.ink,
+                ),
+              ),
+              const Text(
+                '사진과 별점도 함께 지워지고, 되돌릴 수 없어요.',
+                textAlign: TextAlign.center,
+                style: TextStyle(fontSize: 12, color: PindTheme.muted),
+              ),
+              const SizedBox(height: 8),
+              FilledButton(
+                style: FilledButton.styleFrom(
+                  backgroundColor: const Color(0xFFE8336E),
+                  minimumSize: const Size.fromHeight(44),
+                ),
+                onPressed: () => Navigator.pop(context, true),
+                child: const Text('삭제'),
+              ),
+              TextButton(
+                style: TextButton.styleFrom(
+                  minimumSize: const Size.fromHeight(44),
+                ),
+                onPressed: () => Navigator.pop(context, false),
+                child: const Text('닫기', style: TextStyle(color: PindTheme.ink)),
+              ),
+            ],
+          ),
+        ),
+      ),
+    ) ??
+    false;

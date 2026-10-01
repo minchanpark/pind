@@ -56,7 +56,10 @@ class MainShell extends StatefulWidget {
 class _MainShellState extends State<MainShell> {
   final navigation = NavigationController();
   late final profile = ProfileController(profile: widget.profile);
-  late final discover = DiscoverController(service: widget.discover);
+  late final discover = DiscoverController(
+    service: widget.discover,
+    deletePost: widget.posts?.delete,
+  );
   PindTab get selected => navigation.model.selected;
 
   @override
@@ -228,6 +231,7 @@ class _MainShellState extends State<MainShell> {
                   enabled: selected == PindTab.discover,
                   child: DiscoverScreen(
                     controller: discover,
+                    myId: widget.posts?.userId,
                     explore: widget.controller,
                     preferences: widget.preferences,
                     bottomClearance: clearance,

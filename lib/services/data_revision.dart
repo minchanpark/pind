@@ -12,3 +12,6 @@ void markDataChanged() => dataRevision++;
 /// My profile right after I edit it (photo, name, bio). Screens that show my
 /// name or photo inside other data (feed posts) patch it in place.
 final myProfileEdits = StreamController<UserProfile>.broadcast();
+
+/// Ids of posts I just deleted, so every list showing them can drop them.
+final postDeletions = StreamController<int>.broadcast();

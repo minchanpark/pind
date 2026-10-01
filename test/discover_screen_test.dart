@@ -69,11 +69,16 @@ Future<DiscoverController> pump(
   FakeDiscoverService service, {
   double height = 2400,
   VoidCallback? onFindFriends,
+  String? myId,
+  Future<void> Function(int)? deletePost,
 }) async {
   tester.view.devicePixelRatio = 1;
   tester.view.physicalSize = Size(402, height);
   addTearDown(tester.view.reset);
-  final controller = DiscoverController(service: service);
+  final controller = DiscoverController(
+    service: service,
+    deletePost: deletePost,
+  );
   addTearDown(controller.dispose);
   await tester.pumpWidget(
     MaterialApp(
@@ -81,6 +86,7 @@ Future<DiscoverController> pump(
       home: DiscoverScreen(
         controller: controller,
         onFindFriends: onFindFriends,
+        myId: myId,
       ),
     ),
   );
@@ -180,6 +186,57 @@ void main() {
     expect(find.text('1'), findsNWidgets(2)); // posts 2 and 3 each
     expect(find.text('2'), findsNothing);
     expect(service.likes.last, (3, false));
+    semantics.dispose();
+  });
+
+  testWidgets('my post: 휴지통 10px left of the heart, confirms, then drops', (
+    tester,
+  ) async {
+    final semantics = tester.ensureSemantics();
+    final deleted = <int>[];
+    final service = FakeDiscoverService(first: three);
+    // Post 2 is mine (author u2).
+    await pump(
+      tester,
+      service,
+      myId: 'u2',
+      deletePost: (id) async => deleted.add(id),
+    );
+    final trash = find.bySemanticsLabel('게시물 삭제');
+    expect(trash, findsOneWidget);
+    // Same row as the heart, 10px apart.
+    final buttons = find.ancestor(of: trash, matching: find.byType(Row)).first;
+    final row = tester.widget<Row>(buttons);
+    expect(row.spacing, 10);
+    expect(row.children, hasLength(2));
+    final trashBox = tester.getRect(find.byWidget(row.children.first));
+    final heartBox = tester.getRect(find.byWidget(row.children.last));
+    expect(heartBox.left - trashBox.right, closeTo(10, .01));
+    expect(trashBox.center.dy, closeTo(heartBox.center.dy, .01));
+
+    await tester.tap(trash);
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('닫기'));
+    await tester.pumpAndSettle();
+    expect(deleted, isEmpty);
+    await tester.tap(trash);
+    await tester.pumpAndSettle();
+    await tester.tap(find.widgetWithText(FilledButton, '삭제'));
+    await tester.pumpAndSettle();
+    expect(deleted, [2]);
+    expect(find.text('가게 2'), findsNothing);
+    expect(find.text('게시물을 삭제했어요.'), findsOneWidget);
+    semantics.dispose();
+  });
+
+  testWidgets('no 휴지통 on others\' posts or when signed out', (tester) async {
+    final semantics = tester.ensureSemantics();
+    await pump(
+      tester,
+      FakeDiscoverService(first: three),
+      deletePost: (_) async {},
+    );
+    expect(find.bySemanticsLabel('게시물 삭제'), findsNothing);
     semantics.dispose();
   });
 

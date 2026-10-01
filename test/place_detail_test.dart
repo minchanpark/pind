@@ -556,10 +556,14 @@ void main() {
     final delete = inPost(0, find.bySemanticsLabel('게시물 삭제'));
     expect(delete, findsOneWidget);
     expect(inPost(1, find.bySemanticsLabel('게시물 삭제')), findsNothing);
-    expect(
-      tester.getCenter(delete).dx,
-      lessThan(tester.getCenter(inPost(0, find.bySemanticsLabel('좋아요'))).dx),
+    // Same row as the heart, 10px apart.
+    final row = tester.widget<Row>(
+      find.ancestor(of: delete, matching: find.byType(Row)).first,
     );
+    expect(row.spacing, 10);
+    final trashBox = tester.getRect(find.byWidget(row.children.first));
+    final heartBox = tester.getRect(find.byWidget(row.children.last));
+    expect(heartBox.left - trashBox.right, closeTo(10, .01));
     // Closing the sheet keeps the post.
     await tester.tap(delete);
     await tester.pumpAndSettle();
