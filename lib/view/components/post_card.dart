@@ -122,26 +122,14 @@ class PostCard extends StatelessWidget {
       case 1:
         return frame(urls[0], 214, 262, radius: 17, border: yellow, width: 4.5);
       case 2:
-        return Container(
-          width: 281,
-          height: 203,
-          clipBehavior: Clip.antiAlias,
-          decoration: BoxDecoration(borderRadius: BorderRadius.circular(13.3)),
-          foregroundDecoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(13.3),
-            border: Border.all(color: yellow, width: 3.5),
-          ),
-          child: Column(
-            children: [
-              for (final url in urls)
-                Expanded(
-                  child: SizedBox(
-                    width: double.infinity,
-                    child: placeImage(url),
-                  ),
-                ),
-            ],
-          ),
+        // Medium cards side by side: between the single card and the trio.
+        return Row(
+          mainAxisSize: MainAxisSize.min,
+          spacing: 10,
+          children: [
+            for (final url in urls)
+              frame(url, 140, 190, radius: 14, border: yellow, width: 3),
+          ],
         );
       default:
         // Card-center offsets from the upright center card, Figma 599:23885.
