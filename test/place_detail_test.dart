@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:pind_flutter/model/detail_preview_model.dart';
 import 'package:pind_flutter/controllers/place_detail_controller.dart';
 
@@ -420,6 +422,61 @@ void main() {
       findsNothing,
     );
 
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('two post photos fan like PostCard, each still openable', (
+    tester,
+  ) async {
+    const a = 'assets/preview/place_detail_photo_1.png';
+    const b = 'assets/preview/place_detail_photo_2.png';
+    await mount(
+      tester,
+      LocalDetailContext(),
+      payload: {
+        ...detailPayload,
+        'posts': [
+          {
+            'author': '유하람',
+            'photos': [a, b],
+            'ratings': {'taste': 5},
+          },
+        ],
+      },
+    );
+    await tester.tap(find.byKey(const ValueKey('detail-expand')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const ValueKey('detail-tab-1')));
+    await tester.pumpAndSettle();
+    final post = find.byKey(const ValueKey('detail-post-0'));
+    expect(
+      find.descendant(of: post, matching: find.byType(Image)),
+      findsNWidgets(2),
+    );
+    // Front (first photo) tilts left, back (second) right, as in PostCard.
+    double tilt(int photo) {
+      final m = tester
+          .widget<Transform>(
+            find
+                .ancestor(
+                  of: find.bySemanticsLabel('게시물 사진 $photo 크게 보기'),
+                  matching: find.byType(Transform),
+                )
+                .first,
+          )
+          .transform;
+      return math.atan2(m.entry(1, 0), m.entry(0, 0)) * 180 / math.pi;
+    }
+
+    expect(tilt(1), closeTo(-5, .01));
+    expect(tilt(2), closeTo(7, .01));
+    for (final photo in [1, 2]) {
+      await tester.tap(find.bySemanticsLabel('게시물 사진 $photo 크게 보기'));
+      await tester.pumpAndSettle();
+      expect(find.bySemanticsLabel('게시물 사진 $photo/2'), findsOneWidget);
+      await tester.tap(find.byKey(const ValueKey('photo-viewer-back')));
+      await tester.pumpAndSettle();
+    }
     expect(tester.takeException(), isNull);
   });
 

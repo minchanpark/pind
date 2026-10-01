@@ -811,9 +811,15 @@ class _PlaceSheetState extends State<PlaceSheet> {
             );
     }
     final extra = post.photos.length - 3;
-    Widget card(int index, Color border, [int more = 0]) => Container(
-      width: 109.01,
-      height: 164.912,
+    Widget card(
+      int index,
+      Color border, {
+      int more = 0,
+      double w = 109.01,
+      double h = 164.912,
+    }) => Container(
+      width: w,
+      height: h,
       foregroundDecoration: BoxDecoration(
         border: Border.all(color: border, width: 2),
         borderRadius: BorderRadius.circular(12.086),
@@ -847,6 +853,27 @@ class _PlaceSheetState extends State<PlaceSheet> {
           offset: Offset(dx, dy),
           child: Transform.rotate(angle: degrees * math.pi / 180, child: child),
         );
+    const purple = Color(0xFF6300DB);
+    if (post.photos.length == 2) {
+      // A fanned pair, as in PostCard: the first photo in front.
+      return SizedBox(
+        width: double.infinity,
+        height: 190,
+        child: Stack(
+          clipBehavior: Clip.none,
+          alignment: Alignment.center,
+          children: [
+            side(openable(post, 1, card(1, yellow, w: 126, h: 180)), 52, -4, 7),
+            side(
+              openable(post, 0, card(0, purple, w: 126, h: 180)),
+              -52,
+              2,
+              -5,
+            ),
+          ],
+        ),
+      );
+    }
     // Full width, so the fanned side cards stay inside the Stack and receive taps.
     return SizedBox(
       width: double.infinity,
@@ -856,9 +883,9 @@ class _PlaceSheetState extends State<PlaceSheet> {
         alignment: const Alignment(0, 1),
         children: [
           if (post.photos.length > 2)
-            side(openable(post, 2, card(2, yellow, extra)), 95, -8, 6.51),
+            side(openable(post, 2, card(2, yellow, more: extra)), 95, -8, 6.51),
           side(openable(post, 1, card(1, yellow)), -93, -7, -8.21),
-          openable(post, 0, card(0, const Color(0xFF6300DB))),
+          openable(post, 0, card(0, purple)),
         ],
       ),
     );
