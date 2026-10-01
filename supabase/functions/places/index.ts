@@ -15,15 +15,14 @@ declare const EdgeRuntime: {waitUntil(promise: Promise<unknown>): void};
 const geminiKey = Deno.env.get('GEMINI_API_KEY');
 const gemini = geminiKey ? new GoogleGenAI({apiKey:geminiKey}) : null;
 
-const serviceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
-const admin = createClient(Deno.env.get('SUPABASE_URL')!,serviceKey,{
+const admin = createClient(Deno.env.get('SUPABASE_URL')!,Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!,{
   auth:{persistSession:false,autoRefreshToken:false},
 });
 
 // Runs after the response. A failure frees the claim and records why;
 // claim_place_insight then waits a minute before the next try.
-async function refreshInsight(placeId:number) {
-  const {data:claimed} = await admin.rpc('claim_place_insight',{p_place_id:placeId});
+async function refreshInsight(placeId:number,claimed=false) {
+  if (!claimed) ({data:claimed} = await admin.rpc('claim_place_insight',{p_place_id:placeId}));
   if (!claimed) return;
   try {
     // ponytail: newest 50 posts only; summarise in batches if places outgrow that.
@@ -55,8 +54,8 @@ async function refreshInsight(placeId:number) {
     throw error;
   }
 }
-const queueInsight = (placeId:number) => {
-  if (gemini) EdgeRuntime.waitUntil(refreshInsight(placeId).catch(error => console.error('insight refresh failed',error)));
+const queueInsight = (placeId:number,claimed=false) => {
+  if (gemini) EdgeRuntime.waitUntil(refreshInsight(placeId,claimed).catch(error => console.error('insight refresh failed',error)));
 };
 Deno.serve(async request => {
   if (request.method === 'OPTIONS') return new Response('ok',{headers});
@@ -64,20 +63,24 @@ Deno.serve(async request => {
   try {
     const auth = request.headers.get('Authorization');
     if (!auth?.startsWith('Bearer ')) throw new CatalogError(401,'UNAUTHORIZED','로그인이 필요합니다.');
-    // posts trigger (public.request_place_insight); service key only.
-    if (auth === `Bearer ${serviceKey}`) {
-      const {refreshInsight:placeId} = await request.json().catch(() => ({}));
-      if (!Number.isSafeInteger(placeId) || placeId <= 0) throw new CatalogError(400,'INVALID_JSON','잘못된 요청입니다.');
-      queueInsight(placeId);
-      return json({queued:true},202);
-    }
     const client = createClient(Deno.env.get('SUPABASE_URL')!,Deno.env.get('SUPABASE_ANON_KEY')!,{
       global:{headers:{Authorization:auth}},auth:{persistSession:false,autoRefreshToken:false},
     });
+    // posts trigger (public.request_place_insight). Only service_role may
+    // execute claim_place_insight, so the database itself checks the caller.
+    const raw = await request.text();
+    const webhook = (() => { try { return JSON.parse(raw)?.refreshInsight; } catch { return undefined; } })();
+    if (webhook !== undefined) {
+      if (!Number.isSafeInteger(webhook) || webhook <= 0) throw new CatalogError(400,'INVALID_JSON','잘못된 요청입니다.');
+      const {data:claimed,error} = await client.rpc('claim_place_insight',{p_place_id:webhook});
+      if (error) throw new CatalogError(401,'UNAUTHORIZED','로그인이 필요합니다.');
+      if (claimed) queueInsight(webhook,true);
+      return json({queued:Boolean(claimed)},202);
+    }
     const {data:user,error:authError} = await client.auth.getUser();
     if (authError || !user.user) throw new CatalogError(401,'UNAUTHORIZED','로그인이 필요합니다.');
     let body;
-    try { body = await request.json(); } catch { throw new CatalogError(400,'INVALID_JSON','잘못된 요청입니다.'); }
+    try { body = JSON.parse(raw); } catch { throw new CatalogError(400,'INVALID_JSON','잘못된 요청입니다.'); }
     if (!body || typeof body !== 'object' || Array.isArray(body)) throw new CatalogError(400,'INVALID_JSON','잘못된 요청입니다.');
     return json(await catalogRequest(body,async args => {
       const {data,error} = await client.rpc('get_catalog_places',args);
