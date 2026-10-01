@@ -224,10 +224,17 @@ class _ExploreScreenState extends State<ExploreScreen> {
       load: () async => explore.nearbyRanking(await mapCenter()),
       include: (p) => pattern.isEmpty || _inCategory(pattern, p),
       preferences: widget.preferences,
-      onOpen: showPlace,
+      onOpen: focusPlace,
       onSetSaved: explore.placeContext?.setSaved,
     );
   }
+
+  /// Centers the map on [place]; its pin opens the detail as usual.
+  void focusPlace(Place place) => map
+      ?.animateCamera(
+        CameraUpdate.newLatLngZoom(LatLng(place.latitude, place.longitude), 16),
+      )
+      .catchError((_) {});
 
   /// Fallback origin when my location is unavailable.
   Future<MapViewport> mapCenter() async {

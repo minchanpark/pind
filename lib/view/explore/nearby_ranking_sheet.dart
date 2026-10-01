@@ -51,6 +51,8 @@ class NearbyRankingSheet extends StatefulWidget {
   final NearbyLoad Function() load;
   final bool Function(Place) include;
   final TastePreferences? preferences;
+
+  /// Called after the sheet closes, with the tapped place.
   final ValueChanged<Place> onOpen;
   final Future<void> Function(int placeId, bool saved)? onSetSaved;
 
@@ -283,7 +285,10 @@ class _NearbyRankingSheetState extends State<NearbyRankingSheet> {
     );
     final shown = by == null ? criteria : [by!];
     return InkWell(
-      onTap: () => widget.onOpen(p.place),
+      onTap: () {
+        Navigator.maybePop(context);
+        widget.onOpen(p.place);
+      },
       child: Padding(
         padding: const EdgeInsets.symmetric(vertical: 14),
         child: Row(

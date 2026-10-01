@@ -132,6 +132,7 @@ void main() {
     WidgetTester tester, {
     bool nearMe = true,
     bool fail = false,
+    List<String>? opened,
   }) async {
     final saves = <(int, bool)>[];
     await tester.pumpWidget(
@@ -145,7 +146,7 @@ void main() {
                 fail ? throw Exception() : (places: rows, nearMe: nearMe),
             include: (p) => p.category == '카페',
             preferences: prefs,
-            onOpen: (_) {},
+            onOpen: (p) => opened?.add(p.name),
             onSetSaved: (id, saved) async => saves.add((id, saved)),
           ),
         ),
@@ -185,6 +186,35 @@ void main() {
     expect(saves, [(2, true)]);
     expect(find.text('1,412'), findsOneWidget);
     expect(find.bySemanticsLabel('저장 취소'), findsOneWidget);
+  });
+
+  testWidgets('tapping a place closes the sheet and reports it', (
+    tester,
+  ) async {
+    final opened = <String>[];
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Builder(
+          builder: (context) => TextButton(
+            onPressed: () => showNearbyRanking(
+              context,
+              title: '☕ 카페',
+              load: () async => (places: rows, nearMe: true),
+              include: (p) => p.category == '카페',
+              preferences: prefs,
+              onOpen: (p) => opened.add(p.name),
+            ),
+            child: const Text('open'),
+          ),
+        ),
+      ),
+    );
+    await tester.tap(find.text('open'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('가까운집'));
+    await tester.pumpAndSettle();
+    expect(opened, ['가까운집']);
+    expect(find.byType(NearbyRankingSheet), findsNothing);
   });
 
   testWidgets('map-center fallback note and retry on failure', (tester) async {
