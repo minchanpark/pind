@@ -2,7 +2,7 @@ import 'jsr:@supabase/functions-js/edge-runtime.d.ts';
 import { createClient } from 'npm:@supabase/supabase-js@2.112.3';
 import { GoogleGenAI } from 'npm:@google/genai@2.24.0';
 import { catalogRequest, CatalogError } from './catalog.ts';
-import { INSIGHT_SCHEMA, INSIGHT_SYSTEM, insightPrompt, parseInsight } from './insights.ts';
+import { INSIGHT_SCHEMA, INSIGHT_SYSTEM, insightPrompt, parseInsight, retryOnce } from './insights.ts';
 
 const headers = {
   'Access-Control-Allow-Origin':'*',
@@ -15,37 +15,62 @@ declare const EdgeRuntime: {waitUntil(promise: Promise<unknown>): void};
 const geminiKey = Deno.env.get('GEMINI_API_KEY');
 const gemini = geminiKey ? new GoogleGenAI({apiKey:geminiKey}) : null;
 
-// Runs after the response; a failed refresh retries once its claim expires.
+const serviceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+const admin = createClient(Deno.env.get('SUPABASE_URL')!,serviceKey,{
+  auth:{persistSession:false,autoRefreshToken:false},
+});
+
+// Runs after the response. A failure frees the claim and records why;
+// claim_place_insight then waits a minute before the next try.
 async function refreshInsight(placeId:number) {
-  const admin = createClient(Deno.env.get('SUPABASE_URL')!,Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!,{
-    auth:{persistSession:false,autoRefreshToken:false},
-  });
   const {data:claimed} = await admin.rpc('claim_place_insight',{p_place_id:placeId});
   if (!claimed) return;
-  // ponytail: newest 50 posts only; summarise in batches if places outgrow that.
-  const {data:posts,count,error} = await admin.from('posts')
-    .select('body,ratings,taste_score,portion_score,ambience_score',{count:'exact'})
-    .eq('place_id',placeId).eq('is_public',true).eq('status','published')
-    .order('created_at',{ascending:false}).limit(50);
-  if (error) throw error;
-  const response = await gemini!.models.generateContent({
-    model:'gemini-3.8-flash',
-    contents:insightPrompt(posts),
-    config:{systemInstruction:INSIGHT_SYSTEM,responseMimeType:'application/json',responseJsonSchema:INSIGHT_SCHEMA},
-  });
-  const finish = response.candidates?.[0]?.finishReason;
-  if (finish !== 'STOP' || !response.text) throw new Error(`Insight stopped: ${finish}`);
-  const {error:saveError} = await admin.from('place_insights').update({
-    ...parseInsight(response.text),post_count:count ?? posts.length,claimed_at:null,updated_at:new Date().toISOString(),
-  }).eq('place_id',placeId);
-  if (saveError) throw saveError;
+  try {
+    // ponytail: newest 50 posts only; summarise in batches if places outgrow that.
+    const {data:posts,count,error} = await admin.from('posts')
+      .select('body,ratings,taste_score,portion_score,ambience_score',{count:'exact'})
+      .eq('place_id',placeId).eq('is_public',true).eq('status','published')
+      .order('created_at',{ascending:false}).limit(50);
+    if (error) throw error;
+    let insight = {summary:'',criteria:{}};
+    if (posts.length) {
+      const response = await retryOnce(() => gemini!.models.generateContent({
+        model:'gemini-3.8-flash',
+        contents:insightPrompt(posts),
+        config:{systemInstruction:INSIGHT_SYSTEM,responseMimeType:'application/json',responseJsonSchema:INSIGHT_SCHEMA},
+      }));
+      const finish = response.candidates?.[0]?.finishReason;
+      if (finish !== 'STOP' || !response.text) throw new Error(`Insight stopped: ${finish}`);
+      insight = parseInsight(response.text);
+    }
+    const {error:saveError} = await admin.from('place_insights').update({
+      ...insight,post_count:count ?? posts.length,claimed_at:null,last_error:null,failed_at:null,
+      updated_at:new Date().toISOString(),
+    }).eq('place_id',placeId);
+    if (saveError) throw saveError;
+  } catch (error) {
+    await admin.from('place_insights').update({
+      claimed_at:null,failed_at:new Date().toISOString(),last_error:String(error).slice(0,500),
+    }).eq('place_id',placeId);
+    throw error;
+  }
 }
+const queueInsight = (placeId:number) => {
+  if (gemini) EdgeRuntime.waitUntil(refreshInsight(placeId).catch(error => console.error('insight refresh failed',error)));
+};
 Deno.serve(async request => {
   if (request.method === 'OPTIONS') return new Response('ok',{headers});
   if (request.method !== 'POST') return json({error:{message:'Use POST.'}},405);
   try {
     const auth = request.headers.get('Authorization');
     if (!auth?.startsWith('Bearer ')) throw new CatalogError(401,'UNAUTHORIZED','로그인이 필요합니다.');
+    // posts trigger (public.request_place_insight); service key only.
+    if (auth === `Bearer ${serviceKey}`) {
+      const {refreshInsight:placeId} = await request.json().catch(() => ({}));
+      if (!Number.isSafeInteger(placeId) || placeId <= 0) throw new CatalogError(400,'INVALID_JSON','잘못된 요청입니다.');
+      queueInsight(placeId);
+      return json({queued:true},202);
+    }
     const client = createClient(Deno.env.get('SUPABASE_URL')!,Deno.env.get('SUPABASE_ANON_KEY')!,{
       global:{headers:{Authorization:auth}},auth:{persistSession:false,autoRefreshToken:false},
     });
@@ -65,9 +90,7 @@ Deno.serve(async request => {
       return error ? paths.map(() => null) : data.map(item => item.error ? null : item.signedUrl);
     },
     Deno.env.get('GOOGLE_FALLBACK_ENABLED') !== 'false',
-    placeId => {
-      if (gemini) EdgeRuntime.waitUntil(refreshInsight(placeId).catch(error => console.error('insight refresh failed',error)));
-    }));
+    queueInsight));
   } catch(error) {
     if (error instanceof CatalogError) return json({error:{code:error.code,message:error.message}},error.status);
     return json({error:{code:'CATALOG_UNAVAILABLE',message:'장소 DB에 연결하지 못했어요.'}},503);

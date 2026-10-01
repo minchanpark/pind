@@ -39,7 +39,7 @@ try:
     sql(ROOT / 'supabase/tests/post_storage_bootstrap.sql')
     for path in sorted((ROOT / 'supabase/migrations').glob('*.sql')):
         sql(path)
-    for name in ['public_first_places.sql', 'place_detail_context.sql', 'published_posts_map.sql', 'profile_page.sql', 'discover_feed.sql', 'follows_taste.sql', 'other_profiles.sql', 'saved_places_page.sql']:
+    for name in ['public_first_places.sql', 'place_detail_context.sql', 'published_posts_map.sql', 'profile_page.sql', 'discover_feed.sql', 'follows_taste.sql', 'other_profiles.sql', 'saved_places_page.sql', 'place_insight_refresh.sql']:
         sql(ROOT / 'supabase/tests' / name)
 except subprocess.CalledProcessError as error:
     print((error.stderr or b'').decode(), flush=True)
