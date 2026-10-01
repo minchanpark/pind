@@ -16,6 +16,7 @@ import 'package:pind_flutter/model/preferences.dart';
 import 'package:pind_flutter/model/places.dart';
 import 'package:pind_flutter/view/explore/place_sheet.dart';
 import 'package:pind_flutter/view/explore/post_photo_viewer.dart';
+import 'package:pind_flutter/view/components/pind_glass.dart';
 
 class SharedAverageContext extends LocalDetailContext {
   @override
@@ -556,14 +557,15 @@ void main() {
     final delete = inPost(0, find.bySemanticsLabel('게시물 삭제'));
     expect(delete, findsOneWidget);
     expect(inPost(1, find.bySemanticsLabel('게시물 삭제')), findsNothing);
-    // Same row as the heart, 10px apart.
-    final row = tester.widget<Row>(
-      find.ancestor(of: delete, matching: find.byType(Row)).first,
+    // The visible circles sit 10pt apart (tap targets are wider).
+    Rect circle(Finder button) => tester.getRect(
+      find.descendant(of: button, matching: find.byType(PindGlass)),
     );
-    expect(row.spacing, 10);
-    final trashBox = tester.getRect(find.byWidget(row.children.first));
-    final heartBox = tester.getRect(find.byWidget(row.children.last));
-    expect(heartBox.left - trashBox.right, closeTo(10, .01));
+    expect(
+      circle(inPost(0, find.bySemanticsLabel('좋아요'))).left -
+          circle(delete).right,
+      closeTo(10, .01),
+    );
     // Closing the sheet keeps the post.
     await tester.tap(delete);
     await tester.pumpAndSettle();

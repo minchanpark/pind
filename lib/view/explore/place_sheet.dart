@@ -739,22 +739,19 @@ class _PlaceSheetState extends State<PlaceSheet> {
                   ),
                 ),
               ),
-              Row(
-                spacing: 10,
-                children: [
-                  if (post.mine &&
-                      post.id != null &&
-                      controller.deletePost != null)
-                    PostDeleteButton(
-                      onConfirmed: () async {
-                        final error = await controller.delete(post);
-                        if (mounted) message(error ?? '게시물을 삭제했어요.');
-                      },
-                    ),
-                  if (post.id != null && controller.setLiked != null)
-                    likeButton(post),
-                ],
-              ),
+              if (post.id != null && controller.setLiked != null)
+                postActions(
+                  likeHasCount: post.likeCount > 0,
+                  delete: post.mine && controller.deletePost != null
+                      ? PostDeleteButton(
+                          onConfirmed: () async {
+                            final error = await controller.delete(post);
+                            if (mounted) message(error ?? '게시물을 삭제했어요.');
+                          },
+                        )
+                      : null,
+                  like: likeButton(post),
+                ),
             ],
           ),
           Padding(

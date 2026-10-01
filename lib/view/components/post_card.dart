@@ -322,6 +322,27 @@ class PostCardButton extends StatelessWidget {
   );
 }
 
+/// 휴지통 (if any) then the heart, the trash circle 10pt from the heart's
+/// first visible mark: its count, else its circle. Both keep their 44pt tap
+/// targets, so the trash slides right over its own padding instead.
+Widget postActions({
+  Widget? delete,
+  required Widget like,
+  required bool likeHasCount,
+}) {
+  if (delete == null) return like;
+  const pad = (44 - 23) / 2; // tap target around each 23pt circle
+  const gap = 10.0;
+  final shift = pad + (likeHasCount ? 0 : pad) - gap;
+  return Row(
+    mainAxisSize: MainAxisSize.min,
+    children: [
+      Transform.translate(offset: Offset(shift, 0), child: delete),
+      like,
+    ],
+  );
+}
+
 /// 휴지통 for my own posts, next to the heart: confirms, then [onConfirmed].
 class PostDeleteButton extends StatelessWidget {
   const PostDeleteButton({super.key, required this.onConfirmed});

@@ -7,6 +7,7 @@ import 'package:pind_flutter/model/places.dart';
 import 'package:pind_flutter/model/preferences.dart';
 import 'package:pind_flutter/model/profile_model.dart';
 import 'package:pind_flutter/services/discover_service.dart';
+import 'package:pind_flutter/view/components/pind_glass.dart';
 import 'package:pind_flutter/view/components/post_card.dart';
 import 'package:pind_flutter/view/discover/discover_screen.dart';
 import 'package:pind_flutter/view/theme.dart';
@@ -204,15 +205,25 @@ void main() {
     );
     final trash = find.bySemanticsLabel('게시물 삭제');
     expect(trash, findsOneWidget);
-    // Same row as the heart, 10px apart.
-    final buttons = find.ancestor(of: trash, matching: find.byType(Row)).first;
-    final row = tester.widget<Row>(buttons);
-    expect(row.spacing, 10);
-    expect(row.children, hasLength(2));
-    final trashBox = tester.getRect(find.byWidget(row.children.first));
-    final heartBox = tester.getRect(find.byWidget(row.children.last));
-    expect(heartBox.left - trashBox.right, closeTo(10, .01));
-    expect(trashBox.center.dy, closeTo(heartBox.center.dy, .01));
+    // The visible circles sit 10pt apart on one line (tap targets are wider).
+    Rect circle(Finder button) => tester.getRect(
+      find.descendant(of: button, matching: find.byType(PindGlass)),
+    );
+    final heart = find.ancestor(
+      of: find.byIcon(Icons.favorite_border).at(0),
+      matching: find.byType(PostCardButton),
+    );
+    final post2 = find.ancestor(of: trash, matching: find.byType(Row)).first;
+    final heart2 = find.descendant(of: post2, matching: heart);
+    expect(circle(heart2).left - circle(trash).right, closeTo(10, .01));
+    expect(circle(trash).center.dy, closeTo(circle(heart2).center.dy, .01));
+    // With a count, the gap runs to the count instead.
+    await tester.tap(
+      find.descendant(of: post2, matching: find.bySemanticsLabel('좋아요')),
+    );
+    await tester.pumpAndSettle();
+    final count = find.descendant(of: post2, matching: find.text('1'));
+    expect(tester.getRect(count).left - circle(trash).right, closeTo(10, .01));
 
     await tester.tap(trash);
     await tester.pumpAndSettle();
