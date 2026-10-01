@@ -273,27 +273,31 @@ class _SavedRow extends StatelessWidget {
                   ].join(' · '),
                   style: const TextStyle(fontSize: 12, color: PindTheme.muted),
                 ),
-                Wrap(
-                  spacing: 4,
-                  runSpacing: 4,
-                  children: [
-                    if (match != null)
-                      PindGlass(
-                        tone: PindGlassTone.purple,
-                        radius: 11,
-                        padding: const EdgeInsets.fromLTRB(6, 3, 7, 3),
-                        child: Text(
-                          '$match%',
-                          style: const TextStyle(
-                            fontSize: 10.5,
-                            fontWeight: FontWeight.w700,
-                            color: Colors.white,
+                // One line always: shrinks rather than wraps when narrow.
+                FittedBox(
+                  fit: BoxFit.scaleDown,
+                  alignment: Alignment.centerLeft,
+                  child: Row(
+                    spacing: 4,
+                    children: [
+                      if (match != null)
+                        PindGlass(
+                          tone: PindGlassTone.purple,
+                          radius: 11,
+                          padding: const EdgeInsets.fromLTRB(6, 3, 7, 3),
+                          child: Text(
+                            '$match%',
+                            style: const TextStyle(
+                              fontSize: 10.5,
+                              fontWeight: FontWeight.w700,
+                              color: Colors.white,
+                            ),
                           ),
                         ),
-                      ),
-                    for (final c in criteria)
-                      if (card.averages[c] case final avg?) rating(c, avg),
-                  ],
+                      for (final c in criteria)
+                        if (card.averages[c] case final avg?) rating(c, avg),
+                    ],
+                  ),
                 ),
                 if (card.savedAt case final at?)
                   Row(
