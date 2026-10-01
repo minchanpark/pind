@@ -31,21 +31,41 @@ class PlacePhoto {
 /// A published post as shown in the place detail posts tab.
 class PlacePost {
   const PlacePost({
+    this.id,
     required this.author,
     this.handle,
     this.avatar,
     this.body = '',
     this.ratings = const {},
     this.photos = const [],
+    this.likeCount = 0,
+    this.liked = false,
   });
+  final int? id;
   final String author, body;
   final String? handle, avatar;
+  final int likeCount;
+  final bool liked;
 
   /// Criterion name to the author's 1–5 score.
   final Map<String, int> ratings;
   final List<String> photos;
 
+  /// [liked] toggled, with the count following it.
+  PlacePost withLike(bool value) => PlacePost(
+    id: id,
+    author: author,
+    handle: handle,
+    avatar: avatar,
+    body: body,
+    ratings: ratings,
+    photos: photos,
+    liked: value,
+    likeCount: likeCount + (value == liked ? 0 : (value ? 1 : -1)),
+  );
+
   factory PlacePost.fromJson(Map<String, dynamic> json) => PlacePost(
+    id: (json['id'] as num?)?.toInt(),
     author: json['author'] as String? ?? 'Pind 사용자',
     handle: json['handle'] as String?,
     avatar: json['avatar'] as String?,
@@ -55,6 +75,8 @@ class PlacePost {
         e.key as String: (e.value as num).round(),
     },
     photos: List<String>.from(json['photos'] as List? ?? []),
+    likeCount: (json['likeCount'] as num?)?.toInt() ?? 0,
+    liked: json['liked'] == true,
   );
 }
 

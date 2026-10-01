@@ -43,6 +43,7 @@ Future<void> mount(
   Future<MapViewport?> Function(bool)? position,
   Future<void> Function(String, Rect)? share,
   Future<void> Function(String)? link,
+  Future<bool> Function(int, bool)? setLiked,
 }) async {
   tester.view.physicalSize = size;
   tester.view.devicePixelRatio = 1;
@@ -71,6 +72,7 @@ Future<void> mount(
                   position ?? (_) async => const MapViewport(37.5712, 126.905),
               shareAction: share,
               linkAction: link,
+              setLiked: setLiked,
             ),
           ),
         ),
@@ -479,6 +481,50 @@ void main() {
     }
     expect(tester.takeException(), isNull);
   });
+
+  testWidgets(
+    'post heart shows the count, toggles at once, reverts on failure',
+    (tester) async {
+      final calls = <(int, bool)>[];
+      var fail = false;
+      await mount(
+        tester,
+        LocalDetailContext(),
+        payload: {
+          ...detailPayload,
+          'posts': [
+            {'id': 5, 'author': '유하람', 'likeCount': 2, 'liked': false},
+          ],
+        },
+        setLiked: (id, liked) async {
+          calls.add((id, liked));
+          if (fail) throw Exception('offline');
+          return liked;
+        },
+      );
+      await tester.tap(find.byKey(const ValueKey('detail-expand')));
+      await tester.pumpAndSettle();
+      await tester.tap(find.byKey(const ValueKey('detail-tab-1')));
+      await tester.pumpAndSettle();
+      final post = find.byKey(const ValueKey('detail-post-0'));
+      Finder inPost(Finder f) => find.descendant(of: post, matching: f);
+      expect(inPost(find.bySemanticsLabel('좋아요')), findsOneWidget);
+      expect(inPost(find.text('2')), findsOneWidget);
+      await tester.tap(inPost(find.bySemanticsLabel('좋아요')));
+      await tester.pumpAndSettle();
+      expect(calls, [(5, true)]);
+      expect(inPost(find.bySemanticsLabel('좋아요 취소')), findsOneWidget);
+      expect(inPost(find.text('3')), findsOneWidget);
+      fail = true;
+      await tester.tap(inPost(find.bySemanticsLabel('좋아요 취소')));
+      await tester.pumpAndSettle();
+      expect(calls.last, (5, false));
+      // Refused: back to liked with 3, and the reason shown.
+      expect(inPost(find.bySemanticsLabel('좋아요 취소')), findsOneWidget);
+      expect(inPost(find.text('3')), findsOneWidget);
+      expect(find.text('좋아요를 반영하지 못했어요. 다시 시도해 주세요.'), findsOneWidget);
+    },
+  );
 
   testWidgets('Figma tabs fill equal halves and switch underline and content', (
     tester,

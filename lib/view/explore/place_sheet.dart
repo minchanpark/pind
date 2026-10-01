@@ -9,6 +9,7 @@ import '../../model/places.dart';
 import '../../model/preferences.dart';
 import '../../model/place_context.dart';
 import '../../controllers/place_detail_controller.dart';
+import '../components/post_card.dart';
 import 'post_photo_viewer.dart';
 
 /// Flutter rendering of Figma glass, not an iOS-only native control.
@@ -738,6 +739,8 @@ class _PlaceSheetState extends State<PlaceSheet> {
                   ),
                 ),
               ),
+              if (post.id != null && controller.setLiked != null)
+                likeButton(post),
             ],
           ),
           Padding(
@@ -786,6 +789,27 @@ class _PlaceSheetState extends State<PlaceSheet> {
       ),
     );
   }
+
+  /// The feed's heart, same look and count.
+  Widget likeButton(PlacePost post) => PostCardButton(
+    label: post.liked ? '좋아요 취소' : '좋아요',
+    selected: post.liked,
+    leading: post.likeCount > 0
+        ? Text(
+            '${post.likeCount}',
+            style: const TextStyle(fontSize: 10, color: PindTheme.muted),
+          )
+        : null,
+    icon: Icon(
+      post.liked ? Icons.favorite : Icons.favorite_border,
+      size: 12,
+      color: post.liked ? PindTheme.purple : null,
+    ),
+    onTap: (_) async {
+      final error = await controller.toggleLike(post);
+      if (mounted && error != null) message(error);
+    },
+  );
 
   Widget postPhotos(PlacePost post) {
     const yellow = Color(0xFFF4FF5A);
@@ -1026,7 +1050,7 @@ class _PlaceSheetState extends State<PlaceSheet> {
         gallery(photos, 'detail-intro-photo'),
       if (place.hasRichContent && tab == 1)
         for (var i = 0; i < place.posts.length; i++)
-          postCard(place.posts[i], i),
+          postCard(controller.model.shown(place.posts[i]), i),
       Padding(
         padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
         child: Column(

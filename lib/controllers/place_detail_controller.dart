@@ -20,6 +20,7 @@ class PlaceDetailController {
     this.position = LocationService.position,
     this.shareAction,
     this.linkAction,
+    this.setLiked,
   }) : initialPlace = place,
        model = PlaceDetailModel(place);
 
@@ -31,6 +32,10 @@ class PlaceDetailController {
   final Future<MapViewport?> Function(bool request) position;
   final Future<void> Function(String text, Rect origin)? shareAction;
   final Future<void> Function(String uri)? linkAction;
+
+  /// The feed's like toggle; null hides the heart.
+  final Future<bool> Function(int postId, bool liked)? setLiked;
+  final _liking = <int>{};
   final PlaceDetailModel model;
   MapViewport? _position;
   bool _disposed = false;
@@ -128,6 +133,24 @@ class PlaceDetailController {
       if (!_disposed) model.update(() => model.saving = false);
     }
     return null;
+  }
+
+  /// Optimistic; a refusal reverts it and returns a message.
+  Future<String?> toggleLike(PlacePost post) async {
+    final id = post.id;
+    if (id == null || setLiked == null || !_liking.add(id)) return null;
+    final before = model.shown(post);
+    model.update(() => model.likes[id] = before.withLike(!before.liked));
+    try {
+      await setLiked!(id, !before.liked);
+      return null;
+    } catch (_) {
+      if (_disposed) return null;
+      model.update(() => model.likes[id] = before);
+      return '좋아요를 반영하지 못했어요. 다시 시도해 주세요.';
+    } finally {
+      _liking.remove(id);
+    }
   }
 
   Future<String?> openLink(String raw) async {

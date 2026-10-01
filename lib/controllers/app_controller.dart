@@ -42,6 +42,7 @@ class AppController {
                placeContext: placeContext,
                profile: profile,
                nearby: nearby,
+               setLiked: discover?.setLiked,
              ) {
     if (registrationService != null) {
       registration = RegistrationController(
