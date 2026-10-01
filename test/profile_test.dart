@@ -309,6 +309,35 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
+  testWidgets('saved page shows distance only once location is known', (
+    tester,
+  ) async {
+    Future<void> open(Future<MapViewport?> Function(bool) position) async {
+      await tester.pumpWidget(
+        MaterialApp(
+          home: SavedPlacesPage(
+            key: UniqueKey(),
+            cards: canned.savedPlaces,
+            total: 2,
+            position: position,
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+    }
+
+    final asked = <bool>[];
+    // Exactly at 저장 식당 (place 2).
+    await open((request) async {
+      asked.add(request);
+      return const MapViewport(37.56, 126.94);
+    });
+    expect(asked, [false]); // never prompts
+    expect(find.text('성수동 · 0m · 리뷰 12'), findsOneWidget);
+    await open((_) async => throw Exception('denied'));
+    expect(find.text('성수동 · 리뷰 12'), findsOneWidget);
+  });
+
   testWidgets('posts tab shows posts, dividers, and a +1 overlay', (
     tester,
   ) async {

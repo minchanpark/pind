@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 
 import '../../model/place_context.dart';
+import '../../model/places.dart';
 import '../../model/preferences.dart';
 import '../../model/profile_model.dart';
+import '../../services/location_service.dart';
 import '../components/pind_back_header.dart';
 import '../components/pind_glass.dart';
 import '../theme.dart';
@@ -49,6 +51,7 @@ class SavedPlacesPage extends StatefulWidget {
     this.preferences,
     this.onOpen,
     this.onSetSaved,
+    this.position = LocationService.position,
   });
 
   /// Newest save first, as the server sends them.
@@ -60,6 +63,10 @@ class SavedPlacesPage extends StatefulWidget {
   /// Bookmark toggle; null hides it (someone else's saves).
   final Future<void> Function(ProfilePlaceCard card, bool saved)? onSetSaved;
 
+  /// Current location for the distance line. Never prompts: no permission
+  /// (or an error) just leaves the distance out.
+  final Future<MapViewport?> Function(bool request) position;
+
   @override
   State<SavedPlacesPage> createState() => _SavedPlacesPageState();
 }
@@ -70,6 +77,15 @@ class _SavedPlacesPageState extends State<SavedPlacesPage> {
   /// null = 최근 저장순 (server order).
   num? Function(ProfilePlaceCard)? score;
   final unsaved = <int>{};
+  MapViewport? here;
+
+  @override
+  void initState() {
+    super.initState();
+    widget.position(false).then((p) {
+      if (mounted && p != null) setState(() => here = p);
+    }, onError: (_) {});
+  }
 
   bool get hasTaste => widget.preferences?.priorities.length == 3;
 
@@ -154,6 +170,9 @@ class _SavedPlacesPageState extends State<SavedPlacesPage> {
                 child: _SavedRow(
                   card: card,
                   match: match(card),
+                  meters: here == null
+                      ? null
+                      : LocationService.distance(here!, card.place),
                   criteria: criteria,
                   saved: !unsaved.contains(card.place.id),
                   onTap: widget.onOpen == null
@@ -201,6 +220,7 @@ class _SavedRow extends StatelessWidget {
   const _SavedRow({
     required this.card,
     required this.match,
+    this.meters,
     required this.criteria,
     required this.saved,
     this.onTap,
@@ -208,6 +228,7 @@ class _SavedRow extends StatelessWidget {
   });
   final ProfilePlaceCard card;
   final int? match;
+  final double? meters;
   final List<PreferenceCriterion> criteria;
   final bool saved;
   final VoidCallback? onTap, onToggle;
@@ -245,7 +266,11 @@ class _SavedRow extends StatelessWidget {
                   ),
                 ),
                 Text(
-                  '${placeArea(card.place.address)} · 리뷰 ${card.reviewCount}',
+                  [
+                    placeArea(card.place.address),
+                    if (meters != null) formatDistance(meters!),
+                    '리뷰 ${card.reviewCount}',
+                  ].join(' · '),
                   style: const TextStyle(fontSize: 12, color: PindTheme.muted),
                 ),
                 Wrap(
