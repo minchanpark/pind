@@ -12,6 +12,7 @@ import 'package:pind_flutter/services/profile_service.dart';
 import 'package:pind_flutter/view/profile/profile_follow.dart';
 import 'package:pind_flutter/view/profile/profile_saved_tab.dart';
 import 'package:pind_flutter/view/profile/profile_screen.dart';
+import 'package:pind_flutter/view/profile/saved_places_page.dart';
 import 'package:pind_flutter/view/theme.dart';
 
 Place place(int id, String name, String address) => Place(
@@ -45,10 +46,17 @@ final canned = ProfileOverview(
     ProfilePlaceCard(
       place: place(2, '저장 식당', '서울특별시 성동구 성수동 1'),
       averages: averages,
+      savedAt: DateTime.now().subtract(const Duration(days: 2)),
+      reviewCount: 12,
+      savers: const [null, 'https://example.com/b.png'],
     ),
     ProfilePlaceCard(
       place: place(3, '저장 카페', '서울 종로구 종로 1'),
-      averages: const {PreferenceCriterion.taste: 4},
+      averages: const {
+        PreferenceCriterion.taste: 4,
+        PreferenceCriterion.portion: 5,
+      },
+      savedAt: DateTime.now().subtract(const Duration(days: 8)),
     ),
   ],
   posts: [
@@ -171,7 +179,7 @@ void main() {
     expect(find.text('팔로잉'), findsOneWidget);
     expect(find.text('맛 중시형'), findsOneWidget);
     expect(find.text('맛 먼저, 그다음 양·분위기·공간을 봐요.'), findsOneWidget);
-    expect(find.text('2곳'), findsOneWidget); // posted places only
+    expect(find.text('더보기 ›'), findsNWidgets(2)); // badges, my map
     // The map centers on the newest post; saved-only places stay off it.
     expect(canned.mapPlaces.first.id, canned.posts.first.place.id);
     expect(
@@ -243,10 +251,62 @@ void main() {
     expect(find.text('저장 식당'), findsOneWidget);
     expect(find.text('94%'), findsOneWidget);
     expect(find.text('나의 취향'), findsNothing);
-    await tester.tap(find.text('더보기 ›'));
+    await tester.tap(find.text('더보기 ›').first);
     await tester.pumpAndSettle();
     expect(find.byType(GridView), findsOneWidget);
     expect(find.text('최근 카페'), findsOneWidget);
+  });
+
+  test('savedAgo steps from hours to days, weeks, months', () {
+    final now = DateTime(2026, 10, 1, 12);
+    String ago(Duration d) => savedAgo(now.subtract(d), now);
+    expect(ago(const Duration(minutes: 5)), '방금 저장');
+    expect(ago(const Duration(hours: 3)), '3시간 전 저장');
+    expect(ago(const Duration(days: 2)), '2일 전 저장');
+    expect(ago(const Duration(days: 8)), '1주 전 저장');
+    expect(ago(const Duration(days: 65)), '2개월 전 저장');
+  });
+
+  test('rankSaved puts high scores first, unscored last, ties in order', () {
+    final cards = [
+      for (final (id, name) in [(1, 'a'), (2, 'b'), (3, 'c'), (4, 'd')])
+        ProfilePlaceCard(place: place(id, name, '서울 성동구 성수동 1')),
+    ];
+    final score = {1: 3, 2: null, 3: 5, 4: 3};
+    expect(rankSaved(cards, (c) => score[c.place.id]).map((c) => c.place.id), [
+      3,
+      1,
+      4,
+      2,
+    ]);
+  });
+
+  testWidgets('saved 더보기 sorts by recency, taste, and each priority', (
+    tester,
+  ) async {
+    await pump(tester);
+    await tester.tap(find.text('저장').last);
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('더보기 ›').last);
+    await tester.pumpAndSettle();
+    expect(find.byType(SavedPlacesPage), findsOneWidget);
+    expect(find.text('1곳'), findsOneWidget);
+    expect(find.text('2일 전 저장'), findsOneWidget);
+    expect(find.text('1주 전 저장'), findsOneWidget);
+    expect(find.text('성수동 · 리뷰 12'), findsOneWidget);
+    expect(find.byType(ProfileAvatar), findsNWidgets(2));
+    double top(String name) => tester.getTopLeft(find.text(name)).dy;
+    // 최근 저장순: newest save first.
+    expect(top('저장 식당'), lessThan(top('저장 카페')));
+    // 양: 저장 카페 has 5 against 4.
+    await tester.tap(find.text('양'));
+    await tester.pumpAndSettle();
+    expect(top('저장 카페'), lessThan(top('저장 식당')));
+    // 내 취향순: only 저장 식당 has every priority scored.
+    await tester.tap(find.text('내 취향순'));
+    await tester.pumpAndSettle();
+    expect(top('저장 식당'), lessThan(top('저장 카페')));
+    expect(tester.takeException(), isNull);
   });
 
   testWidgets('posts tab shows posts, dividers, and a +1 overlay', (

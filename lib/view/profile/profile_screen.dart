@@ -169,6 +169,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
     if (mounted) controller.load();
   }
 
+  /// From the saved page's bookmark; reloads so counts and the tab follow.
+  Future<void> setSaved(ProfilePlaceCard card, bool saved) async {
+    await widget.explore!.placeContext!.setSaved(card.place.id!, saved);
+    if (mounted) controller.load();
+  }
+
   Future<void> toggleFollow() async {
     if (await controller.toggleFollow() || !mounted) return;
     ScaffoldMessenger.of(context)
@@ -276,6 +282,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       mine: isMe,
                       preferences: widget.preferences,
                       onOpen: widget.explore == null ? null : openPlace,
+                      onSetSaved: isMe && widget.explore?.placeContext != null
+                          ? setSaved
+                          : null,
                     ),
                     ProfileTab.posts => ProfilePostsTab(
                       overview: o,

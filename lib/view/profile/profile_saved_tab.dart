@@ -8,6 +8,7 @@ import '../../model/profile_model.dart';
 import '../components/pind_glass.dart';
 import '../theme.dart';
 import 'profile_screen.dart';
+import 'saved_places_page.dart';
 
 class ProfileSavedTab extends StatelessWidget {
   const ProfileSavedTab({
@@ -16,6 +17,7 @@ class ProfileSavedTab extends StatelessWidget {
     this.mine = true,
     this.preferences,
     this.onOpen,
+    this.onSetSaved,
   });
   final ProfileOverview overview;
 
@@ -24,6 +26,7 @@ class ProfileSavedTab extends StatelessWidget {
   final bool mine;
   final TastePreferences? preferences;
   final ValueChanged<ProfilePlaceCard>? onOpen;
+  final Future<void> Function(ProfilePlaceCard card, bool saved)? onSetSaved;
 
   @override
   Widget build(BuildContext context) {
@@ -76,7 +79,18 @@ class ProfileSavedTab extends StatelessWidget {
                           _SavedCard(saved[i], preferences, onOpen),
                     ),
                   ),
-            trailing: '${overview.counts.saved}곳',
+            trailing: '더보기 ›',
+            onTrailing: () => Navigator.of(context).push(
+              MaterialPageRoute<void>(
+                builder: (_) => SavedPlacesPage(
+                  cards: saved,
+                  total: overview.counts.saved,
+                  preferences: preferences,
+                  onOpen: onOpen,
+                  onSetSaved: onSetSaved,
+                ),
+              ),
+            ),
           ),
         ],
       ),

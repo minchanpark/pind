@@ -57,7 +57,10 @@ class ProfileMapTab extends StatelessWidget {
           profileSection(
             mine ? '나의 지도' : '지도',
             map(places),
-            trailing: '${places.length}곳',
+            trailing: '더보기 ›',
+            onTrailing: mine && onShowMap != null
+                ? () => onShowMap!(places.firstOrNull?.id)
+                : null,
           ),
         ],
       ),
