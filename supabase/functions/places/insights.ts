@@ -31,15 +31,20 @@ export function insightPrompt(posts: Post[]): string {
   return `<posts>\n${lines.join('\n')}\n</posts>`;
 }
 
-/// One retry, after [delayMs], when Gemini is rate-limited or briefly down.
-export async function retryOnce<T>(call: () => Promise<T>, delayMs = 2000): Promise<T> {
-  try {
-    return await call();
-  } catch (error) {
-    const status = (error as {status?: number})?.status;
-    if (status !== 429 && status !== 503) throw error;
-    await new Promise(resolve => setTimeout(resolve, delayMs));
-    return call();
+/// Primary first; the lighter model sits in a separate capacity pool.
+export const INSIGHT_MODELS = ['gemini-3.8-flash', 'gemini-3.5-flash-lite'];
+
+/// Tries [models] in order, moving on (after [delayMs]) only when one is
+/// rate-limited or overloaded; any other error stops at once.
+export async function withFallback<T>(models: string[], call: (model: string) => Promise<T>, delayMs = 2000): Promise<T> {
+  for (let i = 0; ; i++) {
+    try {
+      return await call(models[i]);
+    } catch (error) {
+      const status = (error as {status?: number})?.status;
+      if ((status !== 429 && status !== 503) || i === models.length - 1) throw error;
+      await new Promise(resolve => setTimeout(resolve, delayMs));
+    }
   }
 }
 

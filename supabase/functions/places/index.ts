@@ -2,7 +2,7 @@ import 'jsr:@supabase/functions-js/edge-runtime.d.ts';
 import { createClient } from 'npm:@supabase/supabase-js@2.112.3';
 import { GoogleGenAI } from 'npm:@google/genai@2.24.0';
 import { catalogRequest, CatalogError } from './catalog.ts';
-import { INSIGHT_SCHEMA, INSIGHT_SYSTEM, insightPrompt, parseInsight, retryOnce } from './insights.ts';
+import { INSIGHT_SCHEMA, INSIGHT_SYSTEM, INSIGHT_MODELS, insightPrompt, parseInsight, withFallback } from './insights.ts';
 
 const headers = {
   'Access-Control-Allow-Origin':'*',
@@ -33,8 +33,8 @@ async function refreshInsight(placeId:number,claimed=false) {
     if (error) throw error;
     let insight = {summary:'',criteria:{}};
     if (posts.length) {
-      const response = await retryOnce(() => gemini!.models.generateContent({
-        model:'gemini-3.8-flash',
+      const response = await withFallback(INSIGHT_MODELS,model => gemini!.models.generateContent({
+        model,
         contents:insightPrompt(posts),
         config:{systemInstruction:INSIGHT_SYSTEM,responseMimeType:'application/json',responseJsonSchema:INSIGHT_SCHEMA},
       }));

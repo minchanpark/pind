@@ -49,8 +49,25 @@ do $$ declare q qa; begin select * into q from qa;
  assert public.claim_place_insight(q.a),'retry after a minute';
 end $$;
 
+-- The 5-minute retry picks failed, stale and missing insights only.
+delete from net.http_request_queue;
+do $$ declare q qa; begin select * into q from qa;
+ -- a: failed; b: no public posts left, but its row still counts 1 (stale).
+ update public.place_insights set failed_at=now(),post_count=1 where place_id=q.a;
+ insert into public.place_insights(place_id,post_count) values(q.b,1);
+ assert public.retry_place_insights()=2,'failed + stale';
+ assert (select array_agg(place_id order by place_id) from sent)=(select array_agg(x order by x) from unnest(array[q.a,q.b]) x),'both requested';
+ delete from net.http_request_queue;
+ update public.place_insights set failed_at=null where place_id=q.a;
+ update public.place_insights set post_count=0 where place_id=q.b;
+ assert public.retry_place_insights()=0,'up-to-date insights are left alone';
+ assert exists(select 1 from cron.job where jobname='retry-place-insights' and schedule='*/5 * * * *'),'scheduled';
+end $$;
+
 set local role authenticated;
 do $$ begin
+ begin perform public.retry_place_insights(); raise exception 'retry callable';
+ exception when insufficient_privilege then null; end;
  begin perform public.request_place_insight(1); raise exception 'callable';
  exception when insufficient_privilege then null; end;
 end $$;
