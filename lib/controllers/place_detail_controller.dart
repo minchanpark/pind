@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:ui';
 
 import '../model/place_detail_model.dart';
+import '../model/place_search_result.dart';
 import '../model/places.dart';
 import '../model/preferences.dart';
 import '../services/location_service.dart';
@@ -21,6 +22,7 @@ class PlaceDetailController {
     this.shareAction,
     this.linkAction,
     this.setLiked,
+    this.deletePost,
   }) : initialPlace = place,
        model = PlaceDetailModel(place);
 
@@ -35,6 +37,9 @@ class PlaceDetailController {
 
   /// The feed's like toggle; null hides the heart.
   final Future<bool> Function(int postId, bool liked)? setLiked;
+
+  /// Deletes one of my posts; null hides 삭제.
+  final Future<void> Function(int postId)? deletePost;
   final _liking = <int>{};
   final PlaceDetailModel model;
   MapViewport? _position;
@@ -151,6 +156,19 @@ class PlaceDetailController {
     } finally {
       _liking.remove(id);
     }
+  }
+
+  /// Removes my post from the sheet once the server confirms.
+  Future<String?> delete(PlacePost post) async {
+    final id = post.id;
+    if (id == null || deletePost == null || !post.mine) return null;
+    try {
+      await deletePost!(id);
+    } catch (caught) {
+      return caught is PlaceFailure ? caught.message : '게시물을 삭제하지 못했어요.';
+    }
+    if (!_disposed) model.update(() => model.deleted.add(id));
+    return null;
   }
 
   Future<String?> openLink(String raw) async {

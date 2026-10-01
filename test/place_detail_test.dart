@@ -44,6 +44,7 @@ Future<void> mount(
   Future<void> Function(String, Rect)? share,
   Future<void> Function(String)? link,
   Future<bool> Function(int, bool)? setLiked,
+  Future<void> Function(int)? deletePost,
 }) async {
   tester.view.physicalSize = size;
   tester.view.devicePixelRatio = 1;
@@ -73,6 +74,7 @@ Future<void> mount(
               shareAction: share,
               linkAction: link,
               setLiked: setLiked,
+              deletePost: deletePost,
             ),
           ),
         ),
@@ -525,6 +527,55 @@ void main() {
       expect(find.text('좋아요를 반영하지 못했어요. 다시 시도해 주세요.'), findsOneWidget);
     },
   );
+
+  testWidgets('삭제 sits left of the heart on my posts and asks first', (
+    tester,
+  ) async {
+    final deleted = <int>[];
+    await mount(
+      tester,
+      LocalDetailContext(),
+      payload: {
+        ...detailPayload,
+        'posts': [
+          {'id': 7, 'author': '나', 'body': '내 글', 'mine': true},
+          {'id': 8, 'author': '하람', 'body': '남의 글'},
+        ],
+      },
+      setLiked: (_, liked) async => liked,
+      deletePost: (id) async => deleted.add(id),
+    );
+    await tester.tap(find.byKey(const ValueKey('detail-expand')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const ValueKey('detail-tab-1')));
+    await tester.pumpAndSettle();
+    Finder inPost(int i, Finder f) => find.descendant(
+      of: find.byKey(ValueKey('detail-post-$i')),
+      matching: f,
+    );
+    final delete = inPost(0, find.bySemanticsLabel('게시물 삭제'));
+    expect(delete, findsOneWidget);
+    expect(inPost(1, find.bySemanticsLabel('게시물 삭제')), findsNothing);
+    expect(
+      tester.getCenter(delete).dx,
+      lessThan(tester.getCenter(inPost(0, find.bySemanticsLabel('좋아요'))).dx),
+    );
+    // Closing the sheet keeps the post.
+    await tester.tap(delete);
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('닫기'));
+    await tester.pumpAndSettle();
+    expect(deleted, isEmpty);
+    expect(find.text('내 글'), findsOneWidget);
+    await tester.tap(delete);
+    await tester.pumpAndSettle();
+    await tester.tap(find.widgetWithText(FilledButton, '삭제'));
+    await tester.pumpAndSettle();
+    expect(deleted, [7]);
+    expect(find.text('내 글'), findsNothing);
+    expect(find.text('남의 글'), findsOneWidget);
+    expect(find.text('게시물을 삭제했어요.'), findsOneWidget);
+  });
 
   testWidgets('Figma tabs fill equal halves and switch underline and content', (
     tester,

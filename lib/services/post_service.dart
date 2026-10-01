@@ -12,6 +12,9 @@ abstract class PostService {
     String requestId,
     String? authorId,
   );
+
+  /// Deletes my post and, best effort, its private photo files.
+  Future<void> delete(int postId);
 }
 
 class UnavailablePostService implements PostService {
@@ -23,6 +26,9 @@ class UnavailablePostService implements PostService {
     String requestId,
     String? authorId,
   ) async => throw const PlaceFailure('로그인 후 게시물을 작성해 주세요.');
+  @override
+  Future<void> delete(int postId) async =>
+      throw const PlaceFailure('게시물 서버에 연결하지 못했어요.');
 }
 
 class SupabasePostService implements PostService {
@@ -31,6 +37,27 @@ class SupabasePostService implements PostService {
   static const bucket = 'post-media-v2';
   @override
   String? get userId => client.auth.currentUser?.id;
+
+  @override
+  Future<void> delete(int postId) async {
+    final Object? result;
+    try {
+      result = await client.rpc('delete_post', params: {'p_post_id': postId});
+    } on PostgrestException {
+      throw const PlaceFailure('게시물을 삭제하지 못했어요. 다시 시도해 주세요.');
+    }
+    markDataChanged();
+    final paths = [
+      for (final p in (result as Map)['paths'] as List? ?? []) p as String,
+    ];
+    // The rows are gone; a leftover file is only storage, so never fail here.
+    if (paths.isNotEmpty) {
+      await client.storage
+          .from(bucket)
+          .remove(paths)
+          .catchError((_) => <FileObject>[]);
+    }
+  }
 
   Future<PublishedPost?> _existing(String requestId, String authorId) async {
     final row = await client

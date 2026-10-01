@@ -22,6 +22,15 @@ class PlaceDetailModel extends ChangeNotifier {
   /// [post] with any like toggled in this sheet.
   PlacePost shown(PlacePost post) => likes[post.id] ?? post;
 
+  /// Posts I deleted from this sheet; hidden until the next detail load.
+  final deleted = <int>{};
+
+  /// [Place.posts] minus the ones I deleted here, likes applied.
+  List<PlacePost> get posts => [
+    for (final p in place.posts)
+      if (!deleted.contains(p.id)) shown(p),
+  ];
+
   void update(VoidCallback change) {
     change();
     notifyListeners();

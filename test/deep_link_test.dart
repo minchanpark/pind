@@ -25,6 +25,8 @@ class _Me implements PostService {
   @override
   Future<PublishedPost> publish(PostDraft d, String r, String? a) =>
       throw UnimplementedError();
+  @override
+  Future<void> delete(int postId) => throw UnimplementedError();
 }
 
 void main() {

@@ -44,7 +44,7 @@ try:
     sql(ROOT / 'supabase/tests/post_storage_bootstrap.sql')
     for path in MIGRATIONS:
         sql(path)
-    for name in ['public_first_places.sql', 'place_detail_context.sql', 'published_posts_map.sql', 'profile_page.sql', 'discover_feed.sql', 'follows_taste.sql', 'other_profiles.sql', 'saved_places_page.sql', 'place_insight_refresh.sql', 'place_rating_stats.sql', 'nearby_ranking.sql', 'place_counters.sql', 'detail_post_likes.sql']:
+    for name in ['public_first_places.sql', 'place_detail_context.sql', 'published_posts_map.sql', 'profile_page.sql', 'discover_feed.sql', 'follows_taste.sql', 'other_profiles.sql', 'saved_places_page.sql', 'place_insight_refresh.sql', 'place_rating_stats.sql', 'nearby_ranking.sql', 'place_counters.sql', 'detail_post_likes.sql', 'delete_post.sql']:
         sql(ROOT / 'supabase/tests' / name)
     concurrent = run(sys.executable, str(ROOT / 'scripts/test_rating_stats_concurrency.py'), CONTAINER)
     print(concurrent.stdout.decode().strip(), flush=True)

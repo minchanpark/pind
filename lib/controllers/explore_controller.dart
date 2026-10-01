@@ -19,6 +19,7 @@ class ExploreController {
     this.nearby,
     this.position = LocationService.position,
     this.setLiked,
+    this.deletePost,
   });
   final PlaceService repository;
   final PlaceContextService? placeContext;
@@ -30,6 +31,7 @@ class ExploreController {
 
   /// Post likes, shared with the feed.
   final Future<bool> Function(int postId, bool liked)? setLiked;
+  final Future<void> Function(int postId)? deletePost;
   final model = ExploreModel();
   List<Place> get places => model.places;
   bool get loading => model.loading;
@@ -45,6 +47,7 @@ class ExploreController {
         preferences: preferences,
         profile: profile,
         setLiked: setLiked,
+        deletePost: deletePost,
       );
 
   Future<MapViewport> locate() async {

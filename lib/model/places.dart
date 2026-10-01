@@ -40,12 +40,16 @@ class PlacePost {
     this.photos = const [],
     this.likeCount = 0,
     this.liked = false,
+    this.mine = false,
   });
   final int? id;
   final String author, body;
   final String? handle, avatar;
   final int likeCount;
   final bool liked;
+
+  /// Written by me: the detail sheet offers 삭제.
+  final bool mine;
 
   /// Criterion name to the author's 1–5 score.
   final Map<String, int> ratings;
@@ -62,6 +66,7 @@ class PlacePost {
     photos: photos,
     liked: value,
     likeCount: likeCount + (value == liked ? 0 : (value ? 1 : -1)),
+    mine: mine,
   );
 
   factory PlacePost.fromJson(Map<String, dynamic> json) => PlacePost(
@@ -77,6 +82,7 @@ class PlacePost {
     photos: List<String>.from(json['photos'] as List? ?? []),
     likeCount: (json['likeCount'] as num?)?.toInt() ?? 0,
     liked: json['liked'] == true,
+    mine: json['mine'] == true,
   );
 }
 

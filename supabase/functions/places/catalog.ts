@@ -66,7 +66,7 @@ export async function catalogRequest(
       place.posts = (place.pindPosts as Payload[]).map(p => {
         const photos = postPaths(p).map(path => url(String(p.bucket), path));
         return {id:p.id,author:p.author,handle:p.handle,avatar:p.avatar,body:p.body,ratings:p.ratings,photos:photos.filter(Boolean),
-          likeCount:p.likeCount ?? 0,liked:p.liked === true};
+          likeCount:p.likeCount ?? 0,liked:p.liked === true,mine:p.mine === true};
       });
       place.gallery = (place.posts as Payload[]).flatMap(p => (p.photos as string[]).map(uri =>
         ({uri,attributions:[{displayName:p.author ?? 'Pind 사용자'}]}))).slice(0,5);

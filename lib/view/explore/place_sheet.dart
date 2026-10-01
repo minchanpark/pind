@@ -739,6 +739,12 @@ class _PlaceSheetState extends State<PlaceSheet> {
                   ),
                 ),
               ),
+              if (post.mine &&
+                  post.id != null &&
+                  controller.deletePost != null) ...[
+                deleteButton(post),
+                const SizedBox(width: 6),
+              ],
               if (post.id != null && controller.setLiked != null)
                 likeButton(post),
             ],
@@ -789,6 +795,17 @@ class _PlaceSheetState extends State<PlaceSheet> {
       ),
     );
   }
+
+  /// Mine only; asks first, since a deleted post can't come back.
+  Widget deleteButton(PlacePost post) => PostCardButton(
+    label: '게시물 삭제',
+    icon: const Icon(Icons.delete_outline, size: 12),
+    onTap: (_) async {
+      if (!await confirmDelete(context)) return;
+      final error = await controller.delete(post);
+      if (mounted) message(error ?? '게시물을 삭제했어요.');
+    },
+  );
 
   /// The feed's heart, same look and count.
   Widget likeButton(PlacePost post) => PostCardButton(
@@ -1049,8 +1066,8 @@ class _PlaceSheetState extends State<PlaceSheet> {
       if (place.hasRichContent && tab == 0 && photos.isNotEmpty)
         gallery(photos, 'detail-intro-photo'),
       if (place.hasRichContent && tab == 1)
-        for (var i = 0; i < place.posts.length; i++)
-          postCard(controller.model.shown(place.posts[i]), i),
+        for (final (i, post) in controller.model.posts.indexed)
+          postCard(post, i),
       Padding(
         padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
         child: Column(
@@ -1073,7 +1090,7 @@ class _PlaceSheetState extends State<PlaceSheet> {
                 ),
                 const SizedBox(height: 20),
                 reviewSummary(),
-              ] else if (place.posts.isEmpty)
+              ] else if (controller.model.posts.isEmpty)
                 const Text('아직 게시물이 없어요.'),
             // Google, Kakao and Naver terms require naming the source.
             if (!place.isCatalog) ...[
@@ -1188,3 +1205,57 @@ class _ClipTop extends CustomClipper<Rect> {
   @override
   bool shouldReclip(_ClipTop old) => old.top != top;
 }
+
+/// True when the user chose 삭제. Same sheet as 팔로우 취소 (Figma 663:5621).
+Future<bool> confirmDelete(BuildContext context) async =>
+    await showModalBottomSheet<bool>(
+      context: context,
+      backgroundColor: const Color(0xFFF7F7F9),
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
+      ),
+      showDragHandle: true,
+      builder: (context) => SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(20, 0, 20, 12),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            spacing: 10,
+            children: [
+              const Text(
+                '게시물을 삭제할까요?',
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w700,
+                  color: PindTheme.ink,
+                ),
+              ),
+              const Text(
+                '사진과 별점도 함께 지워지고, 되돌릴 수 없어요.',
+                textAlign: TextAlign.center,
+                style: TextStyle(fontSize: 12, color: PindTheme.muted),
+              ),
+              const SizedBox(height: 8),
+              FilledButton(
+                style: FilledButton.styleFrom(
+                  backgroundColor: const Color(0xFFE8336E),
+                  minimumSize: const Size.fromHeight(44),
+                ),
+                onPressed: () => Navigator.pop(context, true),
+                child: const Text('삭제'),
+              ),
+              TextButton(
+                style: TextButton.styleFrom(
+                  minimumSize: const Size.fromHeight(44),
+                ),
+                onPressed: () => Navigator.pop(context, false),
+                child: const Text('닫기', style: TextStyle(color: PindTheme.ink)),
+              ),
+            ],
+          ),
+        ),
+      ),
+    ) ??
+    false;

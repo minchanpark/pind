@@ -36,6 +36,8 @@ class TestPosts implements PostService {
   Completer<PublishedPost>? pending;
   bool fail = false;
   @override
+  Future<void> delete(int postId) => throw UnimplementedError();
+  @override
   Future<PublishedPost> publish(
     PostDraft draft,
     String requestId,

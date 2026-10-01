@@ -43,6 +43,7 @@ class AppController {
                profile: profile,
                nearby: nearby,
                setLiked: discover?.setLiked,
+               deletePost: posts?.delete,
              ) {
     if (registrationService != null) {
       registration = RegistrationController(
