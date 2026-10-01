@@ -103,10 +103,17 @@ class ExploreController {
     await _run(() => repository.searchResults(query));
   }
 
-  /// The agent page's sentence, ranked for me around [near].
+  /// The agent page's sentence, ranked for me around [near]. The server's
+  /// "○○ 기준으로 찾았어요" reading is not shown on the map.
   Future<void> agentSearch(String query, MapViewport near) async {
     _searchQuery = query.trim();
-    await _run(() => repository.agentSearch(query, near: near));
+    await _run(() async {
+      final result = await repository.agentSearch(query, near: near);
+      return PlaceSearchResult(
+        result.places,
+        googleSearchEnabled: result.googleSearchEnabled,
+      );
+    });
   }
 
   Future<void> showPublishedPlace(int placeId) async {

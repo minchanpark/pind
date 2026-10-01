@@ -192,12 +192,6 @@ class _ExploreScreenState extends State<ExploreScreen> {
     await search(agent: true);
   }
 
-  Future<void> searchGoogle() async {
-    final generation = ++searchGeneration;
-    await controller?.searchGoogle();
-    if (mounted && generation == searchGeneration) showResults();
-  }
-
   Future<void> locate() async {
     if (controller == null || locating) return;
     try {
@@ -484,25 +478,6 @@ class _ExploreScreenState extends State<ExploreScreen> {
             child: Column(
               children: [
                 searchBar(),
-                if (searchMode)
-                  Align(
-                    alignment: Alignment.centerLeft,
-                    child: ActionChip(
-                      label: const Text('검색 지우고 주변 보기'),
-                      onPressed: () {
-                        query.clear();
-                        search();
-                      },
-                    ),
-                  ),
-                if (searchMode && (controller?.googleSearchEnabled ?? false))
-                  Align(
-                    alignment: Alignment.centerLeft,
-                    child: ActionChip(
-                      label: const Text('Google에서 추가 검색'),
-                      onPressed: controller!.loading ? null : searchGoogle,
-                    ),
-                  ),
                 if (controller?.notice != null)
                   Material(
                     color: Colors.white,

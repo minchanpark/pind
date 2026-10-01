@@ -5,7 +5,7 @@ import 'package:pind_flutter/services/place_service.dart';
 
 void main() {
   test(
-    'agent search sends the sentence and map center, shows the reading',
+    'agent search sends the sentence and map center, hides the reading',
     () async {
       final bodies = <Map<String, dynamic>>[];
       final controller = ExploreController(
@@ -42,11 +42,11 @@ void main() {
         'longitude': 127.05,
       });
       expect(controller.places.single.name, '성수 포차');
-      expect(controller.notice, '혼술 · 포차 기준으로 찾았어요.');
+      expect(controller.notice, isNull);
       // Too short never reaches the server.
       await controller.agentSearch('a', MapViewport.seoul);
       expect(bodies, hasLength(1));
       expect(controller.error, isNotNull);
-      },
+    },
   );
 }
