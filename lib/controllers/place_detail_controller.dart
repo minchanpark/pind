@@ -2,7 +2,6 @@ import 'dart:async';
 import 'dart:ui';
 
 import '../model/place_detail_model.dart';
-import '../model/place_search_result.dart';
 import '../model/places.dart';
 import '../model/preferences.dart';
 import '../services/location_service.dart';
@@ -130,43 +129,6 @@ class PlaceDetailController {
     }
     return null;
   }
-
-  Future<String?> searchGoogle({
-    required Future<void> Function(List<Place>) onResults,
-  }) async {
-    if (model.searchingGoogle) return null;
-    model.update(() => model.searchingGoogle = true);
-    try {
-      final raw = '${model.place.name} ${model.place.address}';
-      final result = await places.searchResults(
-        raw.length > 120 ? raw.substring(0, 120) : raw,
-        supplemental: true,
-      );
-      if (_disposed) return null;
-      if (result.places.isEmpty) return 'Google에서도 추가 정보를 찾지 못했어요.';
-      await onResults(result.places);
-    } on PlaceFailure catch (error) {
-      if (!_disposed) return error.message;
-    } catch (_) {
-      if (!_disposed) {
-        return 'Google 추가 검색을 불러오지 못했어요. 기본 정보는 계속 사용할 수 있어요.';
-      }
-    } finally {
-      if (!_disposed) model.update(() => model.searchingGoogle = false);
-    }
-    return null;
-  }
-
-  PlaceDetailController forPlace(Place place) => PlaceDetailController(
-    place: place,
-    places: places,
-    context: context,
-    preferences: preferences,
-    profile: profile,
-    position: position,
-    shareAction: shareAction,
-    linkAction: linkAction,
-  );
 
   Future<String?> openLink(String raw) async {
     try {

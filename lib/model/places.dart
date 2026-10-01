@@ -32,13 +32,14 @@ class PlacePhoto {
 class PlacePost {
   const PlacePost({
     required this.author,
+    this.handle,
     this.avatar,
     this.body = '',
     this.ratings = const {},
     this.photos = const [],
   });
   final String author, body;
-  final String? avatar;
+  final String? handle, avatar;
 
   /// Criterion name to the author's 1–5 score.
   final Map<String, int> ratings;
@@ -46,6 +47,7 @@ class PlacePost {
 
   factory PlacePost.fromJson(Map<String, dynamic> json) => PlacePost(
     author: json['author'] as String? ?? 'Pind 사용자',
+    handle: json['handle'] as String?,
     avatar: json['avatar'] as String?,
     body: json['body'] as String? ?? '',
     ratings: {

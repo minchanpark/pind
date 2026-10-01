@@ -67,6 +67,7 @@ void main() {
           'userRatingCount': 12,
           'pindPostCount': 3,
           'googleSearchEnabled': provider == 'sbiz',
+          'sourceDate': '2026-06-30',
         };
         await tester.pumpWidget(
           PindApp(
@@ -132,6 +133,17 @@ void main() {
             isEmpty,
           );
         }
+        // Catalog places drop the Google button and source lines; Google
+        // places keep the attribution their terms require.
+        await tester.tap(find.byKey(const ValueKey('detail-expand')));
+        await tester.pumpAndSettle();
+        expect(find.text('Google에서 추가 정보 찾기'), findsNothing);
+        expect(find.textContaining('공공데이터 기준일'), findsNothing);
+        expect(
+          find.text('정보 제공: Google Maps'),
+          provider == 'sbiz' ? findsNothing : findsOneWidget,
+        );
+        expect(find.textContaining('정보 제공: 소상공인'), findsNothing);
         for (final action in ['save', 'share', 'directions']) {
           expect(
             find.byKey(ValueKey('detail-$action')).hitTestable(),

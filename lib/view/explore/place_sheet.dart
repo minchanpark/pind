@@ -103,9 +103,46 @@ class _PlaceSheetState extends State<PlaceSheet> {
   bool get saving => controller.model.saving;
   bool get saved => controller.model.saved;
   bool get locating => controller.model.locating;
-  bool get searchingGoogle => controller.model.searchingGoogle;
   double? get distance => controller.model.distance;
   int tab = 0;
+
+  /// Sheet fraction that shows everything down to the "위로 올려서" hint (all
+  /// of it for Kakao/Naver places, which have no tabs); measured after
+  /// layout because the header grows as detail loads.
+  double peek = .5;
+  static const fullSize = .96;
+  final topKey = GlobalKey(), footerKey = GlobalKey(), bodyKey = GlobalKey();
+
+  /// 0 at the peek, 1 fully expanded; the hint fades and folds away with it.
+  final expansion = ValueNotifier<double>(0);
+
+  double height(GlobalKey key) =>
+      (key.currentContext?.findRenderObject() as RenderBox?)?.size.height ?? 0;
+
+  void measure(double available) {
+    if (!mounted || available <= 0 || topKey.currentContext == null) return;
+    // Measure only at rest at the peek: once raised, the hint is folded away
+    // and the top is shorter than the peek it defines.
+    final resting = !sheet.isAttached || (sheet.size - peek).abs() < .01;
+    if (!resting) return;
+    final pixels =
+        height(topKey) +
+        (place.hasRichContent ? 0 : height(bodyKey)) +
+        height(footerKey);
+    final next = (pixels / available).clamp(.2, fullSize - .06);
+    if ((next - peek).abs() * available < 1) return;
+    setState(() => peek = next);
+    // After the rebuild applies the new min size; jumping first can land on
+    // the old minimum, which closes the modal sheet.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted && sheet.isAttached) sheet.jumpTo(peek);
+    });
+  }
+
+  bool onExtent(DraggableScrollableNotification n) {
+    expansion.value = ((n.extent - peek) / (fullSize - peek)).clamp(0.0, 1.0);
+    return false;
+  }
 
   @override
   void initState() {
@@ -136,6 +173,7 @@ class _PlaceSheetState extends State<PlaceSheet> {
     controller.model.removeListener(changed);
     controller.dispose();
     sheet.dispose();
+    expansion.dispose();
     super.dispose();
   }
 
@@ -184,70 +222,98 @@ class _PlaceSheetState extends State<PlaceSheet> {
   @override
   Widget build(BuildContext context) {
     // Built once per build so per-frame clip updates don't rebuild the tab body.
-    final body = description();
-    return DraggableScrollableSheet(
-      controller: sheet,
-      initialChildSize: .70,
-      minChildSize: .4,
-      maxChildSize: .96,
-      expand: false,
-      snap: true,
-      snapSizes: const [.70],
-      builder: (context, scroll) => DetailGlass(
-        topOnly: true,
-        child: Column(
-          children: [
-            Expanded(
-              child: CustomScrollView(
-                controller: scroll,
-                slivers: [
-                  SliverList.list(
+    final body = KeyedSubtree(key: bodyKey, child: description());
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        WidgetsBinding.instance.addPostFrameCallback(
+          (_) => measure(constraints.maxHeight),
+        );
+        return NotificationListener<DraggableScrollableNotification>(
+          onNotification: onExtent,
+          child: sheetBody(body),
+        );
+      },
+    );
+  }
+
+  Widget sheetBody(Widget body) => DraggableScrollableSheet(
+    controller: sheet,
+    initialChildSize: peek,
+    // Below the peek a fling closes the sheet.
+    minChildSize: math.min(.4, peek - .05),
+    maxChildSize: fullSize,
+    expand: false,
+    snap: true,
+    snapSizes: [peek],
+    builder: (context, scroll) => DetailGlass(
+      topOnly: true,
+      child: Column(
+        children: [
+          Expanded(
+            child: CustomScrollView(
+              controller: scroll,
+              slivers: [
+                SliverToBoxAdapter(
+                  child: Column(
+                    key: topKey,
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
                       header(),
                       if (loading) const LinearProgressIndicator(minHeight: 2),
                       if (detailError) errorRow('상세 정보를 불러오지 못했어요.'),
                       if (contextError) errorRow('취향·팔로잉 정보를 불러오지 못했어요.'),
-                      if (photos.isNotEmpty) gallery(photos),
-                      TextButton(
-                        key: const ValueKey('detail-expand'),
-                        onPressed: () => sheet.animateTo(
-                          .96,
-                          duration: const Duration(milliseconds: 280),
-                          curve: Curves.easeOutCubic,
-                        ),
-                        child: const Text(
-                          '⌃  위로 올려서 소개 · 게시물 보기',
-                          style: TextStyle(
-                            fontSize: 11,
-                            color: Color(0xFF7A7A80),
-                          ),
-                        ),
-                      ),
+                      if (place.hasRichContent) expandHint(),
                     ],
                   ),
-                  // Once the sheet is fully up, tabs stay put and only the tab body
-                  // scrolls. The body is clipped under the transparent tabs instead of
-                  // giving them a fill (a blur can't hide Flutter content over the iOS map).
-                  if (place.hasRichContent) PinnedHeaderSliver(child: tabs()),
-                  SliverLayoutBuilder(
-                    builder: (_, constraints) => SliverToBoxAdapter(
-                      child: ClipRect(
-                        clipper: _ClipTop(
-                          constraints.scrollOffset + constraints.overlap,
-                        ),
-                        child: body,
+                ),
+                // Once the sheet is fully up, tabs stay put and only the tab body
+                // scrolls. The body is clipped under the transparent tabs instead of
+                // giving them a fill (a blur can't hide Flutter content over the iOS map).
+                if (place.hasRichContent) PinnedHeaderSliver(child: tabs()),
+                SliverLayoutBuilder(
+                  builder: (_, constraints) => SliverToBoxAdapter(
+                    child: ClipRect(
+                      clipper: _ClipTop(
+                        constraints.scrollOffset + constraints.overlap,
                       ),
+                      child: body,
                     ),
                   ),
-                ],
-              ),
+                ),
+              ],
             ),
-            footer(),
-          ],
-        ),
+          ),
+          KeyedSubtree(key: footerKey, child: footer()),
+        ],
       ),
-    );
-  }
+    ),
+  );
+
+  /// "위로 올려서" hint; folds away as the sheet is raised.
+  Widget expandHint() => ValueListenableBuilder(
+    valueListenable: expansion,
+    builder: (_, t, child) => t == 1
+        ? const SizedBox.shrink()
+        : ClipRect(
+            child: Align(
+              alignment: Alignment.topCenter,
+              heightFactor: 1 - t,
+              child: Opacity(opacity: 1 - t, child: child),
+            ),
+          ),
+    child: TextButton(
+      key: const ValueKey('detail-expand'),
+      onPressed: () => sheet.animateTo(
+        fullSize,
+        duration: const Duration(milliseconds: 280),
+        curve: Curves.easeOutCubic,
+      ),
+      child: const Text(
+        '⌃  위로 올려서 소개 · 게시물 보기',
+        style: TextStyle(fontSize: 11, color: Color(0xFF7A7A80)),
+      ),
+    ),
+  );
 
   Widget errorRow(String text) => Padding(
     padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -531,10 +597,14 @@ class _PlaceSheetState extends State<PlaceSheet> {
                             ),
                           ),
                         ),
-                        for (final author in photos[index].authors)
-                          photoCredit('사진: ${author.name}', author.uri),
-                        if (photos[index].sourceUri != null)
-                          photoCredit('사진 출처', photos[index].sourceUri),
+                        // Google requires photo credits; Pind post photos
+                        // show their author in the posts tab instead.
+                        if (place.isGoogle) ...[
+                          for (final author in photos[index].authors)
+                            photoCredit('사진: ${author.name}', author.uri),
+                          if (photos[index].sourceUri != null)
+                            photoCredit('사진 출처', photos[index].sourceUri),
+                        ],
                       ],
                     ),
                   ),
@@ -652,7 +722,8 @@ class _PlaceSheetState extends State<PlaceSheet> {
               const SizedBox(width: 7),
               Expanded(
                 child: Text(
-                  '@${post.author}',
+                  // Before a handle is set, the display name without '@'.
+                  post.handle == null ? post.author : '@${post.handle}',
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: const TextStyle(
@@ -949,24 +1020,14 @@ class _PlaceSheetState extends State<PlaceSheet> {
                 reviewSummary(),
               ] else if (place.posts.isEmpty)
                 const Text('아직 게시물이 없어요.'),
-            if (place.isCatalog && place.googleSearchEnabled)
-              TextButton(
-                key: const ValueKey('detail-google-search'),
-                onPressed: searchingGoogle ? null : searchGoogle,
-                child: Text(
-                  searchingGoogle ? 'Google에서 찾는 중…' : 'Google에서 추가 정보 찾기',
-                ),
-              ),
-            const SizedBox(height: 12),
-            if (place.sourceDate != null)
+            // Google, Kakao and Naver terms require naming the source.
+            if (!place.isCatalog) ...[
+              const SizedBox(height: 12),
               Text(
-                '공공데이터 기준일: ${place.sourceDate}',
-                style: const TextStyle(fontSize: 10, color: PindTheme.muted),
+                '정보 제공: ${place.sourceLabel}',
+                style: const TextStyle(fontSize: 12, color: PindTheme.muted),
               ),
-            Text(
-              '정보 제공: ${place.sourceLabel}',
-              style: const TextStyle(fontSize: 12, color: PindTheme.muted),
-            ),
+            ],
             if (!place.hasRichContent)
               TextButton(
                 onPressed: () => link(place.mapsUri),
@@ -977,46 +1038,6 @@ class _PlaceSheetState extends State<PlaceSheet> {
       ),
     ],
   );
-  Future<void> searchGoogle() async {
-    final error = await controller.searchGoogle(
-      onResults: (candidates) async {
-        if (!mounted) return;
-        final selected = await showModalBottomSheet<Place>(
-          context: context,
-          useSafeArea: true,
-          isScrollControlled: true,
-          builder: (ctx) => DraggableScrollableSheet(
-            expand: false,
-            initialChildSize: .55,
-            builder: (_, scroll) => ListView(
-              controller: scroll,
-              padding: const EdgeInsets.all(16),
-              children: [
-                const Text('Google 검색 결과 · 같은 가게인지 확인해 주세요.'),
-                for (final candidate in candidates)
-                  ListTile(
-                    title: Text(candidate.name),
-                    subtitle: Text(candidate.address),
-                    onTap: () => Navigator.pop(ctx, candidate),
-                  ),
-              ],
-            ),
-          ),
-        );
-        if (!mounted || selected == null) return;
-        final detail = controller.forPlace(selected);
-        await showModalBottomSheet<void>(
-          context: context,
-          isScrollControlled: true,
-          useSafeArea: true,
-          backgroundColor: Colors.transparent,
-          builder: (_) => PlaceSheet(controller: detail),
-        );
-      },
-    );
-    if (mounted && error != null) message(error);
-  }
-
   Widget footer() => Container(
     key: const ValueKey('detail-fixed-actions'),
     decoration: const BoxDecoration(

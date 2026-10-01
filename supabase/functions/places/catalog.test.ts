@@ -56,13 +56,13 @@ test('detail posts sign every photo, gallery takes five, stale insight refreshes
   const refreshed:number[]=[];
   const detail=(insight:unknown)=>catalogRequest({action:'catalog_detail',internalPlaceId:7},async()=>({places:[{
     internalId:7,pindPostCount:2,insight,pindPosts:[
-      {id:2,author:'민찬',avatar:null,body:'맛있어요',ratings:{taste:5},bucket:'post-media-v2',photos:['a','b','gone','d','e']},
+      {id:2,author:'민찬',handle:'minchan',avatar:null,body:'맛있어요',ratings:{taste:5},bucket:'post-media-v2',photos:['a','b','gone','d','e']},
       {id:1,author:'하람',avatar:'https://a/p.png',body:'',ratings:{},bucket:'post-media',photos:['f','g','h']},
     ],
   }]}),async paths=>paths.map(path=>path==='gone'?null:`https://signed/${path}`),true,id=>refreshed.push(id));
   const place=(await detail({summary:'',criteria:{},postCount:0})).place as Record<string,unknown>;
   const posts=place.posts as Record<string,unknown>[];
-  assert.deepEqual(posts[0],{id:2,author:'민찬',avatar:null,body:'맛있어요',ratings:{taste:5},
+  assert.deepEqual(posts[0],{id:2,author:'민찬',handle:'minchan',avatar:null,body:'맛있어요',ratings:{taste:5},
     photos:['https://signed/a','https://signed/b','https://signed/d','https://signed/e']});
   assert.deepEqual((place.gallery as {uri:string}[]).map(g=>g.uri),
     ['https://signed/a','https://signed/b','https://signed/d','https://signed/e','https://signed/f']);

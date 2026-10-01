@@ -14,7 +14,6 @@ class PlaceDetailModel extends ChangeNotifier {
   bool saving = false;
   bool saved = false;
   bool locating = false;
-  bool searchingGoogle = false;
   double? distance;
 
   void update(VoidCallback change) {

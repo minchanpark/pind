@@ -63,6 +63,9 @@ begin
  data:=public.get_catalog_places(p_place_id=>p)->'places'->0;
  assert jsonb_array_length(data->'pindPosts')=2 and data->'pindPosts'->0->'photos'->>0=photo2->0->>'path','detail posts newest first';
  assert data->'pindPosts'->0->'ratings'='{"value":4,"quiet":2,"parking":5}'::jsonb and data->'pindPosts'->1->'ratings'='{"taste":5,"portion":4,"ambience":4}'::jsonb,'v3 and legacy ratings';
+ update public.profiles set handle='map_author' where id=auth.uid();
+ data:=public.get_catalog_places(p_place_id=>p)->'places'->0;
+ assert data->'pindPosts'->0->>'handle'='map_author','posts carry the author handle';
  assert jsonb_typeof(data->'insight')='null','no insight before first refresh';
  assert public.get_catalog_places(p_lat=>37.57,p_lng=>126.98,p_radius=>1000)->'places'->0->'pindPosts'='null'::jsonb,'map skips posts';
  assert not has_function_privilege('authenticated','public.claim_place_insight(bigint)','execute');

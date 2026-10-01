@@ -49,7 +49,7 @@ export async function catalogRequest(
       place.posts = await Promise.all((place.pindPosts as Payload[]).map(async p => {
         const paths = Array.isArray(p.photos) ? p.photos as string[] : [];
         const photos = paths.length ? await photoUrls(paths,String(p.bucket)) : [];
-        return {id:p.id,author:p.author,avatar:p.avatar,body:p.body,ratings:p.ratings,photos:photos.filter(Boolean)};
+        return {id:p.id,author:p.author,handle:p.handle,avatar:p.avatar,body:p.body,ratings:p.ratings,photos:photos.filter(Boolean)};
       }));
       place.gallery = (place.posts as Payload[]).flatMap(p => (p.photos as string[]).map(uri =>
         ({uri,attributions:[{displayName:p.author ?? 'Pind 사용자'}]}))).slice(0,5);

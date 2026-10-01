@@ -269,8 +269,8 @@ void main() {
         },
       },
     );
-    expect(find.byKey(const ValueKey('detail-photo-4')), findsOneWidget);
-    expect(find.byKey(const ValueKey('detail-photo-5')), findsNothing);
+    // Photos live in the intro tab only, not under the taste ratings.
+    expect(find.byKey(const ValueKey('detail-photo-0')), findsNothing);
     await tester.tap(find.byKey(const ValueKey('detail-expand')));
     await tester.pumpAndSettle();
     expect(
@@ -301,7 +301,8 @@ void main() {
         ...detailPayload,
         'posts': [
           {
-            'author': 'haramsyoo',
+            'author': '유하람',
+            'handle': 'haramsyoo',
             'body': '분위기도 좋고 음식도 맛있어요.',
             'ratings': {'ambience': 3, 'taste': 4, 'portion': 4},
             'photos': [a, b, a, b, a, b],
@@ -329,6 +330,15 @@ void main() {
       skipOffstage: false,
     );
     expect(inFirst(find.text('@haramsyoo')), findsOneWidget);
+    expect(inFirst(find.textContaining('유하람')), findsNothing);
+    // No handle yet: the display name, without '@'.
+    expect(
+      find.descendant(
+        of: find.byKey(const ValueKey('detail-post-1'), skipOffstage: false),
+        matching: find.text('itisnewdawn', skipOffstage: false),
+      ),
+      findsOneWidget,
+    );
     expect(inFirst(find.text('분위기도 좋고 음식도 맛있어요.')), findsOneWidget);
     expect(inFirst(find.byType(Image)), findsNWidgets(3));
     expect(inFirst(find.text('+ 3')), findsOneWidget);
@@ -353,7 +363,7 @@ void main() {
     );
     await tester.ensureVisible(second);
     await tester.pumpAndSettle();
-    expect(find.text('@itisnewdawn'), findsOneWidget);
+    expect(find.text('itisnewdawn'), findsOneWidget);
     expect(
       find.descendant(of: second, matching: find.byType(Image)),
       findsOneWidget,
@@ -421,6 +431,80 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
+  testWidgets('opens down to the hint; raising folds it away and expands', (
+    tester,
+  ) async {
+    await mount(tester, LocalDetailContext());
+    final hint = find.byKey(const ValueKey('detail-expand'));
+    final footer = find.byKey(const ValueKey('detail-fixed-actions'));
+    // The hint sits right on top of the action bar; the tabs are below it.
+    expect(hint.hitTestable(), findsOneWidget);
+    expect(
+      tester.getBottomLeft(hint).dy,
+      moreOrLessEquals(tester.getTopLeft(footer).dy, epsilon: 1),
+    );
+    expect(
+      find.byKey(const ValueKey('detail-tabs')).hitTestable(),
+      findsNothing,
+    );
+
+    // Halfway up the hint is fading out.
+    final sheet = find.byType(DraggableScrollableSheet);
+    final gesture = await tester.startGesture(tester.getCenter(hint));
+    await gesture.moveBy(const Offset(0, -20)); // past the drag slop
+    await gesture.moveBy(const Offset(0, -150));
+    await tester.pump();
+    final opacity = tester.widget<Opacity>(
+      find.ancestor(of: hint, matching: find.byType(Opacity)),
+    );
+    expect(opacity.opacity, inExclusiveRange(0, 1));
+    await gesture.moveBy(const Offset(0, -600));
+    await gesture.up();
+    await tester.pumpAndSettle();
+
+    expect(
+      tester.getSize(sheet).height,
+      moreOrLessEquals(874 * .96, epsilon: 1),
+    );
+    expect(hint, findsNothing);
+    expect(
+      find.byKey(const ValueKey('detail-tabs')).hitTestable(),
+      findsOneWidget,
+    );
+    expect(
+      find.byKey(const ValueKey('detail-intro')).hitTestable(),
+      findsOneWidget,
+    );
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('Pind post photos carry no 사진: credit', (tester) async {
+    await mount(
+      tester,
+      LocalDetailContext(),
+      payload: {
+        ...detailPayload,
+        'provider': 'sbiz',
+        'gallery': [
+          {
+            'uri': 'assets/preview/place_detail_photo_1.png',
+            'attributions': [
+              {'displayName': '하람'},
+            ],
+          },
+        ],
+      },
+    );
+    await tester.tap(find.byKey(const ValueKey('detail-expand')));
+    await tester.pumpAndSettle();
+    expect(
+      find.byKey(const ValueKey('detail-intro-photo-0'), skipOffstage: false),
+      findsOneWidget,
+    );
+    expect(find.text('사진: 하람', skipOffstage: false), findsNothing);
+    expect(tester.takeException(), isNull);
+  });
+
   for (final scale in [1.0, 2.0]) {
     testWidgets(
       'photo credits stay beneath their own photo at text scale $scale',
@@ -453,6 +537,8 @@ void main() {
           },
           link: (uri) async => opened = uri,
         );
+        await tester.tap(find.byKey(const ValueKey('detail-expand')));
+        await tester.pumpAndSettle();
         await tester.scrollUntilVisible(
           find.text('사진: $author').first,
           200,
@@ -464,7 +550,7 @@ void main() {
               .first,
         );
         await tester.pumpAndSettle();
-        final first = find.byKey(const ValueKey('detail-photo-0'));
+        final first = find.byKey(const ValueKey('detail-intro-photo-0'));
         final firstImage = find.descendant(
           of: first,
           matching: find.byType(Image),
