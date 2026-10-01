@@ -103,6 +103,12 @@ class ExploreController {
     await _run(() => repository.searchResults(query));
   }
 
+  /// The agent page's sentence, ranked for me around [near].
+  Future<void> agentSearch(String query, MapViewport near) async {
+    _searchQuery = query.trim();
+    await _run(() => repository.agentSearch(query, near: near));
+  }
+
   Future<void> showPublishedPlace(int placeId) async {
     _searchQuery = null;
     await _run(() async {

@@ -41,6 +41,29 @@ class PlaceService {
     );
   }
 
+  /// Taste-based agent search: the server reads the sentence with Gemini and
+  /// ranks places by matched terms, my taste, then distance from [near].
+  Future<PlaceSearchResult> agentSearch(
+    String query, {
+    MapViewport? near,
+  }) async {
+    final trimmed = query.trim();
+    if (trimmed.length < 2 || trimmed.length > 120) {
+      throw const PlaceFailure('검색어를 2~120자로 입력해 주세요.');
+    }
+    final data = await invoke({
+      'action': 'agent_search',
+      'query': trimmed,
+      'latitude': ?near?.latitude,
+      'longitude': ?near?.longitude,
+    });
+    return PlaceSearchResult(
+      _list(data),
+      notice: data['notice'] as String?,
+      googleSearchEnabled: data['googleSearchEnabled'] == true,
+    );
+  }
+
   Future<Place> details(Place place) async {
     if (place.isCatalog) {
       final data = await invoke({

@@ -6,13 +6,23 @@ export class CatalogError extends Error {
 type Payload = Record<string, unknown>;
 export async function catalogRequest(
   body: Payload,
-  query: (args: Payload) => Promise<Payload>,
+  query: (args: Payload, fn?: string) => Promise<Payload>,
   photoUrls: (paths: string[], bucket: string) => Promise<(string | null)[]>,
   googleEnabled: boolean,
   refreshInsight: (placeId: number) => void = () => {},
 ): Promise<Payload> {
   const args: Payload = {};
-  if (body.action === 'nearby') {
+  let fn = 'get_catalog_places';
+  if (body.action === 'agent_search') {
+    // index.ts fills terms/area from the sentence before calling us.
+    const terms = Array.isArray(body.terms) ? (body.terms as unknown[]).filter(t => typeof t === 'string' && t.trim()) : [];
+    if (!terms.length) throw new CatalogError(400,'INVALID_QUERY','검색어를 이해하지 못했어요. 다르게 말해 주세요.');
+    const lat = body.latitude, lng = body.longitude;
+    const near = typeof lat === 'number' && typeof lng === 'number' && lat >= 33 && lat <= 38.8 && lng >= 124.5 && lng <= 132;
+    Object.assign(args,{p_terms:terms,p_area:typeof body.area === 'string' ? body.area : null,
+      p_lat:near ? lat : null,p_lng:near ? lng : null});
+    fn = 'agent_search_places';
+  } else if (body.action === 'nearby') {
     const lat = body.latitude, lng = body.longitude, radius = body.radiusMeters;
     if (typeof lat !== 'number' || typeof lng !== 'number' || typeof radius !== 'number' ||
       !Number.isFinite(lat) || !Number.isFinite(lng) || !Number.isInteger(radius) ||
@@ -35,7 +45,7 @@ export async function catalogRequest(
     throw new CatalogError(400,'INVALID_ACTION','기본 장소 조회만 지원합니다.');
   }
   // Errors stay errors. This function has no Google/network fallback dependency.
-  const result = await query(args);
+  const result = await query(args, fn);
   const rows = ((result.places ?? []) as Payload[])
     .filter(p => (body.action !== 'nearby' && body.action !== 'posted') || (typeof p.pindPostCount === 'number' && p.pindPostCount > 0));
   // One signing call per bucket for the whole response, not one per place/post.
@@ -89,6 +99,9 @@ export async function catalogRequest(
   if (body.action === 'catalog_detail') {
     if (!places.length) throw new CatalogError(404,'PLACE_NOT_FOUND','공개된 장소를 찾지 못했어요.');
     return {place:places[0],googleSearchEnabled:googleEnabled};
+  }
+  if (body.action === 'agent_search') {
+    return {places,googleSearchEnabled:googleEnabled,notice:`${body.label} 기준으로 찾았어요.`};
   }
   return {places,googleSearchEnabled:googleEnabled,
     notice:result.catalogReady === false ? '공공 장소 데이터를 준비 중이에요. 준비된 지역부터 표시됩니다.' : null};

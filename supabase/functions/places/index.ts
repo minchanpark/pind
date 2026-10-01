@@ -3,6 +3,7 @@ import { createClient } from 'npm:@supabase/supabase-js@2.112.3';
 import { GoogleGenAI } from 'npm:@google/genai@2.24.0';
 import { catalogRequest, CatalogError } from './catalog.ts';
 import { INSIGHT_SCHEMA, INSIGHT_SYSTEM, INSIGHT_MODELS, insightPrompt, parseInsight, withFallback } from './insights.ts';
+import { AGENT_SCHEMA, AGENT_SYSTEM, type AgentPlan, fallbackPlan, parseAgentPlan } from './agent.ts';
 
 const headers = {
   'Access-Control-Allow-Origin':'*',
@@ -57,6 +58,22 @@ async function refreshInsight(placeId:number,claimed=false) {
     throw error;
   }
 }
+/// Sentence → search plan; any Gemini failure falls back to the words.
+async function agentPlan(query:string): Promise<AgentPlan> {
+  if (!gemini) return fallbackPlan(query);
+  try {
+    const response = await withFallback(INSIGHT_MODELS,model => gemini.models.generateContent({
+      model,
+      contents:`<query>${query}</query>`,
+      config:{systemInstruction:AGENT_SYSTEM,responseMimeType:'application/json',responseJsonSchema:AGENT_SCHEMA},
+    }),500);
+    return parseAgentPlan(response.text ?? '');
+  } catch (error) {
+    console.error('agent plan failed',error);
+    return fallbackPlan(query);
+  }
+}
+
 const queueInsight = (placeId:number,claimed=false) => {
   if (gemini) EdgeRuntime.waitUntil(refreshInsight(placeId,claimed).catch(error => console.error('insight refresh failed',error)));
 };
@@ -85,8 +102,13 @@ Deno.serve(async request => {
     let body;
     try { body = JSON.parse(raw); } catch { throw new CatalogError(400,'INVALID_JSON','잘못된 요청입니다.'); }
     if (!body || typeof body !== 'object' || Array.isArray(body)) throw new CatalogError(400,'INVALID_JSON','잘못된 요청입니다.');
-    return json(await catalogRequest(body,async args => {
-      const {data,error} = await client.rpc('get_catalog_places',args);
+    if (body.action === 'agent_search') {
+      const q = typeof body.query === 'string' ? body.query.trim() : '';
+      if (q.length < 2 || q.length > 120) throw new CatalogError(400,'INVALID_QUERY','검색어를 2~120자로 입력해 주세요.');
+      body = {...body,...await agentPlan(q)};
+    }
+    return json(await catalogRequest(body,async (args,fn) => {
+      const {data,error} = await client.rpc(fn ?? 'get_catalog_places',args);
       if (error) throw new CatalogError(503,'CATALOG_UNAVAILABLE','장소 DB에 연결하지 못했어요. 잠시 후 다시 시도해 주세요.');
       return data;
     },async (paths,bucket) => {

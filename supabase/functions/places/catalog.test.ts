@@ -85,3 +85,16 @@ test('the whole response signs once per bucket',async()=>{
   }]}),async(paths,bucket)=>{calls.push([bucket,paths]);return paths.map(p=>`https://s/${p}`);},true);
   assert.deepEqual(calls.sort(),[['post-media',['old']],['post-media-v2',['a','b','c']]]);
 });
+
+test('agent search runs its own RPC with the plan and explains it',async()=>{
+  const calls:[unknown,unknown][]=[];
+  const result=await catalogRequest({action:'agent_search',terms:['혼술','포차'],area:'성수동',label:'혼술 · 포차',latitude:37.54,longitude:127.05},
+    async(args,fn)=>{calls.push([fn,args]);return {places:[{internalId:1,pindPostCount:0},{internalId:2,pindPostCount:3}]};},async ps=>ps,true);
+  assert.deepEqual(calls,[['agent_search_places',{p_terms:['혼술','포차'],p_area:'성수동',p_lat:37.54,p_lng:127.05}]]);
+  assert.deepEqual((result.places as Record<string,unknown>[]).map(p=>p.internalId),[1,2]); // unposted kept
+  assert.equal(result.notice,'혼술 · 포차 기준으로 찾았어요.');
+  await assert.rejects(()=>catalogRequest({action:'agent_search',terms:[]},async()=>({}),async ps=>ps,true),/이해하지/);
+  const far=await catalogRequest({action:'agent_search',terms:['바'],label:'바',latitude:10,longitude:10},
+    async(args)=>{assert.deepEqual([args.p_lat,args.p_lng],[null,null]);return {places:[]};},async ps=>ps,true);
+  assert.deepEqual(far.places,[]);
+});

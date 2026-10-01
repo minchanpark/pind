@@ -123,7 +123,7 @@ void main() {
         expect(contexts.requestedId, 71);
         expect(actions, [
           'posted',
-          'search',
+          'agent_search', // the map searches through the agent page
           provider == 'sbiz' ? 'catalog_detail' : 'detail',
         ]);
         if (provider == 'sbiz') {
@@ -157,7 +157,7 @@ void main() {
         expect(find.byType(PindNavigationBar), findsOneWidget);
         expect(actions, [
           'posted',
-          'search',
+          'agent_search', // the map searches through the agent page
           provider == 'sbiz' ? 'catalog_detail' : 'detail',
         ]);
         if (provider == 'sbiz') {

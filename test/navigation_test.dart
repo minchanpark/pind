@@ -168,7 +168,7 @@ void main() {
       expect(tester.state(find.byType(ExploreScreen)), same(mapState));
       // The search button still shows the last query.
       expect(find.text('서울 카페'), findsOneWidget);
-      expect(calls, ['posted', 'search']);
+      expect(calls, ['posted', 'agent_search']);
     },
   );
 

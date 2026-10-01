@@ -145,7 +145,9 @@ class _ExploreScreenState extends State<ExploreScreen> {
     super.dispose();
   }
 
-  Future<void> search() async {
+  /// [agent] searches by sentence and taste (the agent page); otherwise by
+  /// name/address, as the clear chip's reload does.
+  Future<void> search({bool agent = false}) async {
     if (controller == null) return;
     final generation = ++searchGeneration;
     FocusScope.of(context).unfocus();
@@ -154,7 +156,11 @@ class _ExploreScreenState extends State<ExploreScreen> {
       category = '전체';
     });
     if (searchMode) {
-      await controller?.search(query.text);
+      if (agent) {
+        await controller?.agentSearch(query.text, await mapCenter());
+      } else {
+        await controller?.search(query.text);
+      }
       if (!mounted || generation != searchGeneration || !searchMode) return;
       final mapPlaces = controller!.places.where((p) => p.canShowOnMap);
       if (mounted && mapPlaces.isNotEmpty) {
@@ -183,7 +189,7 @@ class _ExploreScreenState extends State<ExploreScreen> {
     );
     if (!mounted || text == null) return;
     query.text = text;
-    await search();
+    await search(agent: true);
   }
 
   Future<void> searchGoogle() async {
