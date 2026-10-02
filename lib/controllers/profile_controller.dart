@@ -2,6 +2,7 @@ import 'dart:ui';
 
 import '../model/place_search_result.dart';
 import '../model/profile_model.dart';
+import '../model/friends_model.dart';
 import '../services/friends_service.dart';
 import '../services/place_action_service.dart';
 import '../services/post_photo_service.dart';
@@ -55,6 +56,16 @@ class ProfileController {
 
   /// Optimistic, followers count included. False (and [ProfileModel.error]
   /// set) when the server refused and the page was reverted.
+  /// This page's 팔로워 ([followers]) or 팔로잉.
+  Future<List<FriendCandidate>> followList(bool followers) =>
+      (friends ?? UnavailableFriendsService()).follows(
+        userId: userId,
+        followers: followers,
+      );
+
+  Future<void> setFollowing(String id, bool following) =>
+      (friends ?? UnavailableFriendsService()).setFollowing(id, following);
+
   Future<bool> toggleFollow() async {
     final o = model.overview, id = userId;
     if (o == null || id == null || model.saving) return true;

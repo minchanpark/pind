@@ -18,7 +18,7 @@ import 'package:pind_flutter/view/app.dart';
 import 'package:pind_flutter/view/explore/explore_screen.dart';
 import 'package:pind_flutter/view/onboarding/login_screen.dart';
 import 'package:pind_flutter/view/onboarding/registration_screen.dart';
-import 'package:pind_flutter/view/theme.dart';
+import 'package:pind_flutter/view/design_system.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'support/registration_fakes.dart';

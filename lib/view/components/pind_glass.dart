@@ -2,7 +2,7 @@ import 'dart:ui';
 
 import 'package:flutter/material.dart';
 
-import '../theme.dart';
+import '../design_system.dart';
 
 enum PindGlassTone { light, dark, purple, lime }
 
@@ -33,7 +33,7 @@ class PindGlass extends StatelessWidget {
     final (color, border, highlight, rim) = switch (tone) {
       PindGlassTone.light => (
         const Color.fromRGBO(251, 251, 253, .72),
-        PindTheme.border,
+        PindColors.border,
         .9,
         .95,
       ),

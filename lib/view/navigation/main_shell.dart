@@ -172,6 +172,8 @@ class _MainShellState extends State<MainShell> {
             explore: widget.controller,
             preferences: widget.preferences,
             mapsEnabled: widget.mapsEnabled,
+            myId: widget.posts?.userId,
+            onOpenProfile: openProfile,
           ),
         ),
       );
@@ -260,6 +262,8 @@ class _MainShellState extends State<MainShell> {
                   enabled: selected == PindTab.profile,
                   child: ProfileScreen(
                     controller: profile,
+                    myId: widget.posts?.userId,
+                    onOpenProfile: openProfile,
                     explore: widget.controller,
                     preferences: widget.preferences,
                     mapsEnabled: widget.mapsEnabled,

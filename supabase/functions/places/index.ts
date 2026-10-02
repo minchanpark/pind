@@ -5,6 +5,7 @@ import { catalogRequest, CatalogError } from './catalog.ts';
 import { INSIGHT_SCHEMA, INSIGHT_SYSTEM, INSIGHT_MODELS, insightPrompt, parseInsight, withFallback } from './insights.ts';
 import { AGENT_SCHEMA, AGENT_SYSTEM, type AgentPlan, fallbackPlan, parseAgentPlan } from './agent.ts';
 import { walkingRoute } from './walking.ts';
+import { groqJson } from './llm.ts';
 import { geocodeArea } from './area.ts';
 
 const headers = {
@@ -20,6 +21,28 @@ const json = (body:unknown,status=200) => new Response(JSON.stringify(body),{sta
 declare const EdgeRuntime: {waitUntil(promise: Promise<unknown>): void};
 const geminiKey = Deno.env.get('GEMINI_API_KEY');
 const gemini = geminiKey ? new GoogleGenAI({apiKey:geminiKey}) : null;
+const groqKey = Deno.env.get('GROQ_API_KEY');
+const hasLlm = Boolean(groqKey || gemini);
+
+/// JSON text from Groq, else Gemini when Groq is missing or fails.
+async function askJson(system:string,user:string,schema:object,geminiDelay?:number): Promise<string> {
+  if (groqKey) {
+    try {
+      return await groqJson(groqKey,system,user,schema);
+    } catch (error) {
+      if (!gemini) throw error;
+      console.error('groq failed, trying gemini',error);
+    }
+  }
+  const response = await withFallback(INSIGHT_MODELS,model => gemini!.models.generateContent({
+    model,
+    contents:user,
+    config:{systemInstruction:system,responseMimeType:'application/json',responseJsonSchema:schema},
+  }),geminiDelay);
+  const finish = response.candidates?.[0]?.finishReason;
+  if (finish !== 'STOP' || !response.text) throw new Error(`Gemini stopped: ${finish}`);
+  return response.text;
+}
 
 const admin = createClient(Deno.env.get('SUPABASE_URL')!,Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!,{
   auth:{persistSession:false,autoRefreshToken:false},
@@ -39,14 +62,7 @@ async function refreshInsight(placeId:number,claimed=false) {
     if (error) throw error;
     let insight = {summary:'',criteria:{}};
     if (posts.length) {
-      const response = await withFallback(INSIGHT_MODELS,model => gemini!.models.generateContent({
-        model,
-        contents:insightPrompt(posts),
-        config:{systemInstruction:INSIGHT_SYSTEM,responseMimeType:'application/json',responseJsonSchema:INSIGHT_SCHEMA},
-      }));
-      const finish = response.candidates?.[0]?.finishReason;
-      if (finish !== 'STOP' || !response.text) throw new Error(`Insight stopped: ${finish}`);
-      insight = parseInsight(response.text);
+      insight = parseInsight(await askJson(INSIGHT_SYSTEM,insightPrompt(posts),INSIGHT_SCHEMA));
     }
     const {error:saveError} = await admin.from('place_insights').update({
       ...insight,post_count:count ?? posts.length,claimed_at:null,last_error:null,failed_at:null,
@@ -60,16 +76,11 @@ async function refreshInsight(placeId:number,claimed=false) {
     throw error;
   }
 }
-/// Sentence → search plan; any Gemini failure falls back to the words.
+/// Sentence → search plan; if no model can read it, the sentence's words.
 async function agentPlan(query:string): Promise<AgentPlan> {
-  if (!gemini) return fallbackPlan(query);
+  if (!hasLlm) return fallbackPlan(query);
   try {
-    const response = await withFallback(INSIGHT_MODELS,model => gemini.models.generateContent({
-      model,
-      contents:`<query>${query}</query>`,
-      config:{systemInstruction:AGENT_SYSTEM,responseMimeType:'application/json',responseJsonSchema:AGENT_SCHEMA},
-    }),500);
-    return parseAgentPlan(response.text ?? '');
+    return parseAgentPlan(await askJson(AGENT_SYSTEM,`<query>${query}</query>`,AGENT_SCHEMA,500));
   } catch (error) {
     console.error('agent plan failed',error);
     return fallbackPlan(query);
@@ -77,7 +88,7 @@ async function agentPlan(query:string): Promise<AgentPlan> {
 }
 
 const queueInsight = (placeId:number,claimed=false) => {
-  if (gemini) EdgeRuntime.waitUntil(refreshInsight(placeId,claimed).catch(error => console.error('insight refresh failed',error)));
+  if (hasLlm) EdgeRuntime.waitUntil(refreshInsight(placeId,claimed).catch(error => console.error('insight refresh failed',error)));
 };
 Deno.serve(async request => {
   if (request.method === 'OPTIONS') return new Response('ok',{headers});

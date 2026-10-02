@@ -2,7 +2,7 @@ import 'package:pind_flutter/model/navigation_model.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:integration_test/integration_test.dart';
-import 'package:pind_flutter/view/theme.dart';
+import 'package:pind_flutter/view/design_system.dart';
 import 'package:pind_flutter/view/navigation/main_shell.dart';
 import 'package:pind_flutter/view/navigation/pind_navigation_bar.dart';
 

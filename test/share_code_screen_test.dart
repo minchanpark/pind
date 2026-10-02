@@ -9,7 +9,7 @@ import 'package:pind_flutter/services/profile_service.dart';
 import 'package:pind_flutter/services/profile_share_service.dart';
 import 'package:pind_flutter/view/friends/qr_scan_screen.dart';
 import 'package:pind_flutter/view/friends/share_code_screen.dart';
-import 'package:pind_flutter/view/theme.dart';
+import 'package:pind_flutter/view/design_system.dart';
 import 'package:qr_flutter/qr_flutter.dart';
 
 const id = '9f1c2d3e-4b5a-6c7d-8e9f-0a1b2c3d4e5f';

@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import '../theme.dart';
+import '../design_system.dart';
 import 'registration_components.dart';
 import '../../model/preferences.dart';
 import '../../controllers/onboarding_controller.dart';
@@ -124,8 +124,8 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                                       ),
                                       decoration: BoxDecoration(
                                         color: i <= step
-                                            ? PindTheme.purple
-                                            : PindTheme.border,
+                                            ? PindColors.purple
+                                            : PindColors.border,
                                         borderRadius: BorderRadius.circular(4),
                                       ),
                                     ),
@@ -138,9 +138,9 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                         Text(
                           '${step + 1}/3',
                           style: const TextStyle(
-                            fontSize: 12,
+                            fontSize: PindType.label,
                             fontWeight: FontWeight.bold,
-                            color: PindTheme.muted,
+                            color: PindColors.muted,
                           ),
                         ),
                       ],
@@ -255,9 +255,9 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                             summary,
                             textAlign: TextAlign.center,
                             style: const TextStyle(
-                              fontSize: 11,
+                              fontSize: PindType.caption,
                               fontWeight: FontWeight.w700,
-                              color: PindTheme.muted,
+                              color: PindColors.muted,
                             ),
                           ),
                         ),
@@ -305,7 +305,7 @@ class SelectionCard extends StatelessWidget {
     selected: selected,
     label: '$label, $description${rank == null ? '' : ', $rank순위'}',
     child: Material(
-      color: selected ? PindTheme.selected : PindTheme.surface,
+      color: selected ? PindColors.lime : PindColors.surface,
       borderRadius: BorderRadius.circular(18),
       child: InkWell(
         onTap: onTap,
@@ -316,7 +316,7 @@ class SelectionCard extends StatelessWidget {
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(18),
             border: Border.all(
-              color: selected ? PindTheme.ink : PindTheme.border,
+              color: selected ? PindColors.ink : PindColors.border,
               width: rank == 1 ? 2 : 1,
             ),
           ),
@@ -332,14 +332,14 @@ class SelectionCard extends StatelessWidget {
                       vertical: 3,
                     ),
                     decoration: BoxDecoration(
-                      color: PindTheme.ink,
+                      color: PindColors.ink,
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: Text(
                       '$rank순위',
                       style: const TextStyle(
                         color: Colors.white,
-                        fontSize: 10,
+                        fontSize: PindType.micro,
                         fontWeight: FontWeight.w700,
                       ),
                     ),
@@ -347,7 +347,7 @@ class SelectionCard extends StatelessWidget {
                 Text(
                   label,
                   style: const TextStyle(
-                    fontSize: 15,
+                    fontSize: PindType.bodyLarge,
                     fontWeight: FontWeight.w700,
                   ),
                 ),
@@ -355,8 +355,8 @@ class SelectionCard extends StatelessWidget {
                 Text(
                   description,
                   style: TextStyle(
-                    fontSize: 11,
-                    color: selected ? PindTheme.ink : PindTheme.muted,
+                    fontSize: PindType.caption,
+                    color: selected ? PindColors.ink : PindColors.muted,
                   ),
                 ),
               ],
@@ -385,7 +385,7 @@ class PhotoChoice extends StatelessWidget {
     selected: selected,
     label: cuisine.label,
     child: Material(
-      color: PindTheme.surface,
+      color: PindColors.surface,
       borderRadius: BorderRadius.circular(16),
       clipBehavior: Clip.antiAlias,
       child: InkWell(
@@ -425,7 +425,7 @@ class PhotoChoice extends StatelessWidget {
                           const Text(
                             '✓',
                             style: TextStyle(
-                              fontSize: 12,
+                              fontSize: PindType.label,
                               fontWeight: FontWeight.w700,
                             ),
                           ),
@@ -440,10 +440,10 @@ class PhotoChoice extends StatelessWidget {
                   child: Text(
                     cuisine.label,
                     style: TextStyle(
-                      fontSize: 15,
+                      fontSize: PindType.bodyLarge,
                       fontWeight: FontWeight.w700,
                       color: cuisine.asset == null
-                          ? PindTheme.ink
+                          ? PindColors.ink
                           : Colors.white,
                     ),
                   ),

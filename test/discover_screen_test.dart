@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:pind_flutter/view/components/pind_sheet.dart';
 import 'package:pind_flutter/controllers/discover_controller.dart';
 import 'package:pind_flutter/model/discover_model.dart';
 import 'package:pind_flutter/model/place_search_result.dart';
@@ -10,7 +11,7 @@ import 'package:pind_flutter/services/discover_service.dart';
 import 'package:pind_flutter/view/components/pind_glass.dart';
 import 'package:pind_flutter/view/components/post_card.dart';
 import 'package:pind_flutter/view/discover/discover_screen.dart';
-import 'package:pind_flutter/view/theme.dart';
+import 'package:pind_flutter/view/design_system.dart';
 
 FeedPost post(int id, String handle, {int likes = 0, bool liked = false}) =>
     FeedPost(
@@ -232,7 +233,7 @@ void main() {
     expect(deleted, isEmpty);
     await tester.tap(trash);
     await tester.pumpAndSettle();
-    await tester.tap(find.widgetWithText(FilledButton, '삭제'));
+    await tester.tap(find.widgetWithText(PindSheetButton, '삭제'));
     await tester.pumpAndSettle();
     expect(deleted, [2]);
     expect(find.text('가게 2'), findsNothing);

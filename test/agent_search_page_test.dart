@@ -6,6 +6,7 @@ import 'package:pind_flutter/model/nearby_ranking.dart';
 import 'package:pind_flutter/model/place_search_result.dart';
 import 'package:pind_flutter/model/places.dart';
 import 'package:pind_flutter/model/preferences.dart';
+import 'package:pind_flutter/model/search_suggestions.dart';
 import 'package:pind_flutter/view/explore/agent_search_page.dart';
 import 'package:pind_flutter/view/profile/saved_places_page.dart';
 
@@ -86,7 +87,8 @@ void main() {
     expect(find.text('개인 맞춤형 음식 검색'), findsOneWidget);
     expect(find.text('원하는 취향을 자세히 알려주면 추천 내용이 더 정확해집니다.'), findsOneWidget);
     expect(find.text('무엇이든 물어보세요...'), findsOneWidget);
-    for (final (_, text) in AgentSearchPage.suggestions) {
+    // Priorities alone: the design set.
+    for (final (_, text) in defaultSuggestions) {
       expect(find.text(text), findsOneWidget);
     }
     // Two columns: the first two suggestions share a row.
@@ -227,6 +229,42 @@ void main() {
     expect(find.text('혼술 하기 좋은 식당'), findsOneWidget); // the suggestion only
     expect(find.textContaining('추천 장소', skipOffstage: false), findsNothing);
     expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('suggestions follow my taste and ask when tapped', (
+    tester,
+  ) async {
+    final taste = TastePreferences(
+      priorities: [
+        PreferenceCriterion.ambience,
+        PreferenceCriterion.value,
+        PreferenceCriterion.photogenic,
+      ],
+      occasions: [DiningOccasion.work],
+      cuisines: [Cuisine.dessert, Cuisine.barbecue, Cuisine.korean],
+    );
+    final asked = <String>[];
+    await tester.pumpWidget(
+      MaterialApp(
+        home: AgentSearchPage(
+          preferences: taste,
+          search: (q) {
+            asked.add(q);
+            return Completer<AgentAnswer>().future;
+          },
+        ),
+      ),
+    );
+    for (final (_, text) in suggestionsFor(taste)) {
+      expect(find.text(text), findsOneWidget);
+    }
+    expect(find.text('카공하기 좋은 디저트 카페'), findsOneWidget);
+    expect(find.text('네팔 사람들이 많이 방문한 식당'), findsNothing);
+    await tester.tap(find.text('카공하기 좋은 디저트 카페'));
+    await tester.pump();
+    expect(asked, ['카공하기 좋은 디저트 카페']);
+    // Let the progress lines finish before the test ends.
+    await tester.pump(step * 2);
   });
 
   testWidgets('close returns to the map', (tester) async {

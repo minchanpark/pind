@@ -7,7 +7,7 @@ import '../../model/preferences.dart';
 import '../../model/profile_model.dart';
 import '../components/pind_glass.dart';
 import '../explore/explore_screen.dart';
-import '../theme.dart';
+import '../design_system.dart';
 import 'profile_screen.dart';
 
 /// (emoji, label, earned).
@@ -76,11 +76,11 @@ class ProfileMapTab extends StatelessWidget {
               child: Column(
                 spacing: 4,
                 children: [
-                  Text(emoji, style: const TextStyle(fontSize: 20)),
+                  Text(emoji, style: const TextStyle(fontSize: PindType.titleLarge)),
                   Text(
                     label,
                     style: const TextStyle(
-                      fontSize: 10,
+                      fontSize: PindType.micro,
                       fontWeight: FontWeight.w500,
                       color: profileBody,
                     ),
@@ -124,7 +124,7 @@ class ProfileMapTab extends StatelessWidget {
                     child: Text(
                       '맵 보기 ›',
                       style: TextStyle(
-                        fontSize: 12,
+                        fontSize: PindType.label,
                         fontWeight: FontWeight.w600,
                       ),
                     ),
@@ -138,7 +138,7 @@ class ProfileMapTab extends StatelessWidget {
   }
 
   Widget _note(String text) => Container(
-    color: PindTheme.surface,
+    color: PindColors.surface,
     alignment: Alignment.center,
     child: mutedNote(text),
   );
@@ -228,11 +228,11 @@ class _TasteCard extends StatelessWidget {
   final TastePreferences? preferences;
   final VoidCallback? onEdit;
   final bool mine;
-  static const bars = [Color(0xFFE8336E), Color(0xFF3563FF), Color(0xFFFF8A1F)];
+  static const bars = [PindColors.pink, PindColors.ratingBlue, PindColors.ratingOrange];
   static const values = [
-    Color(0xFFA8154A),
-    Color(0xFF1C3FC4),
-    Color(0xFFB85600),
+    PindColors.taste,
+    PindColors.ambience,
+    PindColors.portion,
   ];
 
   @override
@@ -252,7 +252,7 @@ class _TasteCard extends StatelessWidget {
               Text(
                 mine ? '나의 취향' : '취향',
                 style: const TextStyle(
-                  fontSize: 14,
+                  fontSize: PindType.body,
                   fontWeight: FontWeight.w700,
                 ),
               ),
@@ -272,7 +272,7 @@ class _TasteCard extends StatelessWidget {
                   child: _pill(
                     '✎ 수정',
                     background: const Color.fromRGBO(251, 251, 253, .9),
-                    border: const Color(0xFFD9DAE1),
+                    border: PindColors.imageFill,
                     color: profileBody,
                     weight: FontWeight.w500,
                     vertical: 5,
@@ -284,7 +284,7 @@ class _TasteCard extends StatelessWidget {
             Text(
               mine ? '취향을 설정하면 여기에 표시돼요.' : '공개한 취향이 없어요.',
               style: const TextStyle(
-                fontSize: 12,
+                fontSize: PindType.label,
                 height: 17 / 12,
                 color: profileBody,
               ),
@@ -314,7 +314,7 @@ class _TasteCard extends StatelessWidget {
             Text(
               '${p[0].label} 먼저, 그다음 ${p[1].label}·${p[2].label}을 봐요.',
               style: const TextStyle(
-                fontSize: 12,
+                fontSize: PindType.label,
                 height: 17 / 12,
                 color: profileBody,
               ),
@@ -341,7 +341,7 @@ class _TasteCard extends StatelessWidget {
     ),
     child: Text(
       text,
-      style: TextStyle(fontSize: 11, fontWeight: weight, color: color),
+      style: TextStyle(fontSize: PindType.caption, fontWeight: weight, color: color),
     ),
   );
 
@@ -362,7 +362,7 @@ class _TasteCard extends StatelessWidget {
           ),
         ],
       ),
-      style: const TextStyle(fontSize: 11, color: profileBody),
+      style: const TextStyle(fontSize: PindType.caption, color: profileBody),
     ),
   );
 }

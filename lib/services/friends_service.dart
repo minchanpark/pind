@@ -3,6 +3,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import '../model/friends_model.dart';
 import '../model/place_search_result.dart';
 import '../model/preferences.dart';
+import '../model/profile_model.dart';
 import 'data_revision.dart';
 
 /// Follows (`public.follows`), taste recommendations (`get_taste_matches`),
@@ -17,6 +18,13 @@ abstract interface class FriendsService {
 
   Future<void> setFollowing(String userId, bool following);
 
+  /// Who follows [userId] ([followers]) or whom they follow, newest first,
+  /// each marked with whether I follow them. Null [userId] is me.
+  Future<List<FriendCandidate>> follows({
+    String? userId,
+    required bool followers,
+  });
+
   /// [discoverable]: whether others may be recommended this user.
   Future<void> saveTaste(TastePreferences preferences, {bool discoverable});
 }
@@ -30,6 +38,11 @@ class UnavailableFriendsService implements FriendsService {
   Future<List<FriendCandidate>> search(String query) => throw _failure;
   @override
   Future<void> setFollowing(String userId, bool following) => throw _failure;
+  @override
+  Future<List<FriendCandidate>> follows({
+    String? userId,
+    required bool followers,
+  }) => throw _failure;
   @override
   Future<void> saveTaste(
     TastePreferences preferences, {
@@ -74,6 +87,58 @@ class SupabaseFriendsService implements FriendsService {
       );
     } on PostgrestException {
       throw const PlaceFailure('검색하지 못했어요.');
+    }
+  }
+
+  @override
+  Future<List<FriendCandidate>> follows({
+    String? userId,
+    required bool followers,
+  }) async {
+    final me = _uid, of = userId ?? me;
+    // The other end of each follow, through its own foreign key.
+    final (match, person) = followers
+        ? ('followee_id', 'follows_follower_id_fkey')
+        : ('follower_id', 'follows_followee_id_fkey');
+    try {
+      final rows = await client
+          .from('follows')
+          .select(
+            'p:profiles!$person(id, handle, display_name, avatar_url, bio)',
+          )
+          .eq(match, of)
+          .order('created_at', ascending: false);
+      final people = [
+        for (final r in rows)
+          if (r['p'] case final Map p) Map<String, dynamic>.from(p),
+      ];
+      final ids = [for (final p in people) p['id'] as String];
+      final mine = ids.isEmpty
+          ? <String>{}
+          : {
+              for (final r
+                  in await client
+                      .from('follows')
+                      .select('followee_id')
+                      .eq('follower_id', me)
+                      .inFilter('followee_id', ids))
+                r['followee_id'] as String,
+            };
+      return [
+        for (final p in people)
+          FriendCandidate(
+            profile: UserProfile(
+              id: p['id'] as String,
+              handle: p['handle'] as String?,
+              displayName: p['display_name'] as String? ?? '',
+              avatarUrl: p['avatar_url'] as String?,
+              bio: p['bio'] as String?,
+            ),
+            following: mine.contains(p['id']),
+          ),
+      ];
+    } on PostgrestException {
+      throw PlaceFailure(followers ? '팔로워를 불러오지 못했어요.' : '팔로잉을 불러오지 못했어요.');
     }
   }
 

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:pind_flutter/view/components/pind_sheet.dart';
 import 'package:pind_flutter/controllers/profile_controller.dart';
 import 'package:pind_flutter/model/place_search_result.dart';
 import 'package:pind_flutter/model/places.dart';
@@ -14,7 +15,7 @@ import 'package:pind_flutter/view/profile/profile_follow.dart';
 import 'package:pind_flutter/view/profile/profile_saved_tab.dart';
 import 'package:pind_flutter/view/profile/profile_screen.dart';
 import 'package:pind_flutter/view/profile/saved_places_page.dart';
-import 'package:pind_flutter/view/theme.dart';
+import 'package:pind_flutter/view/design_system.dart';
 
 Place place(int id, String name, String address) => Place(
   id: id,
@@ -177,7 +178,7 @@ void main() {
   ) async {
     await pump(tester);
     expect(find.text('@minchan'), findsOneWidget);
-    expect(find.text('📍 서울 성수동 여행 중'), findsOneWidget);
+    expect(find.text('서울 성수동 여행 중'), findsOneWidget);
     for (final n in ['4', '3', '2', '1']) {
       expect(find.text(n), findsOneWidget);
     }
@@ -193,6 +194,110 @@ void main() {
       isNot(contains(canned.savedPlaces.last.place.id)),
     );
     expect(find.text('지도를 사용할 수 없어요'), findsOneWidget);
+  });
+
+  testWidgets('팔로워/팔로잉 open their lists; follow there, open a person', (
+    tester,
+  ) async {
+    UserProfile person(String id, String handle) =>
+        UserProfile(id: id, handle: handle, displayName: handle);
+    final follows = _Follows()
+      ..lists[(null, true)] = [
+        FriendCandidate(profile: person('a', 'haram'), following: true),
+        FriendCandidate(profile: person('b', 'jiwoo')),
+      ]
+      ..lists[(null, false)] = [
+        FriendCandidate(profile: person('a', 'haram'), following: true),
+      ];
+    final service = FakeProfileService();
+    final controller = ProfileController(profile: service, friends: follows);
+    addTearDown(controller.dispose);
+    final opened = <String>[];
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: PindTheme.data,
+        home: ProfileScreen(
+          controller: controller,
+          preferences: prefs,
+          mapsEnabled: false,
+          myId: canned.profile.id,
+          onOpenProfile: opened.add,
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byKey(const ValueKey('profile-stat-팔로워')));
+    await tester.pumpAndSettle();
+    expect(follows.listed, [(null, true)]);
+    expect(find.text('팔로워'), findsOneWidget);
+    expect(find.text('2명'), findsOneWidget);
+    expect(find.text('@haram'), findsOneWidget);
+    expect(find.text('@jiwoo'), findsOneWidget);
+    // Follow back from the list, at once.
+    await tester.tap(find.bySemanticsLabel('jiwoo 팔로우'));
+    await tester.pump();
+    expect(follows.calls, [('b', true)]);
+    expect(find.bySemanticsLabel('jiwoo 팔로우 취소'), findsOneWidget);
+    await tester.tap(find.text('@haram'));
+    expect(opened, ['a']);
+    // Back on the page, the counts are refetched.
+    final loads = service.overviewCalls;
+    Navigator.of(tester.element(find.byType(FollowListPage))).pop();
+    await tester.pumpAndSettle();
+    expect(service.overviewCalls, greaterThan(loads));
+
+    await tester.tap(find.byKey(const ValueKey('profile-stat-팔로잉')));
+    await tester.pumpAndSettle();
+    expect(follows.listed.last, (null, false));
+    expect(find.text('팔로잉'), findsOneWidget);
+    expect(find.text('1명'), findsOneWidget);
+  });
+
+  testWidgets('a failed follow list says so and retries', (tester) async {
+    final follows = _Follows();
+    var attempts = 0;
+    await tester.pumpWidget(
+      MaterialApp(
+        home: FollowListPage(
+          title: '팔로워',
+          load: () async {
+            if (attempts++ == 0) throw const PlaceFailure('팔로워를 불러오지 못했어요.');
+            return const [];
+          },
+          setFollowing: follows.setFollowing,
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+    expect(find.text('팔로워를 불러오지 못했어요.'), findsOneWidget);
+    await tester.tap(find.text('다시 시도'));
+    await tester.pumpAndSettle();
+    expect(find.text('아직 팔로워가 없어요.'), findsOneWidget);
+  });
+
+  testWidgets('my own row has no follow button', (tester) async {
+    await tester.pumpWidget(
+      MaterialApp(
+        home: FollowListPage(
+          title: '팔로잉',
+          myId: 'me',
+          load: () async => [
+            FriendCandidate(
+              profile: const UserProfile(
+                id: 'me',
+                displayName: '나',
+                handle: 'me_',
+              ),
+            ),
+          ],
+          setFollowing: (_, _) async {},
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+    expect(find.text('@me_'), findsOneWidget);
+    expect(find.bySemanticsLabel(RegExp('팔로우')), findsNothing);
   });
 
   testWidgets('맵 보기 focuses the map on the newest post', (tester) async {
@@ -409,18 +514,22 @@ void main() {
     await tester.tap(find.bySemanticsLabel('설정'));
     await tester.pumpAndSettle();
     expect(find.text('아이디는 변경할 수 없어요'), findsOneWidget);
-    await tester.enterText(find.widgetWithText(TextFormField, '닉네임'), '새 이름');
-    await tester.enterText(
-      find.widgetWithText(TextFormField, '상태 메시지'),
-      '부산 여행 중',
+    // The design system's sheet: title, glass fields, glass buttons.
+    expect(find.text('프로필 설정'), findsOneWidget);
+    expect(find.byType(PindSheetButton), findsNWidgets(2));
+    Finder field(String label) => find.descendant(
+      of: find.widgetWithText(PindTextField, label),
+      matching: find.byType(TextField),
     );
-    await tester.tap(find.text('저장').last);
+    await tester.enterText(field('닉네임'), '새 이름');
+    await tester.enterText(field('상태 메시지'), '부산 여행 중');
+    await tester.tap(find.widgetWithText(PindSheetButton, '저장'));
     await tester.pumpAndSettle();
     expect(service.saves, [
       {'displayName': '새 이름', 'bio': '부산 여행 중'},
     ]);
     expect(find.text('아이디는 변경할 수 없어요'), findsNothing);
-    expect(find.text('📍 부산 여행 중'), findsOneWidget);
+    expect(find.text('부산 여행 중'), findsOneWidget);
   });
 
   testWidgets('load error offers retry', (tester) async {
@@ -559,10 +668,24 @@ extension on ProfileOverview {
 class _Follows implements FriendsService {
   bool fail = false;
   final calls = <(String, bool)>[];
+
+  /// Who follows / is followed by each user id (null = me).
+  final lists = <(String?, bool), List<FriendCandidate>>{};
+  final listed = <(String?, bool)>[];
+  @override
+  Future<List<FriendCandidate>> follows({
+    String? userId,
+    required bool followers,
+  }) async {
+    listed.add((userId, followers));
+    return lists[(userId, followers)] ?? const [];
+  }
+
   @override
   Future<void> setFollowing(String userId, bool following) async {
     calls.add((userId, following));
     if (fail) throw const PlaceFailure('팔로우하지 못했어요.');
+    markDataChanged(); // as the real service does
   }
 
   @override

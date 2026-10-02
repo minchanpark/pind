@@ -6,7 +6,7 @@ import 'package:pind_flutter/model/places.dart';
 import 'package:pind_flutter/model/preferences.dart';
 import 'package:pind_flutter/services/place_service.dart';
 import 'package:pind_flutter/view/explore/nearby_ranking_sheet.dart';
-import 'package:pind_flutter/view/theme.dart';
+import 'package:pind_flutter/view/design_system.dart';
 
 Map<String, dynamic> row(
   int id,

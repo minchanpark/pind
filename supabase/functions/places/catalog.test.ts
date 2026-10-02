@@ -96,6 +96,13 @@ test('agent search runs its own RPC with the plan and explains it',async()=>{
   await catalogRequest({action:'agent_search',terms:['카페'],label:'성수동 · 카페',latitude:37.5407,longitude:127.0566,radiusMeters:1600},
     async(args,fn)=>{calls.push([fn,args]);return {places:[]};},async ps=>ps,true);
   assert.deepEqual(calls,[['agent_search_places',{p_terms:['카페'],p_lat:37.5407,p_lng:127.0566,p_radius:1600}]]);
+  // The kind of place travels apart from the ranking words.
+  calls.length=0;
+  await catalogRequest({action:'agent_search',kinds:['치킨','통닭'],terms:['사진'],label:'치킨'},
+    async(args,fn)=>{calls.push([fn,args]);return {places:[]};},async ps=>ps,true);
+  assert.deepEqual(calls,[['agent_search_places',{p_terms:['사진'],p_lat:null,p_lng:null,p_kinds:['치킨','통닭']}]]);
+  // Kinds alone are enough.
+  await catalogRequest({action:'agent_search',kinds:['카페'],terms:[],label:'카페'},async()=>({places:[]}),async ps=>ps,true);
   assert.deepEqual((result.places as Record<string,unknown>[]).map(p=>p.internalId),[1,2]); // unposted kept
   assert.equal(result.notice,'혼술 · 포차 기준으로 찾았어요.');
   await assert.rejects(()=>catalogRequest({action:'agent_search',terms:[]},async()=>({}),async ps=>ps,true),/이해하지/);

@@ -10,7 +10,7 @@ import 'package:pind_flutter/services/friends_service.dart';
 import 'package:pind_flutter/services/profile_service.dart';
 import 'package:pind_flutter/view/friends/friends_screen.dart';
 import 'package:pind_flutter/view/friends/share_code_screen.dart';
-import 'package:pind_flutter/view/theme.dart';
+import 'package:pind_flutter/view/design_system.dart';
 
 FriendCandidate person(int n, {int? match, bool following = false}) =>
     FriendCandidate(
@@ -59,6 +59,11 @@ class FakeFriendsService implements FriendsService {
     TastePreferences preferences, {
     bool discoverable = false,
   }) async {}
+  @override
+  Future<List<FriendCandidate>> follows({
+    String? userId,
+    required bool followers,
+  }) async => const [];
 }
 
 Future<(FriendsController, FakeFriendsService)> pump(

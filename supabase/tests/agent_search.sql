@@ -21,6 +21,9 @@ grant select on qa to authenticated;
 insert into public.posts(author_id,place_id,menu_name,photo_path,emoji,body,is_public,status)
 select '98000000-0000-0000-0000-000000000002',p,'',p||'.png','🍺',body,true,'published'
  from qa,lateral (values (qa.a,'안주가 좋아요'),(qa.b,'혼술 하기 딱 좋아요'),(qa.c,'맛있어요')) v(p,body);
+-- c also has a bakery-style post: "바삭" is not a 바 (bar).
+insert into public.posts(author_id,place_id,menu_name,photo_path,emoji,body,is_public,status)
+select '98000000-0000-0000-0000-000000000002',qa.c,'',qa.c||'-2.png','🥐','소금빵이 바삭해요',true,'published' from qa;
 -- b tastes better than a on my priorities.
 insert into public.place_ratings(user_id,place_id,criterion,rating,is_public)
 select '98000000-0000-0000-0000-000000000002',p,crit,r,true from qa,lateral (values
@@ -56,6 +59,33 @@ do $$ declare q qa; r jsonb; ids bigint[]; begin select * into q from qa;
  assert (select array_agg((e->>'internalId')::bigint) from jsonb_array_elements(r) e)=array[q.a],'p_area ignored, radius used';
  begin perform public.agent_search_places(array['포차'],null,null,null,1000); raise exception 'radius without center accepted';
  exception when raise_exception then if sqlerrm<>'Invalid radius' then raise; end if; end;
+ -- The kind must match; mood words only rank. b's post says 좋아요, but b
+ -- is no 포차.
+ r:=public.agent_search_places(array['좋아요'],null,37.5440,127.0550,null,array['포차'])->'places';
+ assert (select array_agg((e->>'internalId')::bigint) from jsonb_array_elements(r) e)=array[q.a],'kind filters, terms rank';
+ -- A place of the kind stays even when no post uses the mood word.
+ r:=public.agent_search_places(array['사진'],null,null,null,null,array['한식'])->'places';
+ assert (select array_agg((e->>'internalId')::bigint) from jsonb_array_elements(r) e)=array[q.b],'kind without term hits';
+ -- Matching mood words go first among the kind: 혼술 (b's post) before c.
+ r:=public.agent_search_places(array['혼술'],null,null,null,null,array['주점','한식'])->'places';
+ assert (select array_agg((e->>'internalId')::bigint) from jsonb_array_elements(r) e)[1]=q.b,'hits rank within the kind';
+ -- No place of the kind: nothing, not lookalikes.
+ r:=public.agent_search_places(array['좋아요'],null,null,null,null,array['치킨'])->'places';
+ assert jsonb_array_length(r)=0,'unknown kind finds nothing';
+ -- Kinds alone are a valid search.
+ r:=public.agent_search_places(array[]::text[],null,null,null,null,array['이자카야'])->'places';
+ assert (select array_agg((e->>'internalId')::bigint) from jsonb_array_elements(r) e)=array[q.c],'kinds only';
+ -- One-letter words count only as whole words (particles allowed).
+ assert not public.agent_text_hit('소금빵이 바삭해요','바'),'바 in 바삭';
+ assert public.agent_text_hit('바에서 혼술했어요','바'),'바 + particle';
+ assert public.agent_text_hit('분위기 좋은 바','바'),'바 at the end';
+ assert public.agent_text_hit('바, 포차 둘 다 좋아요','바'),'바 before a comma';
+ assert not public.agent_text_hit('냉면이 맛있어요','면'),'면 in 냉면';
+ assert public.agent_text_hit('냉면/밀면','면',true),'categories match inside';
+ assert public.agent_text_hit('돼지고기 구이/찜','고기'),'longer words still match inside';
+ assert not public.agent_text_hit(null,'바') and not public.agent_text_hit('바','');
+ r:=public.agent_search_places(array['바'],null,null,null,null,null)->'places';
+ assert jsonb_array_length(r)=0,'바삭 no longer finds c';
  -- Bad input.
  begin perform public.agent_search_places(array[]::text[]); raise exception 'empty accepted';
  exception when raise_exception then null; end;

@@ -3,7 +3,7 @@ import 'package:pind_flutter/controllers/place_detail_controller.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:integration_test/integration_test.dart';
-import 'package:pind_flutter/view/theme.dart';
+import 'package:pind_flutter/view/design_system.dart';
 import 'package:pind_flutter/services/preview/detail_fixture.dart';
 import 'package:pind_flutter/model/places.dart';
 import 'package:pind_flutter/view/explore/place_sheet.dart';

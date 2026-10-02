@@ -6,8 +6,9 @@ import '../../model/preferences.dart';
 import '../../model/profile_model.dart';
 import '../explore/post_photo_viewer.dart';
 import '../profile/profile_screen.dart';
-import '../theme.dart';
+import '../design_system.dart';
 import 'pind_glass.dart';
+import 'pind_sheet.dart';
 
 /// Figma 599:23885 post card shared by the profile posts tab and the
 /// Discover feed. [action] is the trailing 44×44 button (share, like...).
@@ -26,7 +27,7 @@ class PostCard extends StatelessWidget {
   final TastePreferences? preferences;
   final Widget action;
   final VoidCallback? onPlace;
-  static const yellow = Color(0xFFF4FF5A);
+  static const yellow = PindColors.lime;
 
   @override
   Widget build(BuildContext context) {
@@ -43,7 +44,10 @@ class PostCard extends StatelessWidget {
         child: Center(
           child: Text(
             '📍${post.place.name}',
-            style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w500),
+            style: const TextStyle(
+              fontSize: PindType.label,
+              fontWeight: FontWeight.w500,
+            ),
           ),
         ),
       ),
@@ -62,9 +66,9 @@ class PostCard extends StatelessWidget {
                     ? author.displayName
                     : '@${author.handle}',
                 style: const TextStyle(
-                  fontSize: 14,
+                  fontSize: PindType.body,
                   fontWeight: FontWeight.w500,
-                  color: PindTheme.ink,
+                  color: PindColors.ink,
                 ),
               ),
             ),
@@ -75,7 +79,7 @@ class PostCard extends StatelessWidget {
           Text(
             post.body,
             style: const TextStyle(
-              fontSize: 12,
+              fontSize: PindType.label,
               height: 16.9 / 12,
               color: Colors.black,
             ),
@@ -164,7 +168,7 @@ class PostCard extends StatelessWidget {
                 -5,
                 w: 126,
                 h: 180,
-                border: PindTheme.purple,
+                border: PindColors.purple,
               ),
             ],
           ),
@@ -194,7 +198,7 @@ class PostCard extends StatelessWidget {
                 109,
                 165,
                 radius: 12,
-                border: PindTheme.purple,
+                border: PindColors.purple,
                 width: 2,
               ),
               // Upright, above the tilted card, as in the design; taps fall
@@ -206,7 +210,7 @@ class PostCard extends StatelessWidget {
                     child: Text(
                       '+ $more',
                       style: const TextStyle(
-                        fontSize: 20,
+                        fontSize: PindType.titleLarge,
                         fontWeight: FontWeight.w500,
                         color: Colors.white,
                       ),
@@ -290,7 +294,10 @@ class PostCard extends StatelessWidget {
               ),
             ],
           ),
-          style: const TextStyle(fontSize: 10, color: PindTheme.ink),
+          style: const TextStyle(
+            fontSize: PindType.micro,
+            color: PindColors.ink,
+          ),
         ),
       ),
     );
@@ -387,54 +394,31 @@ class PostDeleteButton extends StatelessWidget {
 
 /// True when the user chose 삭제. Same sheet as 팔로우 취소 (Figma 663:5621).
 Future<bool> confirmDelete(BuildContext context) async =>
-    await showModalBottomSheet<bool>(
-      context: context,
-      backgroundColor: const Color(0xFFF7F7F9),
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
-      ),
-      showDragHandle: true,
-      builder: (context) => SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(20, 0, 20, 12),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            spacing: 10,
-            children: [
-              const Text(
-                '게시물을 삭제할까요?',
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w700,
-                  color: PindTheme.ink,
-                ),
-              ),
-              const Text(
-                '사진과 별점도 함께 지워지고, 되돌릴 수 없어요.',
-                textAlign: TextAlign.center,
-                style: TextStyle(fontSize: 12, color: PindTheme.muted),
-              ),
-              const SizedBox(height: 8),
-              FilledButton(
-                style: FilledButton.styleFrom(
-                  backgroundColor: const Color(0xFFE8336E),
-                  minimumSize: const Size.fromHeight(44),
-                ),
-                onPressed: () => Navigator.pop(context, true),
-                child: const Text('삭제'),
-              ),
-              TextButton(
-                style: TextButton.styleFrom(
-                  minimumSize: const Size.fromHeight(44),
-                ),
-                onPressed: () => Navigator.pop(context, false),
-                child: const Text('닫기', style: TextStyle(color: PindTheme.ink)),
-              ),
-            ],
+    await showPindSheet<bool>(
+      context,
+      builder: (context) => Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        spacing: 10,
+        children: [
+          const Text(
+            '게시물을 삭제할까요?',
+            textAlign: TextAlign.center,
+            style: PindText.title,
           ),
-        ),
+          const Text(
+            '사진과 별점도 함께 지워지고, 되돌릴 수 없어요.',
+            textAlign: TextAlign.center,
+            style: PindText.caption,
+          ),
+          const SizedBox(height: 8),
+          PindSheetButton(
+            '삭제',
+            tone: PindSheetButtonTone.danger,
+            onTap: () => Navigator.pop(context, true),
+          ),
+          PindSheetButton('닫기', onTap: () => Navigator.pop(context, false)),
+        ],
       ),
     ) ??
     false;

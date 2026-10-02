@@ -7,7 +7,7 @@ import '../../model/profile_model.dart';
 import '../../services/location_service.dart';
 import '../components/pind_back_header.dart';
 import '../components/pind_glass.dart';
-import '../theme.dart';
+import '../design_system.dart';
 import 'profile_screen.dart';
 
 /// `2일 전 저장`: under an hour is 방금, then hours, days, weeks, months, years.
@@ -147,9 +147,9 @@ class _SavedPlacesPageState extends State<SavedPlacesPage> {
                 Text(
                   '${widget.total}곳',
                   style: const TextStyle(
-                    fontSize: 12,
+                    fontSize: PindType.label,
                     fontWeight: FontWeight.w700,
-                    color: PindTheme.muted,
+                    color: PindColors.muted,
                   ),
                 ),
               ],
@@ -213,9 +213,9 @@ class _SavedPlacesPageState extends State<SavedPlacesPage> {
             child: Text(
               label,
               style: TextStyle(
-                fontSize: 12,
+                fontSize: PindType.label,
                 fontWeight: FontWeight.w700,
-                color: on ? Colors.white : PindTheme.muted,
+                color: on ? Colors.white : PindColors.muted,
               ),
             ),
           ),
@@ -272,9 +272,9 @@ class SavedPlaceRow extends StatelessWidget {
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: const TextStyle(
-                    fontSize: 16,
+                    fontSize: PindType.title,
                     fontWeight: FontWeight.w700,
-                    color: PindTheme.ink,
+                    color: PindColors.ink,
                   ),
                 ),
                 Text(
@@ -283,7 +283,7 @@ class SavedPlaceRow extends StatelessWidget {
                     if (meters != null) formatDistance(meters!),
                     '리뷰 ${card.reviewCount}',
                   ].join(' · '),
-                  style: const TextStyle(fontSize: 12, color: PindTheme.muted),
+                  style: const TextStyle(fontSize: PindType.label, color: PindColors.muted),
                 ),
                 // One line always: shrinks rather than wraps when narrow.
                 FittedBox(
@@ -332,7 +332,7 @@ class SavedPlaceRow extends StatelessWidget {
                       Text(
                         savedAgo(at, DateTime.now()),
                         style: const TextStyle(
-                          fontSize: 10,
+                          fontSize: PindType.micro,
                           fontWeight: FontWeight.w500,
                           color: profileBody,
                         ),
@@ -355,18 +355,18 @@ class SavedPlaceRow extends StatelessWidget {
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
                     color: saved
-                        ? PindTheme.purple.withValues(alpha: .12)
+                        ? PindColors.purple.withValues(alpha: .12)
                         : Colors.white,
                     border: Border.all(
                       color: saved
-                          ? PindTheme.purple.withValues(alpha: .4)
-                          : PindTheme.border,
+                          ? PindColors.purple.withValues(alpha: .4)
+                          : PindColors.border,
                     ),
                   ),
                   child: Icon(
                     saved ? Icons.bookmark : Icons.bookmark_border,
                     size: 16,
-                    color: saved ? PindTheme.purple : PindTheme.muted,
+                    color: saved ? PindColors.purple : PindColors.muted,
                   ),
                 ),
               ),
@@ -398,7 +398,7 @@ class SavedPlaceRow extends StatelessWidget {
               ),
             ],
           ),
-          style: const TextStyle(fontSize: 10.5, color: PindTheme.ink),
+          style: const TextStyle(fontSize: 10.5, color: PindColors.ink),
         ),
       ),
     );

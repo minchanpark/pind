@@ -3,7 +3,7 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 
 import '../components/pind_glass.dart';
-import '../theme.dart';
+import '../design_system.dart';
 
 /// Figma 542:22927 (all) / 542:22930 (category).
 class MapFilterChip extends StatelessWidget {
@@ -36,7 +36,7 @@ class MapFilterChip extends StatelessWidget {
             child: PindGlass(
               tone: all ? PindGlassTone.dark : PindGlassTone.light,
               radius: 20,
-              borderColor: !all && selected ? PindTheme.purple : null,
+              borderColor: !all && selected ? PindColors.purple : null,
               padding: const EdgeInsets.symmetric(horizontal: 13, vertical: 10),
               child: ExcludeSemantics(
                 child: Row(
@@ -45,18 +45,18 @@ class MapFilterChip extends StatelessWidget {
                     if (!all) ...[
                       Text(
                         parts.first,
-                        style: const TextStyle(fontSize: 15, height: 1),
+                        style: const TextStyle(fontSize: PindType.bodyLarge, height: 1),
                       ),
                       const SizedBox(width: 5),
                     ],
                     Text(
                       all ? '전체' : parts.skip(1).join(' '),
                       style: TextStyle(
-                        fontSize: 13,
+                        fontSize: PindType.bodySmall,
                         height: 1.2,
                         letterSpacing: 0,
                         fontWeight: all ? FontWeight.w700 : FontWeight.w500,
-                        color: all ? Colors.white : PindTheme.ink,
+                        color: all ? Colors.white : PindColors.ink,
                       ),
                     ),
                     if (all) ...[
@@ -64,7 +64,7 @@ class MapFilterChip extends StatelessWidget {
                       const Text(
                         '▾',
                         style: TextStyle(
-                          fontSize: 13,
+                          fontSize: PindType.bodySmall,
                           height: 1.2,
                           color: Colors.white,
                           fontWeight: FontWeight.w700,

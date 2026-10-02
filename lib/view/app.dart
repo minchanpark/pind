@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../controllers/app_controller.dart';
 import '../model/preferences.dart';
-import 'theme.dart';
+import 'design_system.dart';
 import 'navigation/main_shell.dart';
 import 'onboarding/onboarding_screen.dart';
 import 'onboarding/registration_screen.dart';

@@ -11,7 +11,7 @@ import '../components/pind_glass.dart';
 import '../components/pind_search_field.dart';
 import '../explore/explore_screen.dart' show PlacePin;
 import '../profile/profile_screen.dart' show mutedNote;
-import '../theme.dart';
+import '../design_system.dart';
 
 enum PlaceFilter {
   nearby('📍 현재 위치 주변'),
@@ -179,7 +179,7 @@ class _PostPlacePickerState extends State<PostPlacePicker> {
                   width: 44,
                   height: 5,
                   decoration: BoxDecoration(
-                    color: const Color(0xFFDCDDE3),
+                    color: PindColors.imageFill,
                     borderRadius: BorderRadius.circular(3),
                   ),
                 ),
@@ -190,9 +190,9 @@ class _PostPlacePickerState extends State<PostPlacePicker> {
                     child: Text(
                       '어디에 다녀오셨어요?',
                       style: TextStyle(
-                        fontSize: 18,
+                        fontSize: PindType.subtitle,
                         fontWeight: FontWeight.w700,
-                        color: PindTheme.ink,
+                        color: PindColors.ink,
                       ),
                     ),
                   ),
@@ -202,9 +202,9 @@ class _PostPlacePickerState extends State<PostPlacePicker> {
                     icon: const Text(
                       '✕',
                       style: TextStyle(
-                        fontSize: 14,
+                        fontSize: PindType.body,
                         fontWeight: FontWeight.w700,
-                        color: Color(0xFF9B9B9B),
+                        color: PindColors.subtle,
                       ),
                     ),
                   ),
@@ -215,7 +215,7 @@ class _PostPlacePickerState extends State<PostPlacePicker> {
                 controller: query,
                 hint: '식당 이름 또는 주소',
                 autofocus: true,
-                fontSize: 15,
+                fontSize: PindType.bodyLarge,
                 verticalPadding: 13,
                 onSubmitted: (_) => search(),
                 onChanged: (_) {
@@ -235,9 +235,9 @@ class _PostPlacePickerState extends State<PostPlacePicker> {
                     ? filter!.label.replaceFirst('📍 ', '')
                     : '검색 결과',
                 style: const TextStyle(
-                  fontSize: 12,
+                  fontSize: PindType.label,
                   fontWeight: FontWeight.w700,
-                  color: PindTheme.muted,
+                  color: PindColors.muted,
                 ),
               ),
               const SizedBox(height: 6),
@@ -247,7 +247,7 @@ class _PostPlacePickerState extends State<PostPlacePicker> {
                   padding: const EdgeInsets.symmetric(vertical: 8),
                   child: Text(
                     error!,
-                    style: const TextStyle(fontSize: 12, color: Colors.red),
+                    style: const TextStyle(fontSize: PindType.label, color: Colors.red),
                   ),
                 ),
               Expanded(
@@ -262,7 +262,7 @@ class _PostPlacePickerState extends State<PostPlacePicker> {
                     : ListView.separated(
                         itemCount: rows.length,
                         separatorBuilder: (_, _) =>
-                            const Divider(height: 1, color: Color(0xFFEDEDF1)),
+                            const Divider(height: 1, color: PindColors.chip),
                         itemBuilder: (_, i) => row(rows[i]),
                       ),
               ),
@@ -288,9 +288,9 @@ class _PostPlacePickerState extends State<PostPlacePicker> {
             child: Text(
               f.label,
               style: TextStyle(
-                fontSize: 11,
+                fontSize: PindType.caption,
                 fontWeight: on ? FontWeight.w700 : FontWeight.w500,
-                color: on ? Colors.white : const Color(0xFF4A4A52),
+                color: on ? Colors.white : PindColors.body,
               ),
             ),
           ),
@@ -317,9 +317,9 @@ class _PostPlacePickerState extends State<PostPlacePicker> {
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: const TextStyle(
-                    fontSize: 14,
+                    fontSize: PindType.body,
                     fontWeight: FontWeight.w700,
-                    color: PindTheme.ink,
+                    color: PindColors.ink,
                   ),
                 ),
                 Text(
@@ -330,7 +330,7 @@ class _PostPlacePickerState extends State<PostPlacePicker> {
                   ].where((t) => t.isNotEmpty).join(' · '),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(fontSize: 11, color: PindTheme.muted),
+                  style: const TextStyle(fontSize: PindType.caption, color: PindColors.muted),
                 ),
               ],
             ),
@@ -349,9 +349,9 @@ class _PostPlacePickerState extends State<PostPlacePicker> {
                     child: Text(
                       '선택',
                       style: TextStyle(
-                        fontSize: 11,
+                        fontSize: PindType.caption,
                         fontWeight: FontWeight.w700,
-                        color: Color(0xFF4A4A52),
+                        color: PindColors.body,
                       ),
                     ),
                   ),
@@ -376,7 +376,7 @@ TextSpan highlight(String text, String keyword) {
       TextSpan(text: text.substring(0, at)),
       TextSpan(
         text: text.substring(at, at + keyword.length),
-        style: const TextStyle(color: PindTheme.purple),
+        style: const TextStyle(color: PindColors.purple),
       ),
       TextSpan(text: text.substring(at + keyword.length)),
     ],

@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import '../theme.dart';
+import '../design_system.dart';
 
 /// `‹ Title` page header that pops the route.
 class PindBackHeader extends StatelessWidget {
@@ -29,7 +29,7 @@ class PindBackHeader extends StatelessWidget {
                   child: Icon(
                     Icons.chevron_left,
                     size: 30,
-                    color: PindTheme.ink,
+                    color: PindColors.ink,
                   ),
                 ),
               ),
@@ -41,9 +41,9 @@ class PindBackHeader extends StatelessWidget {
         child: Text(
           title,
           style: const TextStyle(
-            fontSize: 18,
+            fontSize: PindType.subtitle,
             fontWeight: FontWeight.w700,
-            color: PindTheme.ink,
+            color: PindColors.ink,
           ),
         ),
       ),

@@ -6,7 +6,7 @@ import 'package:flutter/services.dart';
 import '../../controllers/registration_controller.dart';
 import '../../model/preferences.dart';
 import '../../model/registration_model.dart';
-import '../theme.dart';
+import '../design_system.dart';
 import 'login_screen.dart';
 import 'location_permission_screen.dart';
 import 'onboarding_screen.dart';
@@ -86,9 +86,9 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
         Text(
           caption,
           style: const TextStyle(
-            fontSize: 11,
+            fontSize: PindType.caption,
             fontWeight: FontWeight.w700,
-            color: PindTheme.muted,
+            color: PindColors.muted,
           ),
         ),
         const SizedBox(height: 10),
@@ -121,20 +121,20 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
           onChanged: controller.searchCountries,
           decoration: const InputDecoration(
             hintText: '국가 검색',
-            prefixIcon: Icon(Icons.search, size: 22, color: PindTheme.muted),
+            prefixIcon: Icon(Icons.search, size: 22, color: PindColors.muted),
             border: InputBorder.none,
             contentPadding: EdgeInsets.symmetric(vertical: 13, horizontal: 16),
           ),
-          style: const TextStyle(fontSize: 14),
+          style: const TextStyle(fontSize: PindType.body),
         ),
       ),
       const SizedBox(height: 20),
       const Text(
         '자주 선택하는 국가',
         style: TextStyle(
-          fontSize: 12,
+          fontSize: PindType.label,
           fontWeight: FontWeight.w700,
-          color: PindTheme.muted,
+          color: PindColors.muted,
         ),
       ),
       const SizedBox(height: 10),
@@ -161,7 +161,7 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
                         Text(
                           country.label,
                           style: const TextStyle(
-                            fontSize: 15,
+                            fontSize: PindType.bodyLarge,
                             height: 1.2,
                             fontWeight: FontWeight.w700,
                           ),
@@ -170,9 +170,9 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
                         Text(
                           country.subtitle,
                           style: const TextStyle(
-                            fontSize: 11,
+                            fontSize: PindType.caption,
                             height: 1.2,
-                            color: PindTheme.muted,
+                            color: PindColors.muted,
                           ),
                         ),
                       ],
@@ -190,7 +190,7 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
                             child: Text(
                               '✓',
                               style: TextStyle(
-                                fontSize: 12,
+                                fontSize: PindType.label,
                                 fontWeight: FontWeight.w700,
                               ),
                             ),
@@ -208,7 +208,7 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
       const SizedBox(height: 8),
       const Text(
         '현재 맛집 탐색은 대한민국에서 제공해요.',
-        style: TextStyle(fontSize: 11, color: PindTheme.muted),
+        style: TextStyle(fontSize: PindType.caption, color: PindColors.muted),
       ),
     ],
   );
@@ -243,9 +243,9 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
             ),
             suffixIcon: draft.name.trim().isEmpty
                 ? null
-                : const Icon(Icons.check, color: Color(0xFF129E5B), size: 16),
+                : const Icon(Icons.check, color: PindColors.success, size: 16),
           ),
-          style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w700),
+          style: const TextStyle(fontSize: PindType.bodyLarge, fontWeight: FontWeight.w700),
         ),
       ),
       const SizedBox(height: 22),
@@ -266,15 +266,15 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
                     vertical: 14,
                   ),
                   backgroundColor: draft.gender == gender
-                      ? PindTheme.button
+                      ? PindColors.purpleLight
                       : const Color(0xB8FBFBFD),
                   foregroundColor: draft.gender == gender
                       ? Colors.white
-                      : const Color(0xFF4A4A52),
+                      : PindColors.body,
                   side: BorderSide(
                     color: draft.gender == gender
-                        ? PindTheme.purple
-                        : PindTheme.border,
+                        ? PindColors.purple
+                        : PindColors.border,
                   ),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(16),
@@ -287,7 +287,7 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
                     ProfileGender.unspecified => '선택 안 함',
                   },
                   textAlign: TextAlign.center,
-                  style: const TextStyle(fontSize: 13),
+                  style: const TextStyle(fontSize: PindType.bodySmall),
                 ),
               ),
             ),
@@ -317,19 +317,19 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
                     ? '중반'
                     : '후반'}',
                 style: const TextStyle(
-                  fontSize: 10,
+                  fontSize: PindType.micro,
                   fontWeight: FontWeight.w700,
                 ),
               ),
             ),
             const Text(
               '또래 취향 추천에 사용돼요',
-              style: TextStyle(fontSize: 11, color: PindTheme.muted),
+              style: TextStyle(fontSize: PindType.caption, color: PindColors.muted),
             ),
             if (age < 14)
               const Text(
                 '만 14세 이상부터 이용할 수 있어요.',
-                style: TextStyle(fontSize: 12, color: Colors.red),
+                style: TextStyle(fontSize: PindType.label, color: Colors.red),
               ),
           ],
         ),
@@ -344,14 +344,14 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
               (value) => controller.edit(draft.copyWith(privacyConsent: value)),
               '이름, 성별, 생년월일은 기본 정보와 취향 추천에 사용하며 공개 프로필에 표시하지 않습니다.',
             ),
-            const Divider(height: 1, color: Color(0xFFEBEBF0)),
+            const Divider(height: 1, color: PindColors.line),
             _consent(
               '만 14세 이상입니다 (필수)',
               draft.ageConsent,
               (value) => controller.edit(draft.copyWith(ageConsent: value)),
               '생년월일을 확인하고 만 14세 이상인 경우 선택해 주세요.',
             ),
-            const Divider(height: 1, color: Color(0xFFEBEBF0)),
+            const Divider(height: 1, color: PindColors.line),
             _consent(
               '맞춤 추천을 위한 정보 활용 (선택)',
               draft.recommendationConsent,
@@ -370,9 +370,9 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
     child: Text(
       label,
       style: const TextStyle(
-        fontSize: 12,
+        fontSize: PindType.label,
         fontWeight: FontWeight.w700,
-        color: Color(0xFF4A4A52),
+        color: PindColors.body,
       ),
     ),
   );
@@ -431,11 +431,11 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
       underline: const SizedBox.shrink(),
       hint: Text(
         label,
-        style: const TextStyle(fontSize: 13, color: PindTheme.muted),
+        style: const TextStyle(fontSize: PindType.bodySmall, color: PindColors.muted),
       ),
       icon: const Text(
         '▾',
-        style: TextStyle(fontSize: 9, color: PindTheme.muted),
+        style: TextStyle(fontSize: PindType.tiny, color: PindColors.muted),
       ),
       selectedItemBuilder: (_) => values
           .map(
@@ -444,7 +444,7 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
               child: Text(
                 '$v $label',
                 style: const TextStyle(
-                  fontSize: 14,
+                  fontSize: PindType.body,
                   fontWeight: FontWeight.w700,
                 ),
               ),
@@ -491,12 +491,12 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
                     width: 20,
                     height: 20,
                     decoration: BoxDecoration(
-                      color: checked ? PindTheme.purple : Colors.white,
+                      color: checked ? PindColors.purple : Colors.white,
                       borderRadius: BorderRadius.circular(6),
                       border: Border.all(
                         color: checked
                             ? const Color(0xB33A0088)
-                            : PindTheme.border,
+                            : PindColors.border,
                       ),
                     ),
                     child: checked
@@ -505,7 +505,7 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
                   ),
                   const SizedBox(width: 10),
                   Expanded(
-                    child: Text(title, style: const TextStyle(fontSize: 12)),
+                    child: Text(title, style: const TextStyle(fontSize: PindType.label)),
                   ),
                 ],
               ),
@@ -515,7 +515,7 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
       ),
       IconButton(
         tooltip: '$title 내용 보기',
-        icon: const Icon(Icons.chevron_right, size: 16, color: PindTheme.muted),
+        icon: const Icon(Icons.chevron_right, size: 16, color: PindColors.muted),
         onPressed: () => showModalBottomSheet<void>(
           context: context,
           useSafeArea: true,
@@ -568,9 +568,9 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
                 child: DecoratedBox(
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
-                    color: Color(0xFFE2E2E7),
+                    color: PindColors.fill,
                     border: Border.fromBorderSide(
-                      BorderSide(color: Color(0xFFE8E8EC)),
+                      BorderSide(color: PindColors.line),
                     ),
                   ),
                 ),
@@ -579,7 +579,7 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
                   ? Center(
                       child: Text(
                         draft.avatar,
-                        style: const TextStyle(fontSize: 34),
+                        style: const TextStyle(fontSize: PindType.hero),
                       ),
                     )
                   : ClipOval(
@@ -603,7 +603,7 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
                   onPressed: _chooseAvatar,
                   icon: const Text(
                     '✚',
-                    style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700),
+                    style: TextStyle(fontSize: PindType.bodySmall, fontWeight: FontWeight.w700),
                   ),
                 ),
               ),
@@ -632,21 +632,21 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
             counterText: '',
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(16),
-              borderSide: const BorderSide(color: PindTheme.purple, width: 1.5),
+              borderSide: const BorderSide(color: PindColors.purple, width: 1.5),
             ),
             enabledBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(16),
-              borderSide: const BorderSide(color: PindTheme.purple, width: 1.5),
+              borderSide: const BorderSide(color: PindColors.purple, width: 1.5),
             ),
             contentPadding: const EdgeInsets.symmetric(
               horizontal: 16,
               vertical: 15,
             ),
             suffixIcon: draft.handleValid
-                ? const Icon(Icons.check, color: Color(0xFF129E5B), size: 16)
+                ? const Icon(Icons.check, color: PindColors.success, size: 16)
                 : null,
           ),
-          style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w700),
+          style: const TextStyle(fontSize: PindType.bodyLarge, fontWeight: FontWeight.w700),
         ),
       ),
       const SizedBox(height: 8),
@@ -655,10 +655,10 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
         child: Text(
           draft.handleValid ? '✓ 사용할 수 있는 형식이에요' : '영문, 숫자, 밑줄로 3~20자를 입력해주세요.',
           style: TextStyle(
-            fontSize: 12,
+            fontSize: PindType.label,
             color: draft.handleValid
-                ? const Color(0xFF129E5B)
-                : PindTheme.muted,
+                ? PindColors.success
+                : PindColors.muted,
           ),
         ),
       ),
@@ -693,7 +693,7 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
                     (emoji) => IconButton(
                       tooltip: emoji,
                       onPressed: () => Navigator.pop(ctx, emoji),
-                      icon: Text(emoji, style: const TextStyle(fontSize: 34)),
+                      icon: Text(emoji, style: const TextStyle(fontSize: PindType.hero)),
                     ),
                   )
                   .toList(),

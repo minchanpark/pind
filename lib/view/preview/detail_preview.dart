@@ -4,7 +4,7 @@ import '../../model/detail_preview_model.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
-import '../theme.dart';
+import '../design_system.dart';
 import '../explore/place_sheet.dart';
 
 void main() {
@@ -48,7 +48,7 @@ class _DetailPreviewState extends State<DetailPreview> {
             gradient: LinearGradient(
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
-              colors: [Color(0xFFE9EFE9), Color(0xFFE6DDF5), Color(0xFFDCE8F4)],
+              colors: [PindColors.pastelSage, PindColors.pastelLavender, PindColors.pastelBlue],
             ),
           ),
           child: SafeArea(

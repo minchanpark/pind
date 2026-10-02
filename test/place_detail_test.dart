@@ -8,7 +8,8 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:pind_flutter/view/theme.dart';
+import 'package:pind_flutter/view/components/pind_sheet.dart';
+import 'package:pind_flutter/view/design_system.dart';
 import 'package:pind_flutter/services/place_service.dart';
 import 'package:pind_flutter/services/preview/detail_fixture.dart';
 import 'package:pind_flutter/model/place_context.dart';
@@ -200,10 +201,28 @@ void main() {
       await mount(tester, repo);
       final actions = find.byKey(const ValueKey('detail-fixed-actions'));
       final bottom = tester.getBottomLeft(actions).dy;
+      // Saved and unsaved differ in icon and color, not just the word.
+      String icon() =>
+          (tester
+                      .widget<SvgPicture>(
+                        find.descendant(
+                          of: find.byKey(const ValueKey('detail-save')),
+                          matching: find.byType(SvgPicture),
+                        ),
+                      )
+                      .bytesLoader
+                  as SvgAssetLoader)
+              .assetName;
+      Color? labelColor(String text) =>
+          tester.widget<Text>(find.text(text)).style?.color;
+      expect(icon(), 'assets/place_detail/save_icon.svg');
+      expect(labelColor('저장'), isNot(PindColors.purple));
       await tester.tap(find.byKey(const ValueKey('detail-save')));
       await tester.pumpAndSettle();
       expect(repo.saved, true);
       expect(find.text('저장됨'), findsOneWidget);
+      expect(icon(), 'assets/place_detail/saved_icon.svg');
+      expect(labelColor('저장됨'), PindColors.purple);
       await tester.tap(find.byKey(const ValueKey('detail-expand')));
       await tester.pumpAndSettle();
       await tester.drag(
@@ -575,7 +594,7 @@ void main() {
     expect(find.text('내 글'), findsOneWidget);
     await tester.tap(delete);
     await tester.pumpAndSettle();
-    await tester.tap(find.widgetWithText(FilledButton, '삭제'));
+    await tester.tap(find.widgetWithText(PindSheetButton, '삭제'));
     await tester.pumpAndSettle();
     expect(deleted, [7]);
     expect(find.text('내 글'), findsNothing);

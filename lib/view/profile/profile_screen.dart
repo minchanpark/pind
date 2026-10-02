@@ -7,7 +7,7 @@ import '../../model/preferences.dart';
 import '../../model/profile_model.dart';
 import '../components/pind_glass.dart';
 import '../explore/place_sheet.dart';
-import '../theme.dart';
+import '../design_system.dart';
 import 'profile_follow.dart';
 import 'profile_map_tab.dart';
 import 'profile_posts_tab.dart';
@@ -18,13 +18,13 @@ import '../components/pind_image.dart';
 /// Figma 531:19957 / 531:20051 / 531:20229; another user's page is 663:5337.
 /// Tabs pad themselves so the post dividers can run edge to edge.
 const profileInset = EdgeInsets.symmetric(horizontal: 16);
-const profileBody = Color(0xFF4A4A52);
+const profileBody = PindColors.body;
 
 /// Figma accent per criterion; anything outside the three is neutral.
 Color criterionColor(PreferenceCriterion c) => switch (c) {
-  PreferenceCriterion.taste => const Color(0xFFA8154A),
-  PreferenceCriterion.ambience => const Color(0xFF1C3FC4),
-  PreferenceCriterion.portion => const Color(0xFFB85600),
+  PreferenceCriterion.taste => PindColors.taste,
+  PreferenceCriterion.ambience => PindColors.ambience,
+  PreferenceCriterion.portion => PindColors.portion,
   _ => profileBody,
 };
 
@@ -43,15 +43,15 @@ String placeArea(String address) {
 }
 
 Widget placeImage(String? url) => url == null
-    ? const ColoredBox(color: Color(0xFFD9D9D9))
+    ? const ColoredBox(color: PindColors.imageFill)
     : Image(
         image: PindImage(url),
         fit: BoxFit.cover,
-        errorBuilder: (_, _, _) => const ColoredBox(color: Color(0xFFD9D9D9)),
+        errorBuilder: (_, _, _) => const ColoredBox(color: PindColors.imageFill),
       );
 
 Widget mutedNote(String text) =>
-    Text(text, style: const TextStyle(fontSize: 12, color: PindTheme.muted));
+    Text(text, style: const TextStyle(fontSize: PindType.label, color: PindColors.muted));
 
 Widget profileSection(
   String title,
@@ -67,9 +67,9 @@ Widget profileSection(
         Text(
           title,
           style: const TextStyle(
-            fontSize: 14,
+            fontSize: PindType.body,
             fontWeight: FontWeight.w700,
-            color: PindTheme.ink,
+            color: PindColors.ink,
           ),
         ),
         const Spacer(),
@@ -78,7 +78,7 @@ Widget profileSection(
             onTap: onTrailing,
             child: Text(
               trailing,
-              style: const TextStyle(fontSize: 12, color: PindTheme.muted),
+              style: const TextStyle(fontSize: PindType.label, color: PindColors.muted),
             ),
           ),
       ],
@@ -95,8 +95,8 @@ class ProfileAvatar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final fallback = ColoredBox(
-      color: const Color(0xFFE9E9EE),
-      child: Icon(Icons.person, size: size / 2, color: PindTheme.muted),
+      color: PindColors.line,
+      child: Icon(Icons.person, size: size / 2, color: PindColors.muted),
     );
     return ClipOval(
       child: SizedBox(
@@ -124,6 +124,8 @@ class ProfileScreen extends StatefulWidget {
     this.onEditPreferences,
     this.onShowMap,
     this.bottomClearance = 0,
+    this.myId,
+    this.onOpenProfile,
   });
   final ProfileController controller;
   final ExploreController? explore;
@@ -134,6 +136,12 @@ class ProfileScreen extends StatefulWidget {
   final VoidCallback? onEditPreferences;
   final void Function(int? placeId)? onShowMap;
   final double bottomClearance;
+
+  /// Me, so 팔로워/팔로잉 lists don't offer to follow myself.
+  final String? myId;
+
+  /// Someone in a 팔로워/팔로잉 list was tapped.
+  final void Function(String userId)? onOpenProfile;
 
   @override
   State<ProfileScreen> createState() => _ProfileScreenState();
@@ -206,7 +214,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
             icon: const Icon(
               Icons.chevron_left,
               size: 28,
-              color: PindTheme.ink,
+              color: PindColors.ink,
             ),
           ),
         );
@@ -248,7 +256,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       Text(
                         model.error ?? '프로필을 불러오지 못했어요.',
                         textAlign: TextAlign.center,
-                        style: const TextStyle(color: PindTheme.muted),
+                        style: const TextStyle(color: PindColors.muted),
                       ),
                       TextButton(
                         onPressed: controller.load,
@@ -302,55 +310,92 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 
-  Widget header(UserProfile p) => Column(
-    children: [
-      ProfileAvatar(p.avatarUrl, 105),
-      const SizedBox(height: 10),
-      Text(
-        p.handle == null ? p.displayName : '@${p.handle}',
-        style: const TextStyle(
-          fontSize: 14,
-          fontWeight: FontWeight.w500,
-          color: Colors.black,
-        ),
-      ),
-      if (p.bio?.isNotEmpty == true)
-        Padding(
-          padding: const EdgeInsets.only(top: 4),
-          child: Text(
-            '📍 ${p.bio}',
-            style: const TextStyle(fontSize: 11.3, color: Color(0xFF9B9B9B)),
+  /// Figma 671:34873: photo, handle, then the status message as written.
+  Widget header(UserProfile p) {
+    final status = p.bio?.trim();
+    return Column(
+      spacing: 6,
+      children: [
+        ProfileAvatar(p.avatarUrl, 105),
+        Text(
+          p.handle == null ? p.displayName : '@${p.handle}',
+          style: const TextStyle(
+            fontSize: PindType.body,
+            fontWeight: FontWeight.w500,
+            letterSpacing: -.4092,
+            color: Colors.black,
           ),
         ),
-    ],
-  );
+        if (status?.isNotEmpty == true)
+          Text(
+            status!,
+            key: const ValueKey('profile-status'),
+            textAlign: TextAlign.center,
+            style: const TextStyle(
+              fontSize: 11.338,
+              height: 17.006 / 11.338,
+              color: PindColors.subtle,
+            ),
+          ),
+      ],
+    );
+  }
+
+  /// 팔로워 / 팔로잉 list; counts may change while it's open.
+  Future<void> openFollows(bool followers) async {
+    await Navigator.of(context).push<void>(
+      MaterialPageRoute(
+        builder: (_) => FollowListPage(
+          title: followers ? '팔로워' : '팔로잉',
+          load: () => controller.followList(followers),
+          setFollowing: controller.setFollowing,
+          myId: widget.myId,
+          onOpen: widget.onOpenProfile == null
+              ? null
+              : (person) => widget.onOpenProfile!(person.id),
+        ),
+      ),
+    );
+    if (mounted) controller.refresh();
+  }
 
   Widget stats(ProfileCounts c) => Padding(
     padding: const EdgeInsets.only(top: 4, bottom: 12),
     child: Row(
       children: [
-        for (final (label, value) in [
-          ('팔로워', c.followers),
-          ('팔로잉', c.following),
-          ('게시물', c.posts),
-          if (isMe) ('저장', c.saved),
+        for (final (label, value, onTap) in [
+          ('팔로워', c.followers, () => openFollows(true)),
+          ('팔로잉', c.following, () => openFollows(false)),
+          ('게시물', c.posts, null),
+          if (isMe) ('저장', c.saved, null),
         ])
           Expanded(
-            child: Column(
-              children: [
-                Text(
-                  '$value',
-                  style: const TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w700,
-                    color: PindTheme.ink,
-                  ),
+            child: GestureDetector(
+              key: ValueKey('profile-stat-$label'),
+              behavior: HitTestBehavior.opaque,
+              onTap: onTap,
+              child: Semantics(
+                button: onTap != null,
+                child: Column(
+                  children: [
+                    Text(
+                      '$value',
+                      style: const TextStyle(
+                        fontSize: PindType.title,
+                        fontWeight: FontWeight.w700,
+                        color: PindColors.ink,
+                      ),
+                    ),
+                    Text(
+                      label,
+                      style: const TextStyle(
+                        fontSize: PindType.caption,
+                        color: PindColors.muted,
+                      ),
+                    ),
+                  ],
                 ),
-                Text(
-                  label,
-                  style: const TextStyle(fontSize: 11, color: PindTheme.muted),
-                ),
-              ],
+              ),
             ),
           ),
       ],
@@ -386,21 +431,21 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           ProfileTab.posts => '게시물',
                         },
                         style: TextStyle(
-                          fontSize: 14,
+                          fontSize: PindType.body,
                           fontWeight: tab == current
                               ? FontWeight.w700
                               : FontWeight.w500,
                           color: tab == current
-                              ? PindTheme.ink
-                              : const Color(0xFF9B9B9B),
+                              ? PindColors.ink
+                              : PindColors.subtle,
                         ),
                       ),
                     ),
                     Container(
                       height: tab == current ? 3 : 1,
                       color: tab == current
-                          ? PindTheme.ink
-                          : const Color(0xFFEDEDF1),
+                          ? PindColors.ink
+                          : PindColors.chip,
                     ),
                   ],
                 ),

@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import '../theme.dart';
+import '../design_system.dart';
 import 'pind_glass.dart';
 
 /// Figma 653:25649 / 671:35766: glass search bar; typed text turns bold and
@@ -32,7 +32,7 @@ class PindSearchField extends StatelessWidget {
       final empty = controller.text.isEmpty;
       return PindGlass(
         radius: 18,
-        borderColor: empty ? null : PindTheme.purple.withValues(alpha: .55),
+        borderColor: empty ? null : PindColors.purple.withValues(alpha: .55),
         borderWidth: empty ? 1 : 1.5,
         padding: const EdgeInsets.only(left: 15),
         child: Row(
@@ -41,7 +41,7 @@ class PindSearchField extends StatelessWidget {
             // nudge the paint only, layout stays put.
             Padding(
                 padding: EdgeInsets.only(bottom: 3),
-                child: const Text('🔍', style: TextStyle(fontSize: 14,
+                child: const Text('🔍', style: TextStyle(fontSize: PindType.body,
                   ),
                 ),
             ),  
@@ -56,7 +56,7 @@ class PindSearchField extends StatelessWidget {
                 style: TextStyle(
                   fontSize: fontSize,
                   fontWeight: FontWeight.w700,
-                  color: PindTheme.ink,
+                  color: PindColors.ink,
                 ),
                 decoration: InputDecoration(
                   isDense: true,
@@ -64,7 +64,7 @@ class PindSearchField extends StatelessWidget {
                   hintStyle: TextStyle(
                     fontSize: fontSize,
                     fontWeight: FontWeight.w500,
-                    color: const Color(0xFF9B9B9B),
+                    color: PindColors.subtle,
                   ),
                   border: InputBorder.none,
                   contentPadding: EdgeInsets.symmetric(
@@ -84,9 +84,9 @@ class PindSearchField extends StatelessWidget {
                 icon: const Text(
                   '✕',
                   style: TextStyle(
-                    fontSize: 12,
+                    fontSize: PindType.label,
                     fontWeight: FontWeight.w700,
-                    color: Color(0xFF9B9B9B),
+                    color: PindColors.subtle,
                   ),
                 ),
                 onPressed: () {

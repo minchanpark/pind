@@ -7,7 +7,7 @@ import '../../model/places.dart';
 import '../../model/preferences.dart';
 import '../components/pind_glass.dart';
 import '../explore/explore_screen.dart';
-import '../theme.dart';
+import '../design_system.dart';
 import 'post_place_picker.dart';
 
 class PostComposer extends StatefulWidget {
@@ -87,7 +87,7 @@ class _PostComposerState extends State<PostComposer> {
         centerTitle: true,
         bottom: const PreferredSize(
           preferredSize: Size.fromHeight(.7),
-          child: Divider(height: .7, thickness: .7, color: Color(0xFFF0F0EC)),
+          child: Divider(height: .7, thickness: .7, color: PindColors.pastelSage),
         ),
       ),
       body: CustomScrollView(
@@ -101,7 +101,7 @@ class _PostComposerState extends State<PostComposer> {
                   child: Text(
                     '사진 추가',
                     style: TextStyle(
-                      fontSize: 14,
+                      fontSize: PindType.body,
                       height: 1.2,
                       fontWeight: FontWeight.w600,
                     ),
@@ -127,8 +127,8 @@ class _PostComposerState extends State<PostComposer> {
                             child: Text(
                               '맛 · 양 · 분위기 (필수)',
                               style: TextStyle(
-                                fontSize: 11,
-                                color: PindTheme.muted,
+                                fontSize: PindType.caption,
+                                color: PindColors.muted,
                               ),
                             ),
                           ),
@@ -155,7 +155,7 @@ class _PostComposerState extends State<PostComposer> {
                                     const Divider(
                                       height: 1,
                                       thickness: 1,
-                                      color: PindTheme.border,
+                                      color: PindColors.border,
                                     ),
                                   rating(model.criteria[i], i),
                                 ],
@@ -178,7 +178,7 @@ class _PostComposerState extends State<PostComposer> {
                               child: Text(
                                 '내 평균 별점',
                                 style: TextStyle(
-                                  fontSize: 12,
+                                  fontSize: PindType.label,
                                   height: 1.2,
                                   color: Colors.white,
                                   fontWeight: FontWeight.w500,
@@ -197,10 +197,10 @@ class _PostComposerState extends State<PostComposer> {
                                     ? '★'
                                     : '★ ${model.average}',
                                 style: const TextStyle(
-                                  fontSize: 13,
+                                  fontSize: PindType.bodySmall,
                                   height: 1.2,
                                   fontWeight: FontWeight.w700,
-                                  color: PindTheme.ink,
+                                  color: PindColors.ink,
                                 ),
                               ),
                             ),
@@ -215,8 +215,8 @@ class _PostComposerState extends State<PostComposer> {
                           const Text(
                             '선택',
                             style: TextStyle(
-                              fontSize: 11,
-                              color: PindTheme.muted,
+                              fontSize: PindType.caption,
+                              color: PindColors.muted,
                             ),
                           ),
                         ],
@@ -243,7 +243,7 @@ class _PostComposerState extends State<PostComposer> {
                                 fontWeight: model.body.isEmpty
                                     ? FontWeight.w400
                                     : FontWeight.w500,
-                                color: PindTheme.ink,
+                                color: PindColors.ink,
                                 letterSpacing: 0,
                               ),
                               decoration: const InputDecoration(
@@ -255,7 +255,7 @@ class _PostComposerState extends State<PostComposer> {
                                 hintStyle: TextStyle(
                                   fontSize: 12.536,
                                   height: 23.767 / 12.536,
-                                  color: Color(0xFFABABAB),
+                                  color: PindColors.placeholder,
                                   letterSpacing: 0,
                                 ),
                               ),
@@ -264,11 +264,11 @@ class _PostComposerState extends State<PostComposer> {
                             Text(
                               '${model.bodyLength} / 200',
                               style: TextStyle(
-                                fontSize: 10,
+                                fontSize: PindType.micro,
                                 height: 1.2,
                                 color: model.bodyLength > 200
                                     ? Colors.red
-                                    : PindTheme.muted,
+                                    : PindColors.muted,
                               ),
                             ),
                           ],
@@ -279,7 +279,7 @@ class _PostComposerState extends State<PostComposer> {
                         Text(
                           model.error!,
                           style: const TextStyle(
-                            fontSize: 12,
+                            fontSize: PindType.label,
                             color: Colors.red,
                           ),
                           semanticsLabel: '오류: ${model.error}',
@@ -306,7 +306,7 @@ class _PostComposerState extends State<PostComposer> {
                     // fill turns solid purple once the post can be published.
                     tone: PindGlassTone.dark,
                     fillColor: model.canPublish
-                        ? const Color(0xFF893EE4)
+                        ? PindColors.purpleLight
                         : null,
                     radius: 22,
                     child: SizedBox(
@@ -331,7 +331,7 @@ class _PostComposerState extends State<PostComposer> {
                             : const Text(
                                 '게시하기',
                                 style: TextStyle(
-                                  fontSize: 14,
+                                  fontSize: PindType.body,
                                   fontWeight: FontWeight.w600,
                                   letterSpacing: 0,
                                 ),
@@ -351,10 +351,10 @@ class _PostComposerState extends State<PostComposer> {
   Widget section(String text) => Text(
     text,
     style: const TextStyle(
-      fontSize: 14,
+      fontSize: PindType.body,
       height: 1.2,
       fontWeight: FontWeight.w700,
-      color: PindTheme.ink,
+      color: PindColors.ink,
       letterSpacing: 0,
     ),
   );
@@ -401,8 +401,8 @@ class _PostComposerState extends State<PostComposer> {
                           const Text(
                             '0/10',
                             style: TextStyle(
-                              fontSize: 10,
-                              color: Color(0xFFABABAB),
+                              fontSize: PindType.micro,
+                              color: PindColors.placeholder,
                             ),
                           ),
                         ],
@@ -428,8 +428,8 @@ class _PostComposerState extends State<PostComposer> {
                   borderRadius: BorderRadius.circular(12),
                   border: Border.all(
                     color: index == 0
-                        ? const Color(0xFFCBEF4B)
-                        : PindTheme.purple,
+                        ? PindColors.limeDeep
+                        : PindColors.purple,
                     width: 2,
                   ),
                 ),
@@ -453,7 +453,7 @@ class _PostComposerState extends State<PostComposer> {
     final selected = model.place;
     return PindGlass(
       radius: 18,
-      borderColor: selected == null ? null : PindTheme.purple,
+      borderColor: selected == null ? null : PindColors.purple,
       child: InkWell(
         onTap: model.publishing ? null : selectPlace,
         child: Padding(
@@ -465,7 +465,7 @@ class _PostComposerState extends State<PostComposer> {
                 height: 52,
                 alignment: Alignment.center,
                 decoration: BoxDecoration(
-                  color: const Color(0xFFE2E2E7),
+                  color: PindColors.fill,
                   borderRadius: BorderRadius.circular(14),
                 ),
                 child: Text(
@@ -481,7 +481,7 @@ class _PostComposerState extends State<PostComposer> {
                     Text(
                       selected?.name ?? '방문한 식당을 선택해 주세요',
                       style: const TextStyle(
-                        fontSize: 15,
+                        fontSize: PindType.bodyLarge,
                         fontWeight: FontWeight.w700,
                       ),
                       maxLines: 1,
@@ -492,8 +492,8 @@ class _PostComposerState extends State<PostComposer> {
                       Text(
                         '${selected.category} · ${selected.address}',
                         style: const TextStyle(
-                          fontSize: 11,
-                          color: PindTheme.muted,
+                          fontSize: PindType.caption,
+                          color: PindColors.muted,
                         ),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
@@ -506,9 +506,9 @@ class _PostComposerState extends State<PostComposer> {
               Text(
                 selected == null ? '선택' : '변경',
                 style: const TextStyle(
-                  fontSize: 12,
+                  fontSize: PindType.label,
                   fontWeight: FontWeight.w700,
-                  color: PindTheme.purple,
+                  color: PindColors.purple,
                 ),
               ),
             ],
@@ -531,7 +531,7 @@ class _PostComposerState extends State<PostComposer> {
           child: Text(
             axis.label,
             style: const TextStyle(
-              fontSize: 14,
+              fontSize: PindType.body,
               fontWeight: FontWeight.w700,
               letterSpacing: 0,
             ),
@@ -577,7 +577,7 @@ class _PostComposerState extends State<PostComposer> {
             child: Text(
               scoreLabel(axis, score),
               style: TextStyle(
-                fontSize: 9,
+                fontSize: PindType.tiny,
                 fontWeight: FontWeight.w700,
                 color: color,
                 letterSpacing: 0,
@@ -647,9 +647,9 @@ class PostStar extends StatelessWidget {
   final int slot;
   final bool filled, unrated;
   static const colors = [
-    Color(0xFFE8336E),
-    Color(0xFFFF8A1F),
-    Color(0xFF3563FF),
+    PindColors.pink,
+    PindColors.ratingOrange,
+    PindColors.ratingBlue,
   ];
   static const _assets = ['taste', 'portion', 'ambience'];
   @override
@@ -664,7 +664,7 @@ class PostStar extends StatelessWidget {
             style: TextStyle(
               fontSize: 25,
               height: 1,
-              color: unrated ? PindTheme.border : colors[0],
+              color: unrated ? PindColors.border : colors[0],
             ),
           ),
         ),

@@ -7,7 +7,7 @@ import 'package:flutter/services.dart';
 
 import '../../controllers/registration_controller.dart';
 import '../../model/registration_model.dart';
-import '../theme.dart';
+import '../design_system.dart';
 import 'registration_components.dart';
 
 class LoginScreen extends StatelessWidget {
@@ -20,7 +20,7 @@ class LoginScreen extends StatelessWidget {
       statusBarColor: Colors.transparent,
     ),
     child: Scaffold(
-      backgroundColor: const Color(0xFFF4FF5A),
+      backgroundColor: PindColors.lime,
       body: LayoutBuilder(
         builder: (context, constraints) {
           final scale = MediaQuery.textScalerOf(context).scale(15) / 15;
@@ -78,7 +78,7 @@ class LoginScreen extends StatelessWidget {
                               const Text(
                                 'Pind',
                                 style: TextStyle(
-                                  fontSize: 34,
+                                  fontSize: PindType.hero,
                                   fontWeight: FontWeight.w700,
                                   letterSpacing: -1.02,
                                 ),
@@ -87,16 +87,16 @@ class LoginScreen extends StatelessWidget {
                               const Text(
                                 '내 취향에 맞는 맛집만, 지도 위에서',
                                 style: TextStyle(
-                                  fontSize: 15,
-                                  color: PindTheme.muted,
+                                  fontSize: PindType.bodyLarge,
+                                  color: PindColors.muted,
                                 ),
                               ),
                               const SizedBox(height: 26),
                               _loginButton(
                                 '카카오로 3초 만에 시작하기',
                                 LoginProvider.kakao,
-                                const Color(0xFFFEE500),
-                                PindTheme.ink,
+                                PindColors.kakao,
+                                PindColors.ink,
                               ),
                               const SizedBox(height: 10),
                               _loginButton(
@@ -110,7 +110,7 @@ class LoginScreen extends StatelessWidget {
                                 'Google로 계속하기',
                                 LoginProvider.google,
                                 const Color(0xB8FBFBFD),
-                                PindTheme.ink,
+                                PindColors.ink,
                               ),
                               if (controller.model.error != null) ...[
                                 const SizedBox(height: 12),
@@ -126,8 +126,8 @@ class LoginScreen extends StatelessWidget {
                                     child: const Text(
                                       '로그인 없이 화면 체험',
                                       style: TextStyle(
-                                        fontSize: 12,
-                                        color: PindTheme.muted,
+                                        fontSize: PindType.label,
+                                        color: PindColors.muted,
                                       ),
                                     ),
                                   ),
@@ -164,13 +164,13 @@ class LoginScreen extends StatelessWidget {
         foregroundColor: foreground,
         minimumSize: const Size.fromHeight(50),
         padding: const EdgeInsets.symmetric(vertical: 16),
-        textStyle: const TextStyle(fontSize: 15, fontWeight: FontWeight.w700),
+        textStyle: const TextStyle(fontSize: PindType.bodyLarge, fontWeight: FontWeight.w700),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         side: BorderSide(
           color: provider == LoginProvider.apple
               ? const Color(0xB3000000)
               : provider == LoginProvider.google
-              ? const Color(0xFFE7E7E7)
+              ? PindColors.line
               : Colors.transparent,
         ),
       ),

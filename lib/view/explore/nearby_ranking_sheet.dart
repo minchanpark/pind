@@ -6,7 +6,7 @@ import '../../model/places.dart';
 import '../../model/preferences.dart';
 import '../components/pind_glass.dart';
 import '../profile/profile_screen.dart';
-import '../theme.dart';
+import '../design_system.dart';
 import 'explore_screen.dart';
 import 'place_sheet.dart';
 
@@ -148,7 +148,7 @@ class _NearbyRankingSheetState extends State<NearbyRankingSheet> {
                     width: 44,
                     height: 5,
                     decoration: BoxDecoration(
-                      color: const Color(0xFFE8E8EC),
+                      color: PindColors.line,
                       borderRadius: BorderRadius.circular(3),
                     ),
                   ),
@@ -158,10 +158,10 @@ class _NearbyRankingSheetState extends State<NearbyRankingSheet> {
                   child: Text(
                     widget.title,
                     style: const TextStyle(
-                      fontSize: 24,
+                      fontSize: PindType.headline,
                       fontWeight: FontWeight.w700,
                       letterSpacing: -.48,
-                      color: PindTheme.ink,
+                      color: PindColors.ink,
                     ),
                   ),
                 ),
@@ -224,7 +224,7 @@ class _NearbyRankingSheetState extends State<NearbyRankingSheet> {
                   const Divider(
                     height: 1,
                     thickness: 1,
-                    color: Color(0xFFE8E8EC),
+                    color: PindColors.line,
                   ),
                 row(ranked[i], i + 1),
               ],
@@ -240,10 +240,10 @@ class _NearbyRankingSheetState extends State<NearbyRankingSheet> {
     final label = Text(
       c == null ? '내 취향순' : c.label,
       style: TextStyle(
-        fontSize: 12,
+        fontSize: PindType.label,
         fontWeight: FontWeight.w700,
         color: !on
-            ? PindTheme.muted
+            ? PindColors.muted
             : c == null
             ? Colors.white
             : criterionColor(c),
@@ -267,7 +267,7 @@ class _NearbyRankingSheetState extends State<NearbyRankingSheet> {
                     mainAxisSize: MainAxisSize.min,
                     spacing: 4,
                     children: [
-                      Text(c.emoji, style: const TextStyle(fontSize: 11)),
+                      Text(c.emoji, style: const TextStyle(fontSize: PindType.caption)),
                       label,
                     ],
                   )
@@ -301,13 +301,13 @@ class _NearbyRankingSheetState extends State<NearbyRankingSheet> {
               clipBehavior: Clip.antiAlias,
               alignment: Alignment.center,
               decoration: BoxDecoration(
-                color: const Color(0xFFE2E2E7),
+                color: PindColors.fill,
                 borderRadius: BorderRadius.circular(14),
               ),
               child: p.imageUrl == null
                   ? Text(
                       markerEmoji(p.place),
-                      style: const TextStyle(fontSize: 28),
+                      style: const TextStyle(fontSize: PindType.display),
                     )
                   : SizedBox.expand(child: placeImage(p.imageUrl)),
             ),
@@ -322,10 +322,10 @@ class _NearbyRankingSheetState extends State<NearbyRankingSheet> {
                       Text(
                         '$rank',
                         style: TextStyle(
-                          fontSize: 16,
+                          fontSize: PindType.title,
                           fontWeight: FontWeight.w700,
                           color: by == null
-                              ? PindTheme.purple
+                              ? PindColors.purple
                               : criterionColor(by!),
                         ),
                       ),
@@ -335,9 +335,9 @@ class _NearbyRankingSheetState extends State<NearbyRankingSheet> {
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                           style: const TextStyle(
-                            fontSize: 15,
+                            fontSize: PindType.bodyLarge,
                             fontWeight: FontWeight.w700,
-                            color: PindTheme.ink,
+                            color: PindColors.ink,
                           ),
                         ),
                       ),
@@ -352,8 +352,8 @@ class _NearbyRankingSheetState extends State<NearbyRankingSheet> {
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     style: const TextStyle(
-                      fontSize: 11,
-                      color: PindTheme.muted,
+                      fontSize: PindType.caption,
+                      color: PindColors.muted,
                     ),
                   ),
                   FittedBox(
@@ -391,7 +391,7 @@ class _NearbyRankingSheetState extends State<NearbyRankingSheet> {
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
                             style: const TextStyle(
-                              fontSize: 10,
+                              fontSize: PindType.micro,
                               fontWeight: FontWeight.w500,
                               color: profileBody,
                             ),
@@ -419,18 +419,18 @@ class _NearbyRankingSheetState extends State<NearbyRankingSheet> {
                       decoration: BoxDecoration(
                         shape: BoxShape.circle,
                         color: p.saved
-                            ? PindTheme.purple.withValues(alpha: .12)
+                            ? PindColors.purple.withValues(alpha: .12)
                             : Colors.white,
                         border: Border.all(
                           color: p.saved
-                              ? PindTheme.purple.withValues(alpha: .4)
-                              : PindTheme.border,
+                              ? PindColors.purple.withValues(alpha: .4)
+                              : PindColors.border,
                         ),
                       ),
                       child: Icon(
                         p.saved ? Icons.bookmark : Icons.bookmark_border,
                         size: 16,
-                        color: p.saved ? PindTheme.purple : PindTheme.ink,
+                        color: p.saved ? PindColors.purple : PindColors.ink,
                       ),
                     ),
                   ),
@@ -438,9 +438,9 @@ class _NearbyRankingSheetState extends State<NearbyRankingSheet> {
                 Text(
                   thousands(p.saveCount),
                   style: const TextStyle(
-                    fontSize: 9,
+                    fontSize: PindType.tiny,
                     fontWeight: FontWeight.w700,
-                    color: PindTheme.muted,
+                    color: PindColors.muted,
                   ),
                 ),
               ],
@@ -462,7 +462,7 @@ class _NearbyRankingSheetState extends State<NearbyRankingSheet> {
         const Text(
           '취향',
           style: TextStyle(
-            fontSize: 9,
+            fontSize: PindType.tiny,
             fontWeight: FontWeight.w500,
             color: Colors.white,
           ),
@@ -528,7 +528,7 @@ class _NearbyRankingSheetState extends State<NearbyRankingSheet> {
             Text(
               '▲',
               style: TextStyle(
-                fontSize: 12,
+                fontSize: PindType.label,
                 fontWeight: FontWeight.w700,
                 color: Colors.white,
               ),
@@ -536,7 +536,7 @@ class _NearbyRankingSheetState extends State<NearbyRankingSheet> {
             Text(
               '지도로 돌아가기',
               style: TextStyle(
-                fontSize: 14,
+                fontSize: PindType.body,
                 fontWeight: FontWeight.w700,
                 color: Colors.white,
               ),

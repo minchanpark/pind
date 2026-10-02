@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../controllers/registration_controller.dart';
 import '../components/pind_glass.dart';
-import '../theme.dart';
+import '../design_system.dart';
 import 'registration_components.dart';
 
 class LocationPermissionScreen extends StatelessWidget {
@@ -11,7 +11,7 @@ class LocationPermissionScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => SetupPage(
-    background: const Color(0xFFFAFAFA),
+    background: PindColors.surface,
     footer: Column(
       children: [
         SetupError(controller.model.error),
@@ -33,7 +33,7 @@ class LocationPermissionScreen extends StatelessWidget {
           onPressed: controller.model.busy ? null : controller.skipLocation,
           child: const Text(
             '나중에 할게요',
-            style: TextStyle(fontSize: 13, color: PindTheme.muted),
+            style: TextStyle(fontSize: PindType.bodySmall, color: PindColors.muted),
           ),
         ),
       ],
@@ -67,7 +67,7 @@ class LocationPermissionScreen extends StatelessWidget {
               Center(
                 child: Text(
                   emoji,
-                  style: const TextStyle(fontSize: 24, height: 1),
+                  style: const TextStyle(fontSize: PindType.headline, height: 1),
                 ),
               ),
             ],
@@ -81,13 +81,13 @@ class LocationPermissionScreen extends StatelessWidget {
               Text(
                 title,
                 style: const TextStyle(
-                  fontSize: 14,
+                  fontSize: PindType.body,
                   fontWeight: FontWeight.w700,
                 ),
               ),
               Text(
                 subtitle,
-                style: const TextStyle(fontSize: 12, color: PindTheme.muted),
+                style: const TextStyle(fontSize: PindType.label, color: PindColors.muted),
               ),
             ],
           ),
@@ -121,7 +121,7 @@ class _LocationIllustration extends StatelessWidget {
             width: 354,
             height: 230,
             child: ColoredBox(
-              color: const Color(0xFFEEF0EA),
+              color: PindColors.pastelSage,
               child: ExcludeSemantics(
                 child: Stack(
                   clipBehavior: Clip.none,
@@ -206,7 +206,7 @@ class _LocationIllustration extends StatelessWidget {
                         '🍜',
                         textAlign: TextAlign.center,
                         textScaler: TextScaler.noScaling,
-                        style: TextStyle(fontSize: 20, height: 1),
+                        style: TextStyle(fontSize: PindType.titleLarge, height: 1),
                       ),
                     ),
                     const Positioned(
@@ -222,7 +222,7 @@ class _LocationIllustration extends StatelessWidget {
                         '🥩',
                         textAlign: TextAlign.center,
                         textScaler: TextScaler.noScaling,
-                        style: TextStyle(fontSize: 20, height: 1),
+                        style: TextStyle(fontSize: PindType.titleLarge, height: 1),
                       ),
                     ),
                     const Positioned(
@@ -238,7 +238,7 @@ class _LocationIllustration extends StatelessWidget {
                         '🍰',
                         textAlign: TextAlign.center,
                         textScaler: TextScaler.noScaling,
-                        style: TextStyle(fontSize: 18, height: 1),
+                        style: TextStyle(fontSize: PindType.subtitle, height: 1),
                       ),
                     ),
                   ],
@@ -257,6 +257,6 @@ class _Park extends StatelessWidget {
   const _Park();
   @override
   Widget build(BuildContext context) => const DecoratedBox(
-    decoration: ShapeDecoration(shape: OvalBorder(), color: Color(0xFFD4E7C8)),
+    decoration: ShapeDecoration(shape: OvalBorder(), color: PindColors.pastelGreen),
   );
 }

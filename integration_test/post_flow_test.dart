@@ -10,7 +10,7 @@ import 'package:pind_flutter/services/post_photo_service.dart';
 import 'package:pind_flutter/services/post_service.dart';
 import 'package:pind_flutter/view/explore/map_filter_chip.dart';
 import 'package:pind_flutter/view/posts/post_composer.dart';
-import 'package:pind_flutter/view/theme.dart';
+import 'package:pind_flutter/view/design_system.dart';
 
 // Original Figma imagery is used only in this native QA fixture.
 class FixturePhotos implements PostPhotoService {

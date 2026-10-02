@@ -5,13 +5,13 @@ import 'package:flutter/material.dart';
 import '../../controllers/friends_controller.dart';
 import '../../model/friends_model.dart';
 import '../../model/profile_link.dart';
-import '../../model/profile_model.dart';
 import '../../services/place_action_service.dart';
 import '../components/pind_back_header.dart';
 import '../components/pind_glass.dart';
 import '../components/pind_search_field.dart';
-import '../profile/profile_screen.dart' show ProfileAvatar, mutedNote;
-import '../theme.dart';
+import '../profile/profile_follow.dart' show PersonRow;
+import '../profile/profile_screen.dart' show mutedNote;
+import '../design_system.dart';
 import 'share_code_screen.dart';
 
 /// Figma 653:25641: search, share my code, and taste-matched people to follow.
@@ -100,9 +100,9 @@ class _FriendsScreenState extends State<FriendsScreen> {
               Text(
                 model.searching ? '검색 결과' : '검색 결과 ${model.results.length}명',
                 style: const TextStyle(
-                  fontSize: 12,
+                  fontSize: PindType.label,
                   fontWeight: FontWeight.w700,
-                  color: PindTheme.muted,
+                  color: PindColors.muted,
                 ),
               ),
               const SizedBox(height: 4),
@@ -115,9 +115,9 @@ class _FriendsScreenState extends State<FriendsScreen> {
               const Text(
                 '찾는 사람이 없나요?',
                 style: TextStyle(
-                  fontSize: 12,
+                  fontSize: PindType.label,
                   fontWeight: FontWeight.w700,
-                  color: PindTheme.ink,
+                  color: PindColors.ink,
                 ),
               ),
               const SizedBox(height: 8),
@@ -157,7 +157,7 @@ class _FriendsScreenState extends State<FriendsScreen> {
                     Text(
                       model.error!,
                       textAlign: TextAlign.center,
-                      style: const TextStyle(color: PindTheme.muted),
+                      style: const TextStyle(color: PindColors.muted),
                     ),
                     if (!searching && model.matches.isEmpty)
                       TextButton(
@@ -202,7 +202,7 @@ class _FriendsScreenState extends State<FriendsScreen> {
               if (icon != null)
                 Text(
                   icon,
-                  style: const TextStyle(fontSize: 14, color: PindTheme.purple),
+                  style: const TextStyle(fontSize: PindType.body, color: PindColors.purple),
                 ),
               Expanded(
                 child: Column(
@@ -212,17 +212,17 @@ class _FriendsScreenState extends State<FriendsScreen> {
                     Text(
                       title,
                       style: const TextStyle(
-                        fontSize: 13,
+                        fontSize: PindType.bodySmall,
                         fontWeight: FontWeight.w700,
-                        color: PindTheme.ink,
+                        color: PindColors.ink,
                       ),
                     ),
                     if (subtitle != null)
                       Text(
                         subtitle,
                         style: const TextStyle(
-                          fontSize: 10,
-                          color: PindTheme.muted,
+                          fontSize: PindType.micro,
+                          color: PindColors.muted,
                         ),
                       ),
                   ],
@@ -231,9 +231,9 @@ class _FriendsScreenState extends State<FriendsScreen> {
               const Text(
                 '›',
                 style: TextStyle(
-                  fontSize: 14,
+                  fontSize: PindType.body,
                   fontWeight: FontWeight.w700,
-                  color: Color(0xFFB0B1B8),
+                  color: PindColors.placeholder,
                 ),
               ),
             ],
@@ -249,9 +249,9 @@ class _FriendsScreenState extends State<FriendsScreen> {
         child: Text(
           title,
           style: const TextStyle(
-            fontSize: 14,
+            fontSize: PindType.body,
             fontWeight: FontWeight.w700,
-            color: PindTheme.ink,
+            color: PindColors.ink,
           ),
         ),
       ),
@@ -262,7 +262,7 @@ class _FriendsScreenState extends State<FriendsScreen> {
             padding: EdgeInsets.symmetric(vertical: 4),
             child: Text(
               '더보기 ›',
-              style: TextStyle(fontSize: 11, color: PindTheme.muted),
+              style: TextStyle(fontSize: PindType.caption, color: PindColors.muted),
             ),
           ),
         ),
@@ -291,91 +291,11 @@ class _FriendsScreenState extends State<FriendsScreen> {
     return [for (final p in people) row(p)];
   }
 
-  Widget row(FriendCandidate c) {
-    final UserProfile p = c.profile;
-    final open = widget.onOpenProfile;
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 11),
-      child: Row(
-        spacing: 12,
-        children: [
-          Expanded(
-            child: GestureDetector(
-              behavior: HitTestBehavior.opaque,
-              onTap: open == null ? null : () => open(c),
-              child: Row(
-                spacing: 12,
-                children: [
-                  ProfileAvatar(p.avatarUrl, 44),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      spacing: 2,
-                      children: [
-                        Text(
-                          p.displayName,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: const TextStyle(
-                            fontSize: 14,
-                            fontWeight: FontWeight.w700,
-                            color: PindTheme.ink,
-                          ),
-                        ),
-                        if (p.handle != null)
-                          Text(
-                            '@${p.handle}',
-                            style: const TextStyle(
-                              fontSize: 11,
-                              color: PindTheme.muted,
-                            ),
-                          ),
-                        if (c.match != null)
-                          Text(
-                            '취향 ${c.match}% 일치',
-                            style: const TextStyle(
-                              fontSize: 10,
-                              fontWeight: FontWeight.w500,
-                              color: Color(0xFF9B9B9B),
-                            ),
-                          ),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-          followButton(c),
-        ],
-      ),
-    );
-  }
-
-  Widget followButton(FriendCandidate c) => Semantics(
-    button: true,
-    label: c.following
-        ? '${c.profile.displayName} 팔로우 취소'
-        : '${c.profile.displayName} 팔로우',
-    child: PindGlass(
-      tone: c.following ? PindGlassTone.light : PindGlassTone.purple,
-      radius: 14,
-      child: InkWell(
-        onTap: () => controller.toggleFollow(c),
-        child: ExcludeSemantics(
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-            child: Text(
-              c.following ? '팔로우 취소' : '팔로우',
-              style: TextStyle(
-                fontSize: 11,
-                fontWeight: FontWeight.w700,
-                color: c.following ? const Color(0xFF9B9B9B) : Colors.white,
-              ),
-            ),
-          ),
-        ),
-      ),
-    ),
+  Widget row(FriendCandidate c) => PersonRow(
+    candidate: c,
+    onOpen: widget.onOpenProfile == null
+        ? null
+        : () => widget.onOpenProfile!(c),
+    onToggleFollow: () => controller.toggleFollow(c),
   );
 }

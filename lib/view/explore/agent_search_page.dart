@@ -6,10 +6,11 @@ import '../../model/place_search_result.dart';
 import '../../model/places.dart';
 import '../../model/preferences.dart';
 import '../../model/profile_model.dart';
+import '../../model/search_suggestions.dart';
 import '../components/pind_glass.dart';
 import '../profile/profile_screen.dart';
 import '../profile/saved_places_page.dart';
-import '../theme.dart';
+import '../design_system.dart';
 
 /// One question and its answer on the search page.
 class AgentTurn {
@@ -58,20 +59,6 @@ class AgentSearchPage extends StatefulWidget {
     '당신의 취향에 맞는 장소를 검색하고 있어요',
   ];
 
-  /// (emoji, prompt), row by row as in the design.
-  static const suggestions = [
-    ('🌶️', '매움 단계를 선택할 수 있는 식당'),
-    ('🥩', '한국 BBQ를 즐기면서 분위기 좋은 고깃집'),
-    ('🇳🇵', '네팔 사람들이 많이 방문한 식당'),
-    ('🌿', 'Vegetarian 음식'),
-    ('🍜', '한국식 베트남 음식'),
-    ('🪑', '혼술 하기 좋은 식당'),
-    ('🍜', '느낌 좋은 쌀국수집'),
-    ('📍', '서울 성수동에 분위기 좋은 바'),
-    ('🍚', '한국 집밥 느낌의 식당'),
-    ('🔁', '관광객들이 가장 많이 방문한 식당'),
-  ];
-
   @override
   State<AgentSearchPage> createState() => _AgentSearchPageState();
 }
@@ -81,6 +68,9 @@ class _AgentSearchPageState extends State<AgentSearchPage> {
   final scroll = ScrollController();
 
   final turns = <AgentTurn>[];
+
+  /// Built from my taste once per visit.
+  late final suggestions = suggestionsFor(widget.preferences);
 
   /// One question at a time.
   bool get busy => turns.isNotEmpty && !turns.last.done;
@@ -193,7 +183,7 @@ class _AgentSearchPageState extends State<AgentSearchPage> {
 
   @override
   Widget build(BuildContext context) => Scaffold(
-    backgroundColor: const Color(0xFFF6F5FA),
+    backgroundColor: PindColors.surface,
     body: SafeArea(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -211,7 +201,7 @@ class _AgentSearchPageState extends State<AgentSearchPage> {
                     radius: 17.4,
                     child: SizedBox.square(
                       dimension: 32.8,
-                      child: Icon(Icons.close, size: 16, color: PindTheme.ink),
+                      child: Icon(Icons.close, size: 16, color: PindColors.ink),
                     ),
                   ),
                 ),
@@ -227,18 +217,18 @@ class _AgentSearchPageState extends State<AgentSearchPage> {
                 Text(
                   '개인 맞춤형 음식 검색',
                   style: TextStyle(
-                    fontSize: 28,
+                    fontSize: PindType.display,
                     height: 36 / 28,
                     fontWeight: FontWeight.w700,
-                    color: PindTheme.ink,
+                    color: PindColors.ink,
                   ),
                 ),
                 Text(
                   '원하는 취향을 자세히 알려주면 추천 내용이 더 정확해집니다.',
                   style: TextStyle(
-                    fontSize: 13,
+                    fontSize: PindType.bodySmall,
                     height: 20 / 13,
-                    color: Color(0xFF9A9AA2),
+                    color: PindColors.subtle,
                   ),
                 ),
               ],
@@ -260,9 +250,9 @@ class _AgentSearchPageState extends State<AgentSearchPage> {
                     crossAxisSpacing: 9.2,
                     mainAxisExtent: 59,
                   ),
-                  itemCount: AgentSearchPage.suggestions.length,
+                  itemCount: suggestions.length,
                   itemBuilder: (_, i) {
-                    final (emoji, text) = AgentSearchPage.suggestions[i];
+                    final (emoji, text) = suggestions[i];
                     return suggestion(emoji, text);
                   },
                 ),
@@ -287,12 +277,12 @@ class _AgentSearchPageState extends State<AgentSearchPage> {
         constraints: const BoxConstraints(maxWidth: 280),
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
         decoration: BoxDecoration(
-          color: PindTheme.purple,
+          color: PindColors.purple,
           borderRadius: BorderRadius.circular(18),
         ),
         child: Text(
           t.question,
-          style: const TextStyle(fontSize: 13, color: Colors.white),
+          style: const TextStyle(fontSize: PindType.bodySmall, color: Colors.white),
         ),
       ),
     ),
@@ -337,14 +327,14 @@ class _AgentSearchPageState extends State<AgentSearchPage> {
               child: working
                   ? const CircularProgressIndicator(
                       strokeWidth: 2,
-                      color: PindTheme.purple,
+                      color: PindColors.purple,
                     )
-                  : Icon(icon, size: 14, color: PindTheme.purple),
+                  : Icon(icon, size: 14, color: PindColors.purple),
             ),
             Flexible(
               child: Text(
                 text,
-                style: const TextStyle(fontSize: 13, color: PindTheme.ink),
+                style: const TextStyle(fontSize: PindType.bodySmall, color: PindColors.ink),
               ),
             ),
           ],
@@ -372,9 +362,9 @@ class _AgentSearchPageState extends State<AgentSearchPage> {
                   child: Text(
                     '추천 장소 ${places.length}곳',
                     style: const TextStyle(
-                      fontSize: 14,
+                      fontSize: PindType.body,
                       fontWeight: FontWeight.w700,
-                      color: PindTheme.ink,
+                      color: PindColors.ink,
                     ),
                   ),
                 ),
@@ -383,7 +373,7 @@ class _AgentSearchPageState extends State<AgentSearchPage> {
                   duration: const Duration(milliseconds: 200),
                   child: const Icon(
                     Icons.keyboard_arrow_down_rounded,
-                    color: PindTheme.muted,
+                    color: PindColors.muted,
                   ),
                 ),
               ],
@@ -455,7 +445,7 @@ class _AgentSearchPageState extends State<AgentSearchPage> {
                     fontSize: 12.8,
                     height: 17.3 / 12.8,
                     fontWeight: FontWeight.w500,
-                    color: Color(0xFF222222),
+                    color: PindColors.ink,
                   ),
                 ),
               ),
@@ -478,12 +468,12 @@ class _AgentSearchPageState extends State<AgentSearchPage> {
             onChanged: (_) => setState(() {}),
             onSubmitted: submit,
             textInputAction: TextInputAction.search,
-            style: const TextStyle(fontSize: 14, color: PindTheme.ink),
+            style: const TextStyle(fontSize: PindType.body, color: PindColors.ink),
             decoration: const InputDecoration(
               isDense: true,
               border: InputBorder.none,
               hintText: '무엇이든 물어보세요...',
-              hintStyle: TextStyle(fontSize: 14, color: Color(0x73000000)),
+              hintStyle: TextStyle(fontSize: PindType.body, color: Color(0x73000000)),
             ),
           ),
         ),

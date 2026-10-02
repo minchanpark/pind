@@ -15,14 +15,15 @@ export async function catalogRequest(
   let fn = 'get_catalog_places';
   if (body.action === 'agent_search') {
     // index.ts fills terms from the sentence, and center/radius from its area.
-    const terms = Array.isArray(body.terms) ? (body.terms as unknown[]).filter(t => typeof t === 'string' && t.trim()) : [];
-    if (!terms.length) throw new CatalogError(400,'INVALID_QUERY','검색어를 이해하지 못했어요. 다르게 말해 주세요.');
+    const list = (v: unknown) => Array.isArray(v) ? (v as unknown[]).filter(t => typeof t === 'string' && t.trim()) : [];
+    const terms = list(body.terms), kinds = list(body.kinds);
+    if (!terms.length && !kinds.length) throw new CatalogError(400,'INVALID_QUERY','검색어를 이해하지 못했어요. 다르게 말해 주세요.');
     const lat = body.latitude, lng = body.longitude;
     const near = typeof lat === 'number' && typeof lng === 'number' && lat >= 33 && lat <= 38.8 && lng >= 124.5 && lng <= 132;
     const radius = body.radiusMeters;
     const circle = near && typeof radius === 'number' && Number.isInteger(radius) && radius >= 100 && radius <= 50000;
     Object.assign(args,{p_terms:terms,p_lat:near ? lat : null,p_lng:near ? lng : null,
-      ...(circle ? {p_radius:radius} : {})});
+      ...(circle ? {p_radius:radius} : {}),...(kinds.length ? {p_kinds:kinds} : {})});
     fn = 'agent_search_places';
   } else if (body.action === 'nearby') {
     const lat = body.latitude, lng = body.longitude, radius = body.radiusMeters;

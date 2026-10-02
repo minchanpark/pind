@@ -4,7 +4,7 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 
 import '../components/pind_glass.dart';
-import '../theme.dart';
+import '../design_system.dart';
 
 class SetupPage extends StatelessWidget {
   const SetupPage({
@@ -75,8 +75,8 @@ class SetupPage extends StatelessWidget {
                                           ),
                                           decoration: BoxDecoration(
                                             color: i <= progress!
-                                                ? PindTheme.purple
-                                                : PindTheme.border,
+                                                ? PindColors.purple
+                                                : PindColors.border,
                                             borderRadius: BorderRadius.circular(
                                               2,
                                             ),
@@ -87,9 +87,9 @@ class SetupPage extends StatelessWidget {
                                     Text(
                                       '$progress/3',
                                       style: const TextStyle(
-                                        fontSize: 12,
+                                        fontSize: PindType.label,
                                         fontWeight: FontWeight.w700,
-                                        color: PindTheme.muted,
+                                        color: PindColors.muted,
                                       ),
                                     ),
                                   ],
@@ -139,16 +139,16 @@ class SetupTitle extends StatelessWidget {
           height: 1.36,
           letterSpacing: -.5,
           fontWeight: FontWeight.w700,
-          color: PindTheme.ink,
+          color: PindColors.ink,
         ),
       ),
       const SizedBox(height: 8),
       Text(
         subtitle,
         style: const TextStyle(
-          fontSize: 13,
+          fontSize: PindType.bodySmall,
           height: 1.46,
-          color: PindTheme.muted,
+          color: PindColors.muted,
         ),
       ),
     ],
@@ -180,7 +180,7 @@ class SetupButton extends StatelessWidget {
     child: FilledButton(
       onPressed: busy ? null : onPressed,
       style: FilledButton.styleFrom(
-        backgroundColor: PindTheme.button,
+        backgroundColor: PindColors.purpleLight,
         minimumSize: const Size.fromHeight(54),
         padding: const EdgeInsets.symmetric(vertical: 17),
         side: BorderSide(
@@ -244,7 +244,7 @@ class SetupGlass extends StatelessWidget {
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(radius),
             side: BorderSide(
-              color: selected ? PindTheme.ink : PindTheme.border,
+              color: selected ? PindColors.ink : PindColors.border,
               width: selected ? 2 : 1,
             ),
           ),
@@ -271,7 +271,7 @@ class SetupError extends StatelessWidget {
             child: Text(
               error!,
               style: TextStyle(
-                fontSize: 13,
+                fontSize: PindType.bodySmall,
                 color: Theme.of(context).colorScheme.error,
               ),
             ),

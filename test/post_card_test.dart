@@ -8,7 +8,7 @@ import 'package:pind_flutter/view/components/pind_glass.dart';
 import 'package:pind_flutter/view/components/pind_image.dart';
 import 'package:pind_flutter/view/components/post_card.dart';
 import 'package:pind_flutter/view/explore/post_photo_viewer.dart';
-import 'package:pind_flutter/view/theme.dart';
+import 'package:pind_flutter/view/design_system.dart';
 
 void main() {
   Future<List<Rect>> frames(WidgetTester tester, int count) async {
@@ -105,7 +105,7 @@ void main() {
             .border!
             .top
             .color;
-    expect(border, PindTheme.purple);
+    expect(border, PindColors.purple);
     expect(find.byType(Image).evaluate().length, 2);
     final box = tester.getRect(stack);
     expect(box.size, const Size(260, 180));

@@ -11,7 +11,7 @@ import 'package:pind_flutter/model/place_search_result.dart';
 import 'package:pind_flutter/services/post_service.dart';
 import 'package:pind_flutter/services/post_photo_service.dart';
 import 'package:pind_flutter/view/posts/post_composer.dart';
-import 'package:pind_flutter/view/theme.dart';
+import 'package:pind_flutter/view/design_system.dart';
 import 'package:pind_flutter/controllers/explore_controller.dart';
 import 'package:pind_flutter/services/place_service.dart';
 

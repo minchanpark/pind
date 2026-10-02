@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:pind_flutter/view/theme.dart';
+import 'package:pind_flutter/view/design_system.dart';
 import 'package:pind_flutter/model/preferences.dart';
 import 'package:pind_flutter/view/onboarding/onboarding_screen.dart';
 

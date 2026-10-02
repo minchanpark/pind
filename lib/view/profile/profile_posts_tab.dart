@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import '../../model/preferences.dart';
 import '../../model/profile_model.dart';
 import '../components/post_card.dart';
-import '../theme.dart';
+import '../design_system.dart';
 import 'profile_screen.dart';
 
 class ProfilePostsTab extends StatelessWidget {
@@ -31,7 +31,7 @@ class ProfilePostsTab extends StatelessWidget {
       children: [
         for (var i = 0; i < posts.length; i++) ...[
           if (i > 0)
-            const Divider(height: 1, thickness: 1, color: PindTheme.border),
+            const Divider(height: 1, thickness: 1, color: PindColors.border),
           Padding(
             padding: profileInset.copyWith(top: i == 0 ? 0 : 18, bottom: 18),
             child: PostCard(

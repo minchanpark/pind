@@ -9,7 +9,7 @@ import '../components/pind_glass.dart';
 import '../components/post_card.dart';
 import '../explore/place_sheet.dart';
 import '../profile/profile_screen.dart' show mutedNote;
-import '../theme.dart';
+import '../design_system.dart';
 
 /// Figma 611:23904: public feed of everyone's posts, newest first.
 class DiscoverScreen extends StatefulWidget {
@@ -108,7 +108,7 @@ class _DiscoverScreenState extends State<DiscoverScreen> {
                         const Divider(
                           height: 1,
                           thickness: 1,
-                          color: PindTheme.border,
+                          color: PindColors.border,
                         ),
                       Padding(
                         padding: inset.copyWith(top: 18, bottom: 18),
@@ -151,9 +151,9 @@ class _DiscoverScreenState extends State<DiscoverScreen> {
               child: Text(
                 'Pind Your Taste!',
                 style: TextStyle(
-                  fontSize: 24,
+                  fontSize: PindType.headline,
                   fontWeight: FontWeight.w800,
-                  color: Color(0xFF090909),
+                  color: PindColors.ink,
                   letterSpacing: -.51,
                   height: 33.85 / 24,
                 ),
@@ -178,7 +178,7 @@ class _DiscoverScreenState extends State<DiscoverScreen> {
         const Text(
           '친구들 취향 탐색하기',
           style: TextStyle(
-            fontSize: 14,
+            fontSize: PindType.body,
             fontWeight: FontWeight.w600,
             color: Colors.black,
             letterSpacing: .82,
@@ -225,7 +225,7 @@ class _DiscoverScreenState extends State<DiscoverScreen> {
               width: 12,
               height: 12,
               decoration: BoxDecoration(
-                color: const Color(0xFFD63E6A),
+                color: PindColors.pink,
                 shape: BoxShape.circle,
                 border: Border.all(color: Colors.white, width: 2),
               ),
@@ -248,7 +248,7 @@ class _DiscoverScreenState extends State<DiscoverScreen> {
           style: TextStyle(
             fontSize: 14.4,
             fontWeight: FontWeight.w700,
-            color: Color(0xFF090909),
+            color: PindColors.ink,
             height: 1.5,
           ),
         ),
@@ -257,7 +257,7 @@ class _DiscoverScreenState extends State<DiscoverScreen> {
           '친구들의 음식 취향을 공유하세요',
           style: TextStyle(
             fontSize: 12.3,
-            color: Color(0xFF777771),
+            color: PindColors.muted,
             height: 1.5,
           ),
         ),
@@ -293,7 +293,7 @@ class _DiscoverScreenState extends State<DiscoverScreen> {
           Text(
             model.error!,
             textAlign: TextAlign.center,
-            style: const TextStyle(color: PindTheme.muted),
+            style: const TextStyle(color: PindColors.muted),
           ),
           TextButton(onPressed: controller.load, child: const Text('다시 시도')),
         ],
@@ -329,13 +329,13 @@ class _DiscoverScreenState extends State<DiscoverScreen> {
         leading: p.likeCount > 0
             ? Text(
                 '${p.likeCount}',
-                style: const TextStyle(fontSize: 10, color: PindTheme.muted),
+                style: const TextStyle(fontSize: PindType.micro, color: PindColors.muted),
               )
             : null,
         icon: Icon(
           p.liked ? Icons.favorite : Icons.favorite_border,
           size: 12,
-          color: p.liked ? PindTheme.purple : null,
+          color: p.liked ? PindColors.purple : null,
         ),
         onTap: (_) => controller.toggleLike(p),
       ),

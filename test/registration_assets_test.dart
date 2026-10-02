@@ -9,7 +9,7 @@ import 'package:pind_flutter/model/registration_model.dart';
 import 'package:pind_flutter/services/registration_service.dart';
 import 'package:pind_flutter/view/onboarding/registration_components.dart';
 import 'package:pind_flutter/view/onboarding/registration_screen.dart';
-import 'package:pind_flutter/view/theme.dart';
+import 'package:pind_flutter/view/design_system.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'support/registration_fakes.dart';

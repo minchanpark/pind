@@ -6,7 +6,7 @@ import 'package:pind_flutter/model/profile_model.dart';
 import 'package:pind_flutter/services/place_service.dart';
 import 'package:pind_flutter/view/explore/explore_screen.dart';
 import 'package:pind_flutter/view/posts/post_place_picker.dart';
-import 'package:pind_flutter/view/theme.dart';
+import 'package:pind_flutter/view/design_system.dart';
 
 import 'post_flow_test.dart' show TestPhotos, TestPosts;
 
@@ -91,7 +91,7 @@ void main() {
       'Cafe',
       '',
     ]);
-    expect((span.children![1] as TextSpan).style!.color, PindTheme.purple);
+    expect((span.children![1] as TextSpan).style!.color, PindColors.purple);
     expect(highlight('을지면옥', '을지로').children, isNull);
   });
 
@@ -113,7 +113,7 @@ void main() {
         .firstWhere((t) => t.text.toPlainText() == '을지로 숯불갈비');
     final purple = <String>[];
     title.text.visitChildren((span) {
-      if (span is TextSpan && span.style?.color == PindTheme.purple) {
+      if (span is TextSpan && span.style?.color == PindColors.purple) {
         purple.add(span.text!);
       }
       return true;

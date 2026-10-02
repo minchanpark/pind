@@ -4,7 +4,7 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 
-import '../theme.dart';
+import '../design_system.dart';
 import '../../model/places.dart';
 import '../../model/preferences.dart';
 import '../../model/place_context.dart';
@@ -311,7 +311,7 @@ class _PlaceSheetState extends State<PlaceSheet> {
       ),
       child: const Text(
         '⌃  위로 올려서 소개 · 게시물 보기',
-        style: TextStyle(fontSize: 11, color: Color(0xFF7A7A80)),
+        style: TextStyle(fontSize: PindType.caption, color: PindColors.muted),
       ),
     ),
   );
@@ -321,7 +321,7 @@ class _PlaceSheetState extends State<PlaceSheet> {
     child: Wrap(
       crossAxisAlignment: WrapCrossAlignment.center,
       children: [
-        Text(text, style: const TextStyle(fontSize: 12)),
+        Text(text, style: const TextStyle(fontSize: PindType.label)),
         TextButton(
           onPressed: loading ? null : load,
           child: const Text('다시 시도'),
@@ -359,7 +359,7 @@ class _PlaceSheetState extends State<PlaceSheet> {
                       fontSize: 22.677,
                       height: 1.25,
                       fontWeight: FontWeight.w600,
-                      color: Color(0xFF111111),
+                      color: PindColors.ink,
                     ),
                   ),
                 ),
@@ -389,7 +389,7 @@ class _PlaceSheetState extends State<PlaceSheet> {
                     ),
                     child: Text(
                       '$status${hours == null ? '' : ' · $hours'}',
-                      style: const TextStyle(fontSize: 11, color: Colors.black),
+                      style: const TextStyle(fontSize: PindType.caption, color: Colors.black),
                     ),
                   ),
                 ),
@@ -403,8 +403,8 @@ class _PlaceSheetState extends State<PlaceSheet> {
                         ? (locating ? '위치 확인 중' : '거리 확인')
                         : formatDistance(distance!),
                     style: const TextStyle(
-                      fontSize: 11,
-                      color: Color(0xFF6B6B70),
+                      fontSize: PindType.caption,
+                      color: PindColors.muted,
                     ),
                   ),
                 ),
@@ -415,7 +415,7 @@ class _PlaceSheetState extends State<PlaceSheet> {
                     : place.reviewCount == null
                     ? '리뷰 수 확인 필요'
                     : '리뷰 ${place.reviewCount}개',
-                style: const TextStyle(fontSize: 11, color: Color(0xFF6B6B70)),
+                style: const TextStyle(fontSize: PindType.caption, color: PindColors.muted),
               ),
             ],
           ),
@@ -432,8 +432,8 @@ class _PlaceSheetState extends State<PlaceSheet> {
                 child: Text(
                   place.address,
                   style: const TextStyle(
-                    fontSize: 12,
-                    color: Color(0xFF717178),
+                    fontSize: PindType.label,
+                    color: PindColors.muted,
                   ),
                 ),
               ),
@@ -461,7 +461,7 @@ class _PlaceSheetState extends State<PlaceSheet> {
                       '내 취향 ${score == null ? '평가 부족' : '$score%'}',
                       key: const ValueKey('taste-match'),
                       style: const TextStyle(
-                        fontSize: 11,
+                        fontSize: PindType.caption,
                         color: Colors.white,
                         fontWeight: FontWeight.w700,
                       ),
@@ -487,9 +487,9 @@ class _PlaceSheetState extends State<PlaceSheet> {
   }
 
   static const axisColors = [
-    Color(0xFFA8154A),
-    Color(0xFFB65B00),
-    Color(0xFF3155D9),
+    PindColors.taste,
+    PindColors.portion,
+    PindColors.ambience,
   ];
   String average(PreferenceCriterion axis) {
     final value = social?.averages[axis];
@@ -516,7 +516,7 @@ class _PlaceSheetState extends State<PlaceSheet> {
           child: Text(
             '${axis.emoji} ★ $text',
             style: TextStyle(
-              fontSize: 11,
+              fontSize: PindType.caption,
               color: color,
               fontWeight: FontWeight.w700,
             ),
@@ -561,7 +561,7 @@ class _PlaceSheetState extends State<PlaceSheet> {
           child: Text(
             '$names${visitors.length > 2 ? ' 외 ${visitors.length - 2}명' : ''}님이 다녀갔어요'
             '${social!.friendSaveCount > 0 ? ' · 팔로잉 ${social!.friendSaveCount}명 저장' : ''}',
-            style: const TextStyle(fontSize: 12, color: Color(0xFF454550)),
+            style: const TextStyle(fontSize: PindType.label, color: PindColors.body),
           ),
         ),
       ],
@@ -628,9 +628,9 @@ class _PlaceSheetState extends State<PlaceSheet> {
         child: Text(
           label,
           style: const TextStyle(
-            fontSize: 9,
+            fontSize: PindType.tiny,
             height: 1.35,
-            color: Color(0xFF68686E),
+            color: PindColors.muted,
           ),
         ),
       ),
@@ -656,14 +656,14 @@ class _PlaceSheetState extends State<PlaceSheet> {
                     child: Text(
                       ['소개', '게시물'][i],
                       style: TextStyle(
-                        fontSize: 14,
+                        fontSize: PindType.body,
                         height: 17 / 14,
                         fontWeight: tab == i
                             ? FontWeight.w700
                             : FontWeight.w500,
                         color: tab == i
-                            ? PindTheme.ink
-                            : const Color(0xFF9B9B9B),
+                            ? PindColors.ink
+                            : PindColors.subtle,
                       ),
                     ),
                   ),
@@ -675,8 +675,8 @@ class _PlaceSheetState extends State<PlaceSheet> {
                         key: ValueKey('detail-tab-line-$i'),
                         height: tab == i ? 3 : 1,
                         color: tab == i
-                            ? PindTheme.ink
-                            : const Color(0xFFEDEDF1),
+                            ? PindColors.ink
+                            : PindColors.chip,
                       ),
                     ),
                   ),
@@ -718,7 +718,7 @@ class _PlaceSheetState extends State<PlaceSheet> {
                   dimension: 32,
                   child: post.avatar == null
                       ? const ColoredBox(
-                          color: Color(0xFFEDEDF1),
+                          color: PindColors.chip,
                           child: Icon(Icons.person, size: 22),
                         )
                       : placePhoto(post.avatar!, BoxFit.cover),
@@ -732,7 +732,7 @@ class _PlaceSheetState extends State<PlaceSheet> {
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: const TextStyle(
-                    fontSize: 14,
+                    fontSize: PindType.body,
                     fontWeight: FontWeight.w500,
                     letterSpacing: -.07,
                     color: Colors.black,
@@ -763,7 +763,7 @@ class _PlaceSheetState extends State<PlaceSheet> {
                   Text(
                     post.body.trim(),
                     style: const TextStyle(
-                      fontSize: 12,
+                      fontSize: PindType.label,
                       height: 16.869 / 12,
                       color: Colors.black,
                     ),
@@ -808,13 +808,13 @@ class _PlaceSheetState extends State<PlaceSheet> {
     leading: post.likeCount > 0
         ? Text(
             '${post.likeCount}',
-            style: const TextStyle(fontSize: 10, color: PindTheme.muted),
+            style: const TextStyle(fontSize: PindType.micro, color: PindColors.muted),
           )
         : null,
     icon: Icon(
       post.liked ? Icons.favorite : Icons.favorite_border,
       size: 12,
-      color: post.liked ? PindTheme.purple : null,
+      color: post.liked ? PindColors.purple : null,
     ),
     onTap: (_) async {
       final error = await controller.toggleLike(post);
@@ -823,7 +823,7 @@ class _PlaceSheetState extends State<PlaceSheet> {
   );
 
   Widget postPhotos(PlacePost post) {
-    const yellow = Color(0xFFF4FF5A);
+    const yellow = PindColors.lime;
     if (post.photos.length < 2) {
       return post.photos.isEmpty
           ? const SizedBox(height: 30)
@@ -875,7 +875,7 @@ class _PlaceSheetState extends State<PlaceSheet> {
                 child: Text(
                   '+ $more',
                   style: const TextStyle(
-                    fontSize: 20,
+                    fontSize: PindType.titleLarge,
                     fontWeight: FontWeight.w500,
                     color: Colors.white,
                   ),
@@ -892,7 +892,7 @@ class _PlaceSheetState extends State<PlaceSheet> {
           offset: Offset(dx, dy),
           child: Transform.rotate(angle: degrees * math.pi / 180, child: child),
         );
-    const purple = Color(0xFF6300DB);
+    const purple = PindColors.purple;
     if (post.photos.length == 2) {
       // A fanned pair, as in PostCard: the first photo in front.
       return SizedBox(
@@ -946,7 +946,7 @@ class _PlaceSheetState extends State<PlaceSheet> {
 
   Widget postRatingChip(PreferenceCriterion axis, int score, int index) {
     const borders = [Color(0x66E8336E), Color(0x66FF8A1F), Color(0x663563FF)];
-    const colors = [Color(0xFFA8154A), Color(0xFFB85600), Color(0xFF1C3FC4)];
+    const colors = [PindColors.taste, PindColors.portion, PindColors.ambience];
     return Semantics(
       label: '${axis.label} $score점',
       excludeSemantics: true,
@@ -969,7 +969,7 @@ class _PlaceSheetState extends State<PlaceSheet> {
             children: [
               TextSpan(
                 text: '${axis.emoji} ',
-                style: const TextStyle(color: Color(0xFF111111)),
+                style: const TextStyle(color: PindColors.ink),
               ),
               TextSpan(
                 text: '★ $score',
@@ -980,7 +980,7 @@ class _PlaceSheetState extends State<PlaceSheet> {
               ),
             ],
           ),
-          style: const TextStyle(fontSize: 10),
+          style: const TextStyle(fontSize: PindType.micro),
         ),
       ),
     );
@@ -1001,7 +1001,7 @@ class _PlaceSheetState extends State<PlaceSheet> {
       children: [
         Text(
           '${axes.map((a) => a.label).join(' · ')} 한 줄 요약',
-          style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w700),
+          style: const TextStyle(fontSize: PindType.label, fontWeight: FontWeight.w700),
         ),
         const SizedBox(height: 10),
         DetailGlass(
@@ -1021,7 +1021,7 @@ class _PlaceSheetState extends State<PlaceSheet> {
                   child: Row(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(axes[i].emoji, style: const TextStyle(fontSize: 14)),
+                      Text(axes[i].emoji, style: const TextStyle(fontSize: PindType.body)),
                       const SizedBox(width: 8),
                       Expanded(
                         child: Column(
@@ -1030,7 +1030,7 @@ class _PlaceSheetState extends State<PlaceSheet> {
                             Text(
                               '${axes[i].label}  ★ ${average(axes[i])}',
                               style: TextStyle(
-                                fontSize: 12,
+                                fontSize: PindType.label,
                                 fontWeight: FontWeight.w700,
                                 color: axisColors[i % 3],
                               ),
@@ -1040,8 +1040,8 @@ class _PlaceSheetState extends State<PlaceSheet> {
                               place.insightLines[axes[i].name] ??
                                   '아직 한 줄 평이 없어요.',
                               style: const TextStyle(
-                                fontSize: 11,
-                                color: Color(0xFF454550),
+                                fontSize: PindType.caption,
+                                color: PindColors.body,
                               ),
                             ),
                           ],
@@ -1081,9 +1081,9 @@ class _PlaceSheetState extends State<PlaceSheet> {
                       '제공된 소개가 없어요.',
                   key: const ValueKey('detail-intro'),
                   style: const TextStyle(
-                    fontSize: 12,
+                    fontSize: PindType.label,
                     height: 1.5,
-                    color: Color(0xFF6B6B70),
+                    color: PindColors.muted,
                   ),
                 ),
                 const SizedBox(height: 20),
@@ -1095,7 +1095,7 @@ class _PlaceSheetState extends State<PlaceSheet> {
               const SizedBox(height: 12),
               Text(
                 '정보 제공: ${place.sourceLabel}',
-                style: const TextStyle(fontSize: 12, color: PindTheme.muted),
+                style: const TextStyle(fontSize: PindType.label, color: PindColors.muted),
               ),
             ],
             if (!place.hasRichContent)
@@ -1121,7 +1121,7 @@ class _PlaceSheetState extends State<PlaceSheet> {
         children: [
           action(
             saved ? '저장됨' : '저장',
-            'save',
+            saved ? 'saved' : 'save',
             13.4603,
             saving ? null : save,
             key: const ValueKey('detail-save'),
@@ -1192,7 +1192,13 @@ class _PlaceSheetState extends State<PlaceSheet> {
             Flexible(
               child: Text(
                 label,
-                style: const TextStyle(fontSize: 12.426),
+                // Saved reads at a glance: purple and bold, as bookmarks are
+                // elsewhere in the app.
+                style: TextStyle(
+                  fontSize: 12.426,
+                  fontWeight: selected ? FontWeight.w700 : null,
+                  color: selected ? PindColors.purple : null,
+                ),
                 softWrap: false,
               ),
             ),

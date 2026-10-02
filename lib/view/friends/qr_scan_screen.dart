@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
 
 import '../../model/profile_link.dart';
+import '../design_system.dart';
 
 /// The first scanned value that is a Pind profile link.
 ProfileLink? firstProfileLink(Iterable<String?> raws) {
@@ -63,7 +64,7 @@ class _QrScanScreenState extends State<QrScanScreen> {
                 child: Text(
                   '카메라를 사용할 수 없어요. 설정에서 카메라 권한을 허용해 주세요.',
                   textAlign: TextAlign.center,
-                  style: TextStyle(color: Colors.white, fontSize: 14),
+                  style: TextStyle(color: Colors.white, fontSize: PindType.body),
                 ),
               ),
             ),
@@ -77,7 +78,7 @@ class _QrScanScreenState extends State<QrScanScreen> {
                 wrong ? 'Pind 친구 코드가 아니에요' : '친구의 Pind QR 코드를 네모 안에 맞춰 주세요',
                 style: TextStyle(
                   color: Colors.white,
-                  fontSize: 13,
+                  fontSize: PindType.bodySmall,
                   fontWeight: wrong ? FontWeight.w700 : FontWeight.w400,
                 ),
               ),

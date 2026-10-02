@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../components/pind_image.dart';
+import '../design_system.dart';
 
 /// Asset URIs are local QA fixtures; everything else is a signed network URL.
 Widget placePhoto(String uri, BoxFit fit) => uri.startsWith('assets/')
@@ -23,7 +24,7 @@ class PostPhotoViewer extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Scaffold(
-    backgroundColor: const Color(0xFFEDEDEF),
+    backgroundColor: PindColors.chip,
     body: SafeArea(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,

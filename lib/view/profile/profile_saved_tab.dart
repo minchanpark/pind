@@ -6,7 +6,7 @@ import '../../model/place_context.dart';
 import '../../model/preferences.dart';
 import '../../model/profile_model.dart';
 import '../components/pind_glass.dart';
-import '../theme.dart';
+import '../design_system.dart';
 import 'profile_screen.dart';
 import 'saved_places_page.dart';
 
@@ -153,16 +153,16 @@ class RecentPlaceCard extends StatelessWidget {
           const SizedBox(height: 6),
           Text(
             '📍 ${placeArea(card.place.address)}',
-            style: const TextStyle(fontSize: 10, color: PindTheme.muted),
+            style: const TextStyle(fontSize: PindType.micro, color: PindColors.muted),
           ),
           Text(
             card.place.name,
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
             style: const TextStyle(
-              fontSize: 12,
+              fontSize: PindType.label,
               fontWeight: FontWeight.w700,
-              color: PindTheme.ink,
+              color: PindColors.ink,
             ),
           ),
         ],
@@ -208,8 +208,8 @@ class _SavedCard extends StatelessWidget {
                     Text(
                       '📍 ${placeArea(card.place.address)}',
                       style: const TextStyle(
-                        fontSize: 10,
-                        color: PindTheme.muted,
+                        fontSize: PindType.micro,
+                        color: PindColors.muted,
                       ),
                     ),
                     Text(
@@ -217,9 +217,9 @@ class _SavedCard extends StatelessWidget {
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: const TextStyle(
-                        fontSize: 12,
+                        fontSize: PindType.label,
                         fontWeight: FontWeight.w700,
-                        color: PindTheme.ink,
+                        color: PindColors.ink,
                       ),
                     ),
                     // One line always: shrinks rather than wraps on large text.
@@ -236,13 +236,13 @@ class _SavedCard extends StatelessWidget {
                                 vertical: 2,
                               ),
                               decoration: BoxDecoration(
-                                color: PindTheme.purple.withValues(alpha: .7),
+                                color: PindColors.purple.withValues(alpha: .7),
                                 borderRadius: BorderRadius.circular(9),
                               ),
                               child: Text(
                                 '$match%',
                                 style: const TextStyle(
-                                  fontSize: 9,
+                                  fontSize: PindType.tiny,
                                   fontWeight: FontWeight.w700,
                                   color: Colors.white,
                                 ),
@@ -261,7 +261,7 @@ class _SavedCard extends StatelessWidget {
                                   Text(
                                     avg.toStringAsFixed(1),
                                     style: TextStyle(
-                                      fontSize: 9,
+                                      fontSize: PindType.tiny,
                                       fontWeight: FontWeight.w700,
                                       color: criterionColor(c),
                                     ),

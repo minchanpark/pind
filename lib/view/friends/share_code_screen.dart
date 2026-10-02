@@ -13,7 +13,7 @@ import '../../services/profile_share_service.dart';
 import '../components/pind_back_header.dart';
 import '../components/pind_glass.dart';
 import '../profile/profile_screen.dart' show ProfileAvatar, mutedNote;
-import '../theme.dart';
+import '../design_system.dart';
 import 'qr_scan_screen.dart';
 
 /// Figma 671:35498: my QR code and link, share targets, and the scanner.
@@ -155,10 +155,10 @@ class _ShareCodeScreenState extends State<ShareCodeScreen> {
                 width: 38,
                 height: 38,
                 decoration: const BoxDecoration(
-                  color: Color(0xFFF1F2F6),
+                  color: PindColors.chip,
                   shape: BoxShape.circle,
                 ),
-                child: const Icon(Icons.link, size: 18, color: PindTheme.ink),
+                child: const Icon(Icons.link, size: 18, color: PindColors.ink),
               ),
               (_) => copy(link),
             ),
@@ -180,7 +180,7 @@ class _ShareCodeScreenState extends State<ShareCodeScreen> {
                     '친구 코드 스캔하기',
                     textAlign: TextAlign.center,
                     style: TextStyle(
-                      fontSize: 15,
+                      fontSize: PindType.bodyLarge,
                       fontWeight: FontWeight.w700,
                       color: Colors.white,
                     ),
@@ -223,13 +223,13 @@ class _ShareCodeScreenState extends State<ShareCodeScreen> {
               style: const TextStyle(
                 fontSize: 17,
                 fontWeight: FontWeight.w700,
-                color: PindTheme.ink,
+                color: PindColors.ink,
               ),
             ),
             if (p.handle != null)
               Text(
                 '@${p.handle}',
-                style: const TextStyle(fontSize: 12, color: PindTheme.muted),
+                style: const TextStyle(fontSize: PindType.label, color: PindColors.muted),
               ),
           ],
         ),
@@ -240,7 +240,7 @@ class _ShareCodeScreenState extends State<ShareCodeScreen> {
           decoration: BoxDecoration(
             color: Colors.white,
             borderRadius: BorderRadius.circular(20),
-            border: Border.all(color: PindTheme.border),
+            border: Border.all(color: PindColors.border),
           ),
           child: Semantics(
             container: true,
@@ -259,11 +259,11 @@ class _ShareCodeScreenState extends State<ShareCodeScreen> {
                     padding: EdgeInsets.zero,
                     eyeStyle: const QrEyeStyle(
                       eyeShape: QrEyeShape.square,
-                      color: PindTheme.ink,
+                      color: PindColors.ink,
                     ),
                     dataModuleStyle: const QrDataModuleStyle(
                       dataModuleShape: QrDataModuleShape.square,
-                      color: PindTheme.ink,
+                      color: PindColors.ink,
                     ),
                   ),
                   Container(
@@ -271,16 +271,16 @@ class _ShareCodeScreenState extends State<ShareCodeScreen> {
                     height: 44,
                     alignment: Alignment.center,
                     decoration: BoxDecoration(
-                      color: PindTheme.purple,
+                      color: PindColors.purple,
                       borderRadius: BorderRadius.circular(14),
                       border: Border.all(color: Colors.white, width: 4),
                     ),
                     child: const Text(
                       'P',
                       style: TextStyle(
-                        fontSize: 20,
+                        fontSize: PindType.titleLarge,
                         fontWeight: FontWeight.w700,
-                        color: Color(0xFFF4FF5A),
+                        color: PindColors.lime,
                         height: 1,
                       ),
                     ),
@@ -315,9 +315,9 @@ class _ShareCodeScreenState extends State<ShareCodeScreen> {
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                           style: const TextStyle(
-                            fontSize: 12,
+                            fontSize: PindType.label,
                             fontWeight: FontWeight.w500,
-                            color: Color(0xFF4A4A52),
+                            color: PindColors.body,
                           ),
                         ),
                       ),
@@ -325,7 +325,7 @@ class _ShareCodeScreenState extends State<ShareCodeScreen> {
                       const Icon(
                         Icons.content_copy_rounded,
                         size: 12,
-                        color: PindTheme.purple,
+                        color: PindColors.purple,
                       ),
                     ],
                   ),
@@ -360,9 +360,9 @@ class _ShareCodeScreenState extends State<ShareCodeScreen> {
                         Text(
                           label,
                           style: const TextStyle(
-                            fontSize: 11,
+                            fontSize: PindType.caption,
                             fontWeight: FontWeight.w500,
-                            color: Color(0xFF4A4A52),
+                            color: PindColors.body,
                           ),
                         ),
                       ],

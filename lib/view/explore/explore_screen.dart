@@ -9,7 +9,7 @@ import 'package:flutter_svg/flutter_svg.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 
 import '../components/pind_glass.dart';
-import '../theme.dart';
+import '../design_system.dart';
 import '../../model/preferences.dart';
 import '../../model/places.dart';
 import '../../model/place_context.dart';
@@ -391,14 +391,14 @@ class _ExploreScreenState extends State<ExploreScreen> {
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: const TextStyle(
-                    fontSize: 15,
+                    fontSize: PindType.bodyLarge,
                     fontWeight: FontWeight.w700,
-                    color: PindTheme.ink,
+                    color: PindColors.ink,
                   ),
                 ),
                 Text(
                   status,
-                  style: TextStyle(fontSize: 12, color: PindTheme.muted),
+                  style: TextStyle(fontSize: PindType.label, color: PindColors.muted),
                 ),
               ],
             ),
@@ -409,7 +409,7 @@ class _ExploreScreenState extends State<ExploreScreen> {
               arrived ? '닫기' : '안내 종료',
               style: const TextStyle(
                 fontWeight: FontWeight.w700,
-                color: PindTheme.purple,
+                color: PindColors.purple,
               ),
             ),
           ),
@@ -456,7 +456,7 @@ class _ExploreScreenState extends State<ExploreScreen> {
                 decoration: BoxDecoration(
                   color: const Color.fromRGBO(251, 251, 253, .72),
                   borderRadius: radius,
-                  border: Border.all(color: PindTheme.border),
+                  border: Border.all(color: PindColors.border),
                 ),
                 child: Material(
                   type: MaterialType.transparency,
@@ -492,7 +492,7 @@ class _ExploreScreenState extends State<ExploreScreen> {
                                 maxLines: 1,
                                 overflow: TextOverflow.ellipsis,
                                 style: textStyle.copyWith(
-                                  color: const Color(0xFFABABAB),
+                                  color: PindColors.placeholder,
                                 ),
                               ),
                             ),
@@ -546,7 +546,7 @@ class _ExploreScreenState extends State<ExploreScreen> {
                     for (final v in p.remaining)
                       LatLng(v.latitude, v.longitude),
                   ],
-                  color: PindTheme.purple,
+                  color: PindColors.purple,
                   width: 6,
                   jointType: JointType.round,
                   startCap: Cap.roundCap,
@@ -564,14 +564,14 @@ class _ExploreScreenState extends State<ExploreScreen> {
           )
         else
           Container(
-            color: PindTheme.surface,
+            color: PindColors.surface,
             alignment: Alignment.center,
             child: const Padding(
               padding: EdgeInsets.all(28),
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Icon(Icons.map_outlined, size: 48, color: PindTheme.muted),
+                  Icon(Icons.map_outlined, size: 48, color: PindColors.muted),
                   SizedBox(height: 12),
                   Text('지도를 불러올 수 없어요.'),
                   Text('장소 검색과 목록으로 탐색할 수 있어요.', textAlign: TextAlign.center),
@@ -792,7 +792,7 @@ class _MapGlassButton extends StatelessWidget {
                 dimension: 38,
                 child: Center(
                   child: IconTheme.merge(
-                    data: const IconThemeData(size: 22, color: PindTheme.ink),
+                    data: const IconThemeData(size: 22, color: PindColors.ink),
                     child: child,
                   ),
                 ),
@@ -833,7 +833,7 @@ class PlacePin extends StatelessWidget {
     decoration: BoxDecoration(
       color: Colors.white,
       shape: BoxShape.circle,
-      border: Border.all(color: PindTheme.purple, width: size * 5 / 112),
+      border: Border.all(color: PindColors.purple, width: size * 5 / 112),
     ),
     child: Text(
       markerEmoji(place),
@@ -861,7 +861,7 @@ Future<BitmapDescriptor> _emojiMarker(String emoji) async {
   canvas.drawCircle(
     const Offset(56, 56),
     54,
-    Paint()..color = PindTheme.purple,
+    Paint()..color = PindColors.purple,
   );
   canvas.drawCircle(const Offset(56, 56), 49, Paint()..color = Colors.white);
   // Font size keeps the Figma 531:19871 emoji-to-pin ratio (29px glyph in a 57px pin).
