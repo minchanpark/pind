@@ -66,6 +66,7 @@ class _MainShellState extends State<MainShell> {
   void initState() {
     super.initState();
     navigation.model.addListener(changed);
+    widget.controller?.model.addListener(walkStarted);
     discover.load();
     widget.pendingLink?.addListener(takeLink);
     // A link that arrived during login/onboarding.
@@ -74,9 +75,15 @@ class _MainShellState extends State<MainShell> {
 
   void changed() => setState(() {});
 
+  /// 길찾기 from any tab shows the route on the map.
+  void walkStarted() {
+    if (widget.controller?.model.walkingTo != null) select(PindTab.map);
+  }
+
   @override
   void dispose() {
     navigation.model.removeListener(changed);
+    widget.controller?.model.removeListener(walkStarted);
     widget.pendingLink?.removeListener(takeLink);
     navigation.dispose();
     profile.dispose();

@@ -11,8 +11,24 @@ import '../profile/profile_screen.dart';
 import '../profile/saved_places_page.dart';
 import '../theme.dart';
 
-/// Figma 617:23469 지도 검색. Answers in place, like a chat: the question,
+/// One question and its answer on the search page.
+class AgentTurn {
+  AgentTurn(this.question, this.result);
+  final String question;
+
+  final Future<AgentAnswer> result;
+  AgentAnswer? answer;
+  String? failure;
+
+  /// Progress lines shown so far.
+  int steps = 1;
+  bool open = true;
+  bool get done => answer != null || failure != null;
+}
+
+/// Figma 617:23469 지도 검색. Answers in place, like a chat: each question,
 /// progress lines while [search] runs, then a fold-down list of the places.
+/// Earlier questions stay above the newest until the page closes.
 class AgentSearchPage extends StatefulWidget {
   const AgentSearchPage({
     super.key,
@@ -64,17 +80,10 @@ class _AgentSearchPageState extends State<AgentSearchPage> {
   final query = TextEditingController();
   final scroll = ScrollController();
 
-  /// The question being answered; null before the first one.
-  String? asked;
-  int shownSteps = 0;
-  AgentAnswer? answer;
-  String? failure;
-  bool open = true;
+  final turns = <AgentTurn>[];
 
-  /// Bookmark changes made here, by place id.
-  final saved = <int, bool>{};
-
-  bool get busy => asked != null && answer == null && failure == null;
+  /// One question at a time.
+  bool get busy => turns.isNotEmpty && !turns.last.done;
 
   List<PreferenceCriterion> get criteria =>
       widget.preferences?.priorities.length == 3
@@ -92,42 +101,50 @@ class _AgentSearchPageState extends State<AgentSearchPage> {
     super.dispose();
   }
 
-  /// One question at a time; a new one replaces the last answer.
+  /// Adds a turn below the earlier ones, folding their lists away.
   Future<void> submit(String text) async {
     final q = text.trim();
     if (q.isEmpty || busy) return;
     FocusScope.of(context).unfocus();
     query.clear();
+    final turn = AgentTurn(q, widget.search(q));
     setState(() {
-      asked = q;
-      shownSteps = 1;
-      answer = null;
-      failure = null;
-      open = true;
-      saved.clear();
+      for (final t in turns) {
+        t.open = false;
+      }
+      turns.add(turn);
     });
     follow();
     Future<void> narrate() async {
-      for (var i = 2; i <= AgentSearchPage.steps.length; i++) {
+      while (turn.steps < AgentSearchPage.steps.length) {
         await Future<void>.delayed(widget.stepDelay);
+        turn.steps++;
         if (!mounted) return;
-        setState(() => shownSteps = i);
+        setState(() {});
         follow();
       }
     }
 
-    try {
-      final done = await Future.wait<Object?>([widget.search(q), narrate()]);
-      if (mounted) setState(() => answer = done.first as AgentAnswer);
-    } catch (error) {
-      if (!mounted) return;
-      setState(
-        () => failure = error is PlaceFailure
-            ? error.message
-            : '검색하지 못했어요. 잠시 후 다시 시도해 주세요.',
-      );
-    }
+    await Future.wait([settle(turn), narrate()]);
+    if (!mounted) return;
+    // Every line shows before the answer does.
+    setState(() {});
     follow();
+  }
+
+  /// Records [turn]'s answer; shown once its last line is.
+  Future<void> settle(AgentTurn turn) async {
+    try {
+      turn.answer = await turn.result;
+    } catch (error) {
+      turn.failure = error is PlaceFailure
+          ? error.message
+          : '검색하지 못했어요. 잠시 후 다시 시도해 주세요.';
+    }
+    if (mounted && turn.steps == AgentSearchPage.steps.length) {
+      setState(() {});
+      follow();
+    }
   }
 
   /// Keeps the newest chat line in view.
@@ -140,14 +157,34 @@ class _AgentSearchPageState extends State<AgentSearchPage> {
     );
   });
 
+  /// Marks [id] saved or not in every turn that lists it.
+  void markSaved(int id, bool saved) => setState(() {
+    for (final t in turns) {
+      if (t.answer case final a?) {
+        t.answer = (
+          notice: a.notice,
+          places: [
+            for (final p in a.places)
+              p.place.id == id && p.saved != saved
+                  ? p.copyWith(
+                      saved: saved,
+                      saveCount: p.saveCount + (saved ? 1 : -1),
+                    )
+                  : p,
+          ],
+        );
+      }
+    }
+  });
+
   Future<void> toggleSave(RankedPlace p) async {
-    final id = p.place.id!, save = !(saved[id] ?? p.saved);
-    setState(() => saved[id] = save);
+    final id = p.place.id!, save = !p.saved;
+    markSaved(id, save);
     try {
       await widget.onSetSaved!(id, save);
     } catch (_) {
       if (!mounted) return;
-      setState(() => saved[id] = !save);
+      markSaved(id, !save);
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('저장 상태를 바꾸지 못했어요. 다시 시도해 주세요.')),
       );
@@ -229,7 +266,7 @@ class _AgentSearchPageState extends State<AgentSearchPage> {
                     return suggestion(emoji, text);
                   },
                 ),
-                if (asked case final q?) ...chat(q),
+                for (final t in turns) ...chat(t),
               ],
             ),
           ),
@@ -242,7 +279,7 @@ class _AgentSearchPageState extends State<AgentSearchPage> {
     ),
   );
 
-  List<Widget> chat(String q) => [
+  List<Widget> chat(AgentTurn t) => [
     const SizedBox(height: 24),
     Align(
       alignment: Alignment.centerRight,
@@ -254,20 +291,28 @@ class _AgentSearchPageState extends State<AgentSearchPage> {
           borderRadius: BorderRadius.circular(18),
         ),
         child: Text(
-          q,
+          t.question,
           style: const TextStyle(fontSize: 13, color: Colors.white),
         ),
       ),
     ),
     const SizedBox(height: 12),
-    for (var i = 0; i < shownSteps; i++)
-      agentLine(AgentSearchPage.steps[i], working: busy && i == shownSteps - 1),
-    if (failure case final message?)
-      agentLine(message, icon: Icons.error_outline),
-    if (answer case final a?) ...[
-      if (a.notice case final notice?) agentLine(notice),
-      const SizedBox(height: 4),
-      results(a.places),
+    for (var i = 0; i < t.steps; i++)
+      agentLine(
+        AgentSearchPage.steps[i],
+        working:
+            i == t.steps - 1 &&
+            (!t.done || t.steps < AgentSearchPage.steps.length),
+      ),
+    // The answer waits for the last line.
+    if (t.steps == AgentSearchPage.steps.length) ...[
+      if (t.failure case final message?)
+        agentLine(message, icon: Icons.error_outline),
+      if (t.answer case final a?) ...[
+        if (a.notice case final notice?) agentLine(notice),
+        const SizedBox(height: 4),
+        results(t, a.places),
+      ],
     ],
   ];
 
@@ -309,15 +354,15 @@ class _AgentSearchPageState extends State<AgentSearchPage> {
   );
 
   /// The fold-down bar and, while open, the place cards under it.
-  Widget results(List<RankedPlace> places) => Column(
+  Widget results(AgentTurn t, List<RankedPlace> places) => Column(
     crossAxisAlignment: CrossAxisAlignment.stretch,
     children: [
       Semantics(
         button: true,
-        expanded: open,
+        expanded: t.open,
         child: GestureDetector(
-          key: const ValueKey('agent-results-toggle'),
-          onTap: () => setState(() => open = !open),
+          key: ValueKey('agent-results-toggle-${turns.indexOf(t)}'),
+          onTap: () => setState(() => t.open = !t.open),
           child: PindGlass(
             radius: 16,
             padding: const EdgeInsets.fromLTRB(16, 12, 12, 12),
@@ -334,7 +379,7 @@ class _AgentSearchPageState extends State<AgentSearchPage> {
                   ),
                 ),
                 AnimatedRotation(
-                  turns: open ? .5 : 0,
+                  turns: t.open ? .5 : 0,
                   duration: const Duration(milliseconds: 200),
                   child: const Icon(
                     Icons.keyboard_arrow_down_rounded,
@@ -349,7 +394,7 @@ class _AgentSearchPageState extends State<AgentSearchPage> {
       AnimatedSize(
         duration: const Duration(milliseconds: 200),
         alignment: Alignment.topCenter,
-        child: !open
+        child: !t.open
             ? const SizedBox(width: double.infinity)
             : Padding(
                 padding: const EdgeInsets.only(top: 12),
@@ -377,7 +422,7 @@ class _AgentSearchPageState extends State<AgentSearchPage> {
       match: tasteMatch(widget.preferences, PlaceContext(averages: p.averages)),
       meters: p.meters,
       criteria: criteria,
-      saved: id == null ? p.saved : saved[id] ?? p.saved,
+      saved: p.saved,
       onTap: widget.onOpen == null
           ? null
           : () => widget.onOpen!(context, p.place),

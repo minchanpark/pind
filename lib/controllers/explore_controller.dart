@@ -18,6 +18,7 @@ class ExploreController {
     this.profile,
     this.nearby,
     this.position = LocationService.position,
+    this.track = LocationService.track,
     this.setLiked,
     this.deletePost,
   });
@@ -28,6 +29,9 @@ class ExploreController {
   /// Category list source; null hides the list.
   final NearbyRanking? nearby;
   final Future<MapViewport?> Function(bool request) position;
+
+  /// Live position for walking directions.
+  final Stream<MapViewport> Function() track;
 
   /// Post likes, shared with the feed.
   final Future<bool> Function(int postId, bool liked)? setLiked;
@@ -48,7 +52,12 @@ class ExploreController {
         profile: profile,
         setLiked: setLiked,
         deletePost: deletePost,
+        directions: walkTo,
       );
+
+  /// 길찾기: the map draws the walk to [place] (the shell shows the map).
+  void walkTo(Place place) => model.update(() => model.walkingTo = place);
+  void endWalk() => model.update(() => model.walkingTo = null);
 
   Future<MapViewport> locate() async {
     model.update(() => model.locating = true);

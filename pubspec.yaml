@@ -80,6 +80,7 @@ flutter:
     - assets/navigation/
     - assets/preview/
     - assets/friends/
+    - assets/share/
   fonts:
     - family: BraahOne
       fonts:

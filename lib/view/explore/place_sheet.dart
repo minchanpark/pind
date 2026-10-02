@@ -833,7 +833,7 @@ class _PlaceSheetState extends State<PlaceSheet> {
               Container(
                 height: 217.32,
                 foregroundDecoration: BoxDecoration(
-                  border: Border.all(color: yellow, width: 3.747),
+                  border: Border.all(color: yellow, width: 5.21),
                   borderRadius: BorderRadius.circular(14.238),
                 ),
                 child: ClipRRect(
@@ -856,7 +856,11 @@ class _PlaceSheetState extends State<PlaceSheet> {
       width: w,
       height: h,
       foregroundDecoration: BoxDecoration(
-        border: Border.all(color: border, width: 2),
+        // As in PostCard: a pair gets 4, three or more 2.
+        border: Border.all(
+          color: border,
+          width: post.photos.length == 2 ? 4 : 2,
+        ),
         borderRadius: BorderRadius.circular(12.086),
       ),
       child: ClipRRect(
@@ -1139,7 +1143,16 @@ class _PlaceSheetState extends State<PlaceSheet> {
               '길찾기',
               'directions',
               15.4546,
-              () => link(directionsUri(place).toString()),
+              () {
+                final walk = controller.directions;
+                if (walk == null) {
+                  link(directionsUri(place).toString());
+                  return;
+                }
+                // Back to the shell, where the map draws the route.
+                Navigator.of(context).popUntil((route) => route.isFirst);
+                walk(place);
+              },
               purple: true,
               key: const ValueKey('detail-directions'),
             ),

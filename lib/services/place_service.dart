@@ -2,6 +2,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../model/nearby_ranking.dart';
 import '../model/places.dart';
+import '../model/walking_route.dart';
 import '../model/place_search_result.dart';
 
 typedef PlacesInvoker = Future<Map<String, dynamic>> Function(
@@ -64,6 +65,18 @@ class PlaceService {
       ],
     );
   }
+
+  /// TMAP walking directions from [from] to [to].
+  Future<WalkingRoute> walkingRoute(MapViewport from, Place to) async =>
+      WalkingRoute.fromJson(
+        await invoke({
+          'action': 'walking_route',
+          'fromLatitude': from.latitude,
+          'fromLongitude': from.longitude,
+          'toLatitude': to.latitude,
+          'toLongitude': to.longitude,
+        }),
+      );
 
   Future<Place> details(Place place) async {
     if (place.isCatalog) {

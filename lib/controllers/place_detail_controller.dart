@@ -23,6 +23,7 @@ class PlaceDetailController {
     this.linkAction,
     this.setLiked,
     this.deletePost,
+    this.directions,
   }) : initialPlace = place,
        model = PlaceDetailModel(place);
 
@@ -40,6 +41,9 @@ class PlaceDetailController {
 
   /// Deletes one of my posts; null hides 삭제.
   final Future<void> Function(int postId)? deletePost;
+
+  /// In-app walking directions; null opens the maps link instead.
+  final void Function(Place place)? directions;
   final _liking = <int>{};
   final PlaceDetailModel model;
   MapViewport? _position;

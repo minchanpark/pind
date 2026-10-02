@@ -1,6 +1,7 @@
 import '../../model/place_search_result.dart';
 
 import 'dart:async';
+import 'dart:math' as math;
 import 'dart:ui' as ui;
 
 import 'package:flutter/material.dart';
@@ -11,6 +12,8 @@ import '../components/pind_glass.dart';
 import '../theme.dart';
 import '../../model/preferences.dart';
 import '../../model/places.dart';
+import '../../model/place_context.dart';
+import '../../model/walking_route.dart';
 import '../../controllers/explore_controller.dart';
 import 'place_sheet.dart';
 import 'agent_search_page.dart';
@@ -51,6 +54,17 @@ class _ExploreScreenState extends State<ExploreScreen> {
   int seenPublishedRevision = 0;
   Set<Marker> markers = {};
   List<Place>? markerPlaces;
+
+  /// 길찾기: the place being walked to, its route and where I am on it.
+  Place? walkTarget;
+  WalkingRoute? route;
+  RouteProgress? progress;
+  Marker? walkMarker;
+  bool rerouting = false;
+  DateTime lastRoute = DateTime(0);
+  int walkGeneration = 0;
+  StreamSubscription<MapViewport>? walking;
+  bool get arrived => (progress?.meters ?? double.infinity) < 20;
   // Patterns also cover public-data categories (요리 주점, 돼지고기 구이/찜, 빵/도넛...).
   static const categories = {
     '전체': '',
@@ -95,6 +109,9 @@ class _ExploreScreenState extends State<ExploreScreen> {
           )
           .catchError((_) {});
     }
+    if (controller!.model.walkingTo != walkTarget) {
+      startWalk(controller!.model.walkingTo);
+    }
     setState(() {});
     if (markerPlaces != controller!.places) {
       markerPlaces = controller!.places;
@@ -129,8 +146,119 @@ class _ExploreScreenState extends State<ExploreScreen> {
     }
   }
 
+  /// Fetches the walk from my position, then follows me along it. A null
+  /// [target] ends guidance.
+  Future<void> startWalk(Place? target) async {
+    final generation = ++walkGeneration;
+    walking?.cancel();
+    walking = null;
+    setState(() {
+      walkTarget = target;
+      route = null;
+      progress = null;
+      walkMarker = null;
+      rerouting = false;
+    });
+    if (target == null) return;
+    final explore = controller!;
+    try {
+      final here = await explore.position(true);
+      if (here == null) {
+        throw const PlaceFailure('현재 위치를 확인하지 못했어요. 위치 권한을 확인해 주세요.');
+      }
+      final found = await explore.repository.walkingRoute(here, target);
+      if (!mounted || generation != walkGeneration) return;
+      setState(() {
+        route = found;
+        progress = found.progress(here);
+        lastRoute = DateTime.now();
+      });
+      fitRoute(found);
+      if (widget.mapsEnabled) {
+        placeMarkerIcon(target).then((icon) {
+          if (!mounted || generation != walkGeneration) return;
+          setState(
+            () => walkMarker = Marker(
+              markerId: const MarkerId('walk-to'),
+              position: LatLng(target.latitude, target.longitude),
+              icon: icon,
+            ),
+          );
+        });
+      }
+      walking = explore.track().listen(moved, onError: (_) {});
+    } catch (error) {
+      if (!mounted || generation != walkGeneration) return;
+      // A failed route must not hold the map: say why, give search back.
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            error is PlaceFailure
+                ? error.message
+                : '도보 경로를 찾지 못했어요. 잠시 후 다시 시도해 주세요.',
+          ),
+        ),
+      );
+      explore.endWalk();
+    }
+  }
+
+  /// Trims the walked part; off the line by 50m asks for a new route, at most
+  /// every 15s.
+  void moved(MapViewport at) {
+    final current = route;
+    if (current == null || !mounted) return;
+    final next = current.progress(at, from: progress?.segment ?? 0);
+    setState(() => progress = next);
+    if (arrived) {
+      walking?.cancel();
+      walking = null;
+    } else if (next.offRoute > 50 &&
+        !rerouting &&
+        DateTime.now().difference(lastRoute) > const Duration(seconds: 15)) {
+      reroute(at);
+    }
+  }
+
+  Future<void> reroute(MapViewport at) async {
+    final generation = walkGeneration, target = walkTarget!;
+    setState(() => rerouting = true);
+    lastRoute = DateTime.now();
+    try {
+      final found = await controller!.repository.walkingRoute(at, target);
+      if (!mounted || generation != walkGeneration) return;
+      setState(() {
+        route = found;
+        progress = found.progress(at);
+      });
+    } catch (_) {
+      // Keep guiding along the old line.
+    } finally {
+      if (mounted && generation == walkGeneration) {
+        setState(() => rerouting = false);
+      }
+    }
+  }
+
+  void fitRoute(WalkingRoute r) {
+    final lats = r.points.map((p) => p.latitude);
+    final lngs = r.points.map((p) => p.longitude);
+    map
+        ?.animateCamera(
+          CameraUpdate.newLatLngBounds(
+            LatLngBounds(
+              southwest: LatLng(lats.reduce(math.min), lngs.reduce(math.min)),
+              northeast: LatLng(lats.reduce(math.max), lngs.reduce(math.max)),
+            ),
+            48,
+          ),
+        )
+        .catchError((_) {});
+  }
+
   @override
   void dispose() {
+    walking?.cancel();
     markerGeneration++;
     controller?.model.removeListener(changed);
     map?.dispose();
@@ -223,6 +351,71 @@ class _ExploreScreenState extends State<ExploreScreen> {
     } catch (_) {
       return controller!.viewport;
     }
+  }
+
+  /// Replaces the search bar while walking: where to, what's left, stop.
+  Widget walkBanner(Place target) {
+    final p = progress, r = route;
+    final String status;
+    if (p == null || r == null) {
+      status = '도보 경로를 찾고 있어요…';
+    } else if (arrived) {
+      status = '도착했어요';
+    } else if (rerouting) {
+      status = '경로를 다시 찾고 있어요…';
+    } else {
+      // TMAP's pace for this route, else ~1.2m/s.
+      final seconds = r.meters > 0
+          ? r.seconds * p.meters / r.meters
+          : p.meters / 1.2;
+      status =
+          '${formatDistance(p.meters)} · 약 ${math.max(1, (seconds / 60).round())}분';
+    }
+    return PindGlass(
+      key: const ValueKey('walk-banner'),
+      radius: 22,
+      padding: const EdgeInsets.fromLTRB(16, 10, 8, 10),
+      child: Row(
+        spacing: 10,
+        children: [
+          const ExcludeSemantics(
+            child: Text('🚶', style: TextStyle(fontSize: 22)),
+          ),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              spacing: 2,
+              children: [
+                Text(
+                  '${target.name}까지 도보',
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                    fontSize: 15,
+                    fontWeight: FontWeight.w700,
+                    color: PindTheme.ink,
+                  ),
+                ),
+                Text(
+                  status,
+                  style: TextStyle(fontSize: 12, color: PindTheme.muted),
+                ),
+              ],
+            ),
+          ),
+          TextButton(
+            onPressed: controller!.endWalk,
+            child: Text(
+              arrived ? '닫기' : '안내 종료',
+              style: const TextStyle(
+                fontWeight: FontWeight.w700,
+                color: PindTheme.purple,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
   }
 
   // Figma 524:28096. Keep the exported icons at their original dimensions.
@@ -342,7 +535,25 @@ class _ExploreScreenState extends State<ExploreScreen> {
               zoom: 13,
             ),
             onMapCreated: (value) => map = value,
-            markers: markers,
+            // While walking: only the destination, the line left to walk and
+            // my own dot.
+            markers: walkTarget == null ? markers : {?walkMarker},
+            polylines: {
+              if (progress case final p? when walkTarget != null)
+                Polyline(
+                  polylineId: const PolylineId('walk'),
+                  points: [
+                    for (final v in p.remaining)
+                      LatLng(v.latitude, v.longitude),
+                  ],
+                  color: PindTheme.purple,
+                  width: 6,
+                  jointType: JointType.round,
+                  startCap: Cap.roundCap,
+                  endCap: Cap.roundCap,
+                ),
+            },
+            myLocationEnabled: walkTarget != null,
             myLocationButtonEnabled: false,
             zoomControlsEnabled: false,
             mapToolbarEnabled: false,
@@ -373,7 +584,10 @@ class _ExploreScreenState extends State<ExploreScreen> {
             padding: const EdgeInsets.fromLTRB(16.5333, 12.4001, 16.5333, 0),
             child: Column(
               children: [
-                searchBar(),
+                if (walkTarget case final target?)
+                  walkBanner(target)
+                else
+                  searchBar(),
                 if (controller?.notice != null)
                   Material(
                     color: Colors.white,

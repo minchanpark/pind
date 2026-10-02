@@ -4,6 +4,8 @@ import { GoogleGenAI } from 'npm:@google/genai@2.24.0';
 import { catalogRequest, CatalogError } from './catalog.ts';
 import { INSIGHT_SCHEMA, INSIGHT_SYSTEM, INSIGHT_MODELS, insightPrompt, parseInsight, withFallback } from './insights.ts';
 import { AGENT_SCHEMA, AGENT_SYSTEM, type AgentPlan, fallbackPlan, parseAgentPlan } from './agent.ts';
+import { walkingRoute } from './walking.ts';
+import { geocodeArea } from './area.ts';
 
 const headers = {
   'Access-Control-Allow-Origin':'*',
@@ -102,10 +104,14 @@ Deno.serve(async request => {
     let body;
     try { body = JSON.parse(raw); } catch { throw new CatalogError(400,'INVALID_JSON','잘못된 요청입니다.'); }
     if (!body || typeof body !== 'object' || Array.isArray(body)) throw new CatalogError(400,'INVALID_JSON','잘못된 요청입니다.');
+    if (body.action === 'walking_route') return json(await walkingRoute(body,Deno.env.get('TMAP_APP_KEY')));
     if (body.action === 'agent_search') {
       const q = typeof body.query === 'string' ? body.query.trim() : '';
       if (q.length < 2 || q.length > 120) throw new CatalogError(400,'INVALID_QUERY','검색어를 2~120자로 입력해 주세요.');
-      body = {...body,...await agentPlan(q)};
+      const plan = await agentPlan(q);
+      // A named area searches around it instead of the map center.
+      const area = plan.area ? await geocodeArea(plan.area,Deno.env.get('GOOGLE_PLACES_API_KEY')) : null;
+      body = {...body,...plan,...(area ?? {})};
     }
     return json(await catalogRequest(body,async (args,fn) => {
       const {data,error} = await client.rpc(fn ?? 'get_catalog_places',args);

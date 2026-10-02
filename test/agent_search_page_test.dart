@@ -140,13 +140,13 @@ void main() {
 
     // The bar folds the list away and back.
     await tester.ensureVisible(
-      find.byKey(const ValueKey('agent-results-toggle')),
+      find.byKey(const ValueKey('agent-results-toggle-0')),
     );
-    await tester.tap(find.byKey(const ValueKey('agent-results-toggle')));
+    await tester.tap(find.byKey(const ValueKey('agent-results-toggle-0')));
     await tester.pumpAndSettle();
     expect(find.byType(SavedPlaceRow), findsNothing);
     expect(find.text('추천 장소 2곳'), findsOneWidget);
-    await tester.tap(find.byKey(const ValueKey('agent-results-toggle')));
+    await tester.tap(find.byKey(const ValueKey('agent-results-toggle-0')));
     await tester.pumpAndSettle();
     expect(find.byType(SavedPlaceRow), findsNWidgets(2));
     expect(tester.takeException(), isNull);
@@ -180,12 +180,52 @@ void main() {
     await tester.testTextInput.receiveAction(TextInputAction.search);
     await tester.pump();
     expect(asked, ['매운 국밥', '성수 카페']);
-    // A new question replaces the last answer.
-    expect(find.text('추천 장소 0곳'), findsNothing);
+    // The earlier answer stays above the new question.
+    expect(find.text('매운 국밥', skipOffstage: false), findsOneWidget);
+    expect(find.text('추천 장소 0곳', skipOffstage: false), findsOneWidget);
     answer.completeError(const PlaceFailure('검색어를 2~120자로 입력해 주세요.'));
     await tester.pump(step * 2);
     await tester.pumpAndSettle();
     expect(find.text('검색어를 2~120자로 입력해 주세요.'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('earlier answers stay until the page closes', (tester) async {
+    await open(tester);
+    await tester.tap(find.text('혼술 하기 좋은 식당'));
+    await tester.pump();
+    answer.complete((notice: null, places: [ranked(1, '화담면옥')]));
+    await tester.pump(step * 2);
+    await tester.pumpAndSettle();
+    // A second question folds the first list away but keeps it.
+    answer = Completer();
+    await tester.enterText(find.byType(TextField), '성수 카페');
+    await tester.testTextInput.receiveAction(TextInputAction.search);
+    await tester.pump();
+    answer.complete((notice: null, places: [ranked(2, '스타벅스 성수')]));
+    await tester.pump(step * 2);
+    await tester.pumpAndSettle();
+    expect(find.text('스타벅스 성수'), findsOneWidget);
+    expect(find.text('추천 장소 1곳', skipOffstage: false), findsNWidgets(2));
+    expect(find.text('화담면옥', skipOffstage: false), findsNothing);
+    final first = find.byKey(
+      const ValueKey('agent-results-toggle-0'),
+      skipOffstage: false,
+    );
+    await tester.ensureVisible(first);
+    await tester.pumpAndSettle();
+    await tester.tap(first);
+    await tester.pumpAndSettle();
+    expect(find.text('화담면옥', skipOffstage: false), findsOneWidget);
+
+    // Closing starts the next visit fresh.
+    await tester.tap(find.bySemanticsLabel('닫기'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('open'));
+    await tester.pumpAndSettle();
+    expect(find.text('성수 카페', skipOffstage: false), findsNothing);
+    expect(find.text('혼술 하기 좋은 식당'), findsOneWidget); // the suggestion only
+    expect(find.textContaining('추천 장소', skipOffstage: false), findsNothing);
     expect(tester.takeException(), isNull);
   });
 

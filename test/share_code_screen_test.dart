@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:pind_flutter/controllers/friends_controller.dart';
 import 'package:pind_flutter/model/profile_link.dart';
@@ -47,16 +48,66 @@ void main() {
     expect(find.text('@minchan'), findsOneWidget);
     expect(find.text('pind-profile-links.vercel.app/@minchan'), findsOneWidget);
     expect(find.byType(QrImageView), findsOneWidget);
-    expect(find.byKey(const ValueKey('https://pind-profile-links.vercel.app/@minchan')), findsOne);
+    expect(
+      find.byKey(
+        const ValueKey('https://pind-profile-links.vercel.app/@minchan'),
+      ),
+      findsOne,
+    );
     expect(find.bySemanticsLabel('내 Pind QR 코드'), findsOneWidget);
     semantics.dispose();
+  });
+
+  testWidgets('KakaoTalk and Instagram show their own logos', (tester) async {
+    await pump(tester, minchan);
+    for (final (label, name) in [
+      ('카카오톡', 'kakaotalk_icon.svg'),
+      ('인스타', 'insta_icon.svg'),
+    ]) {
+      final logo = find.descendant(
+        of: find.bySemanticsLabel(label),
+        matching: find.byWidgetPredicate(
+          (w) =>
+              w is SvgPicture &&
+              (w.bytesLoader as SvgAssetLoader).assetName ==
+                  'assets/share/$name',
+        ),
+      );
+      expect(logo, findsOneWidget, reason: name);
+      expect(tester.getSize(logo).height, 38);
+    }
+    // flutter_svg silently draws nothing for Figma's image-in-<pattern>
+    // fills; the logos must actually paint.
+    for (final name in ['kakaotalk_icon.svg', 'insta_icon.svg']) {
+      final drawn = await tester.runAsync(() async {
+        final info = await vg.loadPicture(
+          SvgAssetLoader('assets/share/$name'),
+          null,
+        );
+        final image = await info.picture.toImage(
+          info.size.width.ceil(),
+          info.size.height.ceil(),
+        );
+        final rgba = (await image.toByteData())!;
+        var opaque = 0;
+        for (var i = 3; i < rgba.lengthInBytes; i += 4) {
+          if (rgba.getUint8(i) > 0) opaque++;
+        }
+        return opaque / (image.width * image.height);
+      });
+      expect(drawn, greaterThan(.9), reason: name);
+    }
+    expect(tester.takeException(), isNull);
   });
 
   testWidgets('no handle links by id', (tester) async {
     await pump(tester, const UserProfile(id: id, displayName: '민찬'));
     expect(find.textContaining('@'), findsNothing);
     expect(find.text('pind-profile-links.vercel.app/u/$id'), findsOneWidget);
-    expect(find.byKey(const ValueKey('https://pind-profile-links.vercel.app/u/$id')), findsOne);
+    expect(
+      find.byKey(const ValueKey('https://pind-profile-links.vercel.app/u/$id')),
+      findsOne,
+    );
   });
 
   testWidgets('no profile offers a retry', (tester) async {

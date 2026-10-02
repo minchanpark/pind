@@ -3,6 +3,7 @@ import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import 'package:qr_flutter/qr_flutter.dart';
 
 import '../../controllers/friends_controller.dart';
@@ -131,24 +132,34 @@ class _ShareCodeScreenState extends State<ShareCodeScreen> {
           children: [
             tile(
               '카카오톡',
-              const Color(0xFFFEE500),
-              Icons.chat_bubble,
-              const Color(0xFF3A1D1D),
+              SvgPicture.asset(
+                'assets/share/kakaotalk_icon.svg',
+                width: 38,
+                height: 38,
+              ),
               (at) =>
                   widget.shares.kakao(p, FriendsController.inviteFor(p), at),
             ),
             tile(
               '인스타',
-              const Color(0xFFE4376B),
-              Icons.camera_alt_outlined,
-              Colors.white,
+              SvgPicture.asset(
+                'assets/share/insta_icon.svg',
+                width: 38,
+                height: 38,
+              ),
               (at) => instagram(link, at),
             ),
             tile(
               '링크 복사',
-              const Color(0xFFF1F2F6),
-              Icons.link,
-              PindTheme.ink,
+              Container(
+                width: 38,
+                height: 38,
+                decoration: const BoxDecoration(
+                  color: Color(0xFFF1F2F6),
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(Icons.link, size: 18, color: PindTheme.ink),
+              ),
               (_) => copy(link),
             ),
           ],
@@ -328,51 +339,39 @@ class _ShareCodeScreenState extends State<ShareCodeScreen> {
   );
 
   /// A share target; [onTap] gets the tile's rect for the iPad popover.
-  Widget tile(
-    String label,
-    Color circle,
-    IconData icon,
-    Color iconColor,
-    void Function(Rect at) onTap,
-  ) => Expanded(
-    child: Semantics(
-      button: true,
-      label: label,
-      child: PindGlass(
-        radius: 16,
-        child: Builder(
-          builder: (ctx) => InkWell(
-            onTap: () => onTap(origin(ctx)),
-            child: ExcludeSemantics(
-              child: Padding(
-                padding: const EdgeInsets.only(top: 14, bottom: 12),
-                child: Column(
-                  spacing: 7,
-                  children: [
-                    Container(
-                      width: 38,
-                      height: 38,
-                      decoration: BoxDecoration(
-                        color: circle,
-                        shape: BoxShape.circle,
-                      ),
-                      child: Icon(icon, size: 18, color: iconColor),
+  /// [icon] is 38×38: the app's own logo, or a tinted circle.
+  Widget tile(String label, Widget icon, void Function(Rect at) onTap) =>
+      Expanded(
+        child: Semantics(
+          button: true,
+          label: label,
+          child: PindGlass(
+            radius: 16,
+            child: Builder(
+              builder: (ctx) => InkWell(
+                onTap: () => onTap(origin(ctx)),
+                child: ExcludeSemantics(
+                  child: Padding(
+                    padding: const EdgeInsets.only(top: 14, bottom: 12),
+                    child: Column(
+                      spacing: 7,
+                      children: [
+                        icon,
+                        Text(
+                          label,
+                          style: const TextStyle(
+                            fontSize: 11,
+                            fontWeight: FontWeight.w500,
+                            color: Color(0xFF4A4A52),
+                          ),
+                        ),
+                      ],
                     ),
-                    Text(
-                      label,
-                      style: const TextStyle(
-                        fontSize: 11,
-                        fontWeight: FontWeight.w500,
-                        color: Color(0xFF4A4A52),
-                      ),
-                    ),
-                  ],
+                  ),
                 ),
               ),
             ),
           ),
         ),
-      ),
-    ),
-  );
+      );
 }

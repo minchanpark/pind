@@ -137,7 +137,8 @@ class PostCard extends StatelessWidget {
           h,
           radius: 12,
           border: border,
-          width: 2,
+          // Border by photo count: 1 → 5.21, 2 → 4, 3+ → 2.
+          width: count == 2 ? 4 : 2,
           overlay: overlay,
         ),
       ),
@@ -146,7 +147,7 @@ class PostCard extends StatelessWidget {
       case 0:
         return const SizedBox(height: 24);
       case 1:
-        return frame(0, 214, 262, radius: 17, border: yellow, width: 4.5);
+        return frame(0, 214, 262, radius: 17, border: yellow, width: 5.21);
       case 2:
         // A fanned pair in the trio's style: the first photo in front.
         return SizedBox(

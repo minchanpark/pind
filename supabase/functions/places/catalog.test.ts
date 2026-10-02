@@ -90,7 +90,12 @@ test('agent search runs its own RPC with the plan and explains it',async()=>{
   const calls:[unknown,unknown][]=[];
   const result=await catalogRequest({action:'agent_search',terms:['혼술','포차'],area:'성수동',label:'혼술 · 포차',latitude:37.54,longitude:127.05},
     async(args,fn)=>{calls.push([fn,args]);return {places:[{internalId:1,pindPostCount:0},{internalId:2,pindPostCount:3}]};},async ps=>ps,true);
-  assert.deepEqual(calls,[['agent_search_places',{p_terms:['혼술','포차'],p_area:'성수동',p_lat:37.54,p_lng:127.05}]]);
+  assert.deepEqual(calls,[['agent_search_places',{p_terms:['혼술','포차'],p_lat:37.54,p_lng:127.05}]]);
+  // A geocoded area arrives as a center and radius.
+  calls.length=0;
+  await catalogRequest({action:'agent_search',terms:['카페'],label:'성수동 · 카페',latitude:37.5407,longitude:127.0566,radiusMeters:1600},
+    async(args,fn)=>{calls.push([fn,args]);return {places:[]};},async ps=>ps,true);
+  assert.deepEqual(calls,[['agent_search_places',{p_terms:['카페'],p_lat:37.5407,p_lng:127.0566,p_radius:1600}]]);
   assert.deepEqual((result.places as Record<string,unknown>[]).map(p=>p.internalId),[1,2]); // unposted kept
   assert.equal(result.notice,'혼술 · 포차 기준으로 찾았어요.');
   await assert.rejects(()=>catalogRequest({action:'agent_search',terms:[]},async()=>({}),async ps=>ps,true),/이해하지/);

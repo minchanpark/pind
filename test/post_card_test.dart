@@ -120,6 +120,25 @@ void main() {
     expect(three.where((r) => r.size == const Size(109, 165)), hasLength(1));
   });
 
+  testWidgets('border is 5.21 for one photo, 4 for two, 2 for three', (
+    tester,
+  ) async {
+    Future<Set<double>> widths(int count) async {
+      await frames(tester, count);
+      return {
+        for (final e in find.byType(Container).evaluate())
+          if ((e.widget as Container).foregroundDecoration case BoxDecoration(
+            border: final Border b,
+          ))
+            b.top.width,
+      };
+    }
+
+    expect(await widths(1), {5.21});
+    expect(await widths(2), {4});
+    expect(await widths(3), {2});
+  });
+
   testWidgets('tapping a photo opens that photo full screen', (tester) async {
     await frames(tester, 4);
     // The +1 card: its centered count must not swallow the tap.

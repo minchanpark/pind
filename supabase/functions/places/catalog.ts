@@ -14,13 +14,15 @@ export async function catalogRequest(
   const args: Payload = {};
   let fn = 'get_catalog_places';
   if (body.action === 'agent_search') {
-    // index.ts fills terms/area from the sentence before calling us.
+    // index.ts fills terms from the sentence, and center/radius from its area.
     const terms = Array.isArray(body.terms) ? (body.terms as unknown[]).filter(t => typeof t === 'string' && t.trim()) : [];
     if (!terms.length) throw new CatalogError(400,'INVALID_QUERY','검색어를 이해하지 못했어요. 다르게 말해 주세요.');
     const lat = body.latitude, lng = body.longitude;
     const near = typeof lat === 'number' && typeof lng === 'number' && lat >= 33 && lat <= 38.8 && lng >= 124.5 && lng <= 132;
-    Object.assign(args,{p_terms:terms,p_area:typeof body.area === 'string' ? body.area : null,
-      p_lat:near ? lat : null,p_lng:near ? lng : null});
+    const radius = body.radiusMeters;
+    const circle = near && typeof radius === 'number' && Number.isInteger(radius) && radius >= 100 && radius <= 50000;
+    Object.assign(args,{p_terms:terms,p_lat:near ? lat : null,p_lng:near ? lng : null,
+      ...(circle ? {p_radius:radius} : {})});
     fn = 'agent_search_places';
   } else if (body.action === 'nearby') {
     const lat = body.latitude, lng = body.longitude, radius = body.radiusMeters;

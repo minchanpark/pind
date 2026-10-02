@@ -10,6 +10,9 @@ class ExploreModel extends ChangeNotifier {
   String? notice;
   bool googleSearchEnabled = false;
 
+  /// Where 길찾기 is walking me; null when not guiding.
+  Place? walkingTo;
+
   void update(VoidCallback change) {
     change();
     notifyListeners();

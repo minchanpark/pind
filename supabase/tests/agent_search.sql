@@ -47,9 +47,15 @@ do $$ declare q qa; r jsonb; ids bigint[]; begin select * into q from qa;
  -- Equal hits: taste breaks the tie (b 95 > a 50).
  r:=public.agent_search_places(array['좋아요'],null,null,null)->'places';
  assert (select array_agg((e->>'internalId')::bigint) from jsonb_array_elements(r) e)=array[q.b,q.a],'taste order on a tie';
- -- Area narrows to 연남.
- r:=public.agent_search_places(array['이자카야','포차'],'연남동',37.5440,127.0550)->'places';
- assert (select array_agg((e->>'internalId')::bigint) from jsonb_array_elements(r) e)=array[q.c],'area filter';
+ -- An area is a circle around its geocoded point: 연남 (c) only, whatever
+ -- the address says; the old address match is gone (c's address has 연남동,
+ -- a/b's road addresses never name 성수동).
+ r:=public.agent_search_places(array['이자카야','포차'],null,37.5620,126.9250,1000)->'places';
+ assert (select array_agg((e->>'internalId')::bigint) from jsonb_array_elements(r) e)=array[q.c],'radius filter';
+ r:=public.agent_search_places(array['포차'],'성수동',37.5440,127.0550,1000)->'places';
+ assert (select array_agg((e->>'internalId')::bigint) from jsonb_array_elements(r) e)=array[q.a],'p_area ignored, radius used';
+ begin perform public.agent_search_places(array['포차'],null,null,null,1000); raise exception 'radius without center accepted';
+ exception when raise_exception then if sqlerrm<>'Invalid radius' then raise; end if; end;
  -- Bad input.
  begin perform public.agent_search_places(array[]::text[]); raise exception 'empty accepted';
  exception when raise_exception then null; end;

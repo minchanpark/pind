@@ -60,6 +60,14 @@ class LocationService {
     return viewport;
   }
 
+  /// Live position while walking a route; permission is already granted.
+  static Stream<MapViewport> track() => Geolocator.getPositionStream(
+    locationSettings: const LocationSettings(
+      accuracy: LocationAccuracy.bestForNavigation,
+      distanceFilter: 3,
+    ),
+  ).map((p) => MapViewport(p.latitude, p.longitude));
+
   static double distance(MapViewport position, Place place) =>
       Geolocator.distanceBetween(
         position.latitude,
