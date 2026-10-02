@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 
 import '../../model/preferences.dart';
 import '../../model/profile_model.dart';
+import '../explore/post_photo_viewer.dart';
 import '../profile/profile_screen.dart';
 import '../theme.dart';
 import 'pind_glass.dart';
@@ -87,7 +88,7 @@ class PostCard extends StatelessWidget {
           children: [
             Padding(
               padding: const EdgeInsets.only(top: 23, bottom: 19),
-              child: photos(post.photos),
+              child: photos(post.photos.length),
             ),
             Positioned(
               // A lone upright photo would only graze the pill; sink it about
@@ -117,9 +118,9 @@ class PostCard extends StatelessWidget {
     );
   }
 
-  Widget photos(List<String> urls) {
+  Widget photos(int count) {
     Widget tilted(
-      String url,
+      int index,
       Offset at,
       double degrees, {
       double w = 109,
@@ -131,7 +132,7 @@ class PostCard extends StatelessWidget {
       child: Transform.rotate(
         angle: degrees * math.pi / 180,
         child: frame(
-          url,
+          index,
           w,
           h,
           radius: 12,
@@ -141,11 +142,11 @@ class PostCard extends StatelessWidget {
         ),
       ),
     );
-    switch (urls.length) {
+    switch (count) {
       case 0:
         return const SizedBox(height: 24);
       case 1:
-        return frame(urls[0], 214, 262, radius: 17, border: yellow, width: 4.5);
+        return frame(0, 214, 262, radius: 17, border: yellow, width: 4.5);
       case 2:
         // A fanned pair in the trio's style: the first photo in front.
         return SizedBox(
@@ -155,9 +156,9 @@ class PostCard extends StatelessWidget {
             clipBehavior: Clip.none,
             alignment: Alignment.center,
             children: [
-              tilted(urls[1], const Offset(52, -4), 7, w: 126, h: 180),
+              tilted(1, const Offset(52, -4), 7, w: 126, h: 180),
               tilted(
-                urls[0],
+                0,
                 const Offset(-52, 2),
                 -5,
                 w: 126,
@@ -170,7 +171,7 @@ class PostCard extends StatelessWidget {
       default:
         // Card-center offsets from the upright center card, Figma 599:23885.
         const left = Offset(-92.8, -6.6), right = Offset(95.1, -8.4);
-        final more = urls.length - 3;
+        final more = count - 3;
         return SizedBox(
           width: 318,
           height: 165,
@@ -179,32 +180,35 @@ class PostCard extends StatelessWidget {
             alignment: Alignment.center,
             children: [
               tilted(
-                urls[2],
+                2,
                 right,
                 6.51,
                 overlay: more > 0
                     ? const ColoredBox(color: Color.fromRGBO(0, 0, 0, .2))
                     : null,
               ),
-              tilted(urls[1], left, -8.21),
+              tilted(1, left, -8.21),
               frame(
-                urls[0],
+                0,
                 109,
                 165,
                 radius: 12,
                 border: PindTheme.purple,
                 width: 2,
               ),
-              // Upright, above the tilted card, as in the design.
+              // Upright, above the tilted card, as in the design; taps fall
+              // through to the card.
               if (more > 0)
                 Transform.translate(
                   offset: right,
-                  child: Text(
-                    '+ $more',
-                    style: const TextStyle(
-                      fontSize: 20,
-                      fontWeight: FontWeight.w500,
-                      color: Colors.white,
+                  child: IgnorePointer(
+                    child: Text(
+                      '+ $more',
+                      style: const TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.w500,
+                        color: Colors.white,
+                      ),
                     ),
                   ),
                 ),
@@ -214,24 +218,46 @@ class PostCard extends StatelessWidget {
     }
   }
 
+  /// Photo [index] of the post; a tap opens it full screen, as on the place
+  /// detail page.
   Widget frame(
-    String url,
+    int index,
     double w,
     double h, {
     required double radius,
     required Color border,
     required double width,
     Widget? overlay,
-  }) => Container(
-    width: w,
-    height: h,
-    clipBehavior: Clip.antiAlias,
-    decoration: BoxDecoration(borderRadius: BorderRadius.circular(radius)),
-    foregroundDecoration: BoxDecoration(
-      borderRadius: BorderRadius.circular(radius),
-      border: Border.all(color: border, width: width),
+  }) => Builder(
+    builder: (context) => Semantics(
+      button: true,
+      label: '게시물 사진 ${index + 1} 크게 보기',
+      child: GestureDetector(
+        key: ValueKey('post-photo-${post.id}-$index'),
+        onTap: () => Navigator.of(context).push(
+          MaterialPageRoute<void>(
+            builder: (_) =>
+                PostPhotoViewer(photos: post.photos, initial: index),
+          ),
+        ),
+        child: Container(
+          width: w,
+          height: h,
+          clipBehavior: Clip.antiAlias,
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(radius),
+          ),
+          foregroundDecoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(radius),
+            border: Border.all(color: border, width: width),
+          ),
+          child: Stack(
+            fit: StackFit.expand,
+            children: [placeImage(post.photos[index]), ?overlay],
+          ),
+        ),
+      ),
     ),
-    child: Stack(fit: StackFit.expand, children: [placeImage(url), ?overlay]),
   );
 
   Widget chip(PreferenceCriterion c, int value) {

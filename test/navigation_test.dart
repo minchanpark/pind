@@ -161,13 +161,13 @@ void main() {
       final mapState = tester.state(find.byType(ExploreScreen));
       await mapSearch(tester, '서울 카페');
       await tester.pumpAndSettle();
+      await tester.tap(find.bySemanticsLabel('닫기'));
+      await tester.pumpAndSettle();
       for (final name in ['discover', 'profile', 'map', 'map']) {
         await tester.tap(find.byKey(ValueKey('nav-$name')));
         await tester.pumpAndSettle();
       }
       expect(tester.state(find.byType(ExploreScreen)), same(mapState));
-      // The search button still shows the last query.
-      expect(find.text('서울 카페'), findsOneWidget);
       expect(calls, ['posted', 'agent_search']);
     },
   );

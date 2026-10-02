@@ -346,7 +346,7 @@ class _NearbyRankingSheetState extends State<NearbyRankingSheet> {
                   Text(
                     [
                       if (p.place.category.isNotEmpty) p.place.category,
-                      formatDistance(p.meters),
+                      if (p.meters case final m?) formatDistance(m),
                       '리뷰 ${p.reviewCount}',
                     ].join(' · '),
                     maxLines: 1,

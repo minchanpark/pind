@@ -6,6 +6,7 @@ import '../../model/post_model.dart';
 import '../../model/places.dart';
 import '../../model/preferences.dart';
 import '../components/pind_glass.dart';
+import '../explore/explore_screen.dart';
 import '../theme.dart';
 import 'post_place_picker.dart';
 
@@ -14,18 +15,6 @@ class PostComposer extends StatefulWidget {
   final PostController controller;
   @override
   State<PostComposer> createState() => _PostComposerState();
-}
-
-String placeEmoji(String? category) {
-  final value = category ?? '';
-  if (value.contains('고기') || value.contains('갈비') || value.contains('구이')) {
-    return '🥩';
-  }
-  if (value.contains('카페') || value.contains('커피')) return '☕';
-  if (value.contains('치킨')) return '🍗';
-  if (value.contains('피자')) return '🍕';
-  if (value.contains('일식') || value.contains('초밥')) return '🍣';
-  return '🍽️';
 }
 
 class _PostComposerState extends State<PostComposer> {
@@ -480,7 +469,7 @@ class _PostComposerState extends State<PostComposer> {
                   borderRadius: BorderRadius.circular(14),
                 ),
                 child: Text(
-                  placeEmoji(selected?.category),
+                  selected == null ? '🍽️' : markerEmoji(selected),
                   style: const TextStyle(fontSize: 22),
                 ),
               ),

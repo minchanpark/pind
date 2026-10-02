@@ -16,7 +16,6 @@ import 'place_sheet.dart';
 import 'agent_search_page.dart';
 import 'map_filter_chip.dart';
 import 'nearby_ranking_sheet.dart';
-import '../components/pind_image.dart';
 
 class ExploreScreen extends StatefulWidget {
   const ExploreScreen({
@@ -40,9 +39,7 @@ class ExploreScreen extends StatefulWidget {
 
 class _ExploreScreenState extends State<ExploreScreen> {
   ExploreController? get controller => widget.controller;
-  final query = TextEditingController();
   GoogleMapController? map;
-  bool searchMode = false;
 
   /// On iOS, Flutter widgets above the map platform view are painted into a
   /// separate overlay, so the sheet's BackdropFilter blurs only the map
@@ -51,7 +48,6 @@ class _ExploreScreenState extends State<ExploreScreen> {
   bool get locating => controller?.model.locating ?? false;
   String category = '전체';
   int markerGeneration = 0;
-  int searchGeneration = 0;
   int seenPublishedRevision = 0;
   Set<Marker> markers = {};
   List<Place>? markerPlaces;
@@ -88,9 +84,6 @@ class _ExploreScreenState extends State<ExploreScreen> {
     if (!mounted) return;
     if (controller!.publishedRevision != seenPublishedRevision) {
       seenPublishedRevision = controller!.publishedRevision;
-      searchGeneration++;
-      query.clear();
-      searchMode = false;
       category = '전체';
       final viewport = controller!.viewport;
       map
@@ -141,55 +134,25 @@ class _ExploreScreenState extends State<ExploreScreen> {
     markerGeneration++;
     controller?.model.removeListener(changed);
     map?.dispose();
-    query.dispose();
     super.dispose();
   }
 
-  /// [agent] searches by sentence and taste (the agent page); otherwise by
-  /// name/address, as the clear chip's reload does.
-  Future<void> search({bool agent = false}) async {
-    if (controller == null) return;
-    final generation = ++searchGeneration;
-    FocusScope.of(context).unfocus();
-    setState(() {
-      searchMode = query.text.trim().isNotEmpty;
-      category = '전체';
-    });
-    if (searchMode) {
-      if (agent) {
-        await controller?.agentSearch(query.text, await mapCenter());
-      } else {
-        await controller?.search(query.text);
-      }
-      if (!mounted || generation != searchGeneration || !searchMode) return;
-      final mapPlaces = controller!.places.where((p) => p.canShowOnMap);
-      if (mounted && mapPlaces.isNotEmpty) {
-        final first = mapPlaces.first;
-        await map?.animateCamera(
-          CameraUpdate.newLatLngZoom(
-            LatLng(first.latitude, first.longitude),
-            14,
-          ),
-        );
-      }
-      // Explicit searches keep all providers reachable without a nearby-list CTA.
-      if (mounted && generation == searchGeneration) showResults();
-    } else {
-      await controller?.load();
-    }
-  }
-
-  /// Figma 617:23469; runs whatever the page returns.
+  /// Figma 617:23469. The page answers itself, around the map center; a
+  /// result opens its detail over the page.
   Future<void> openSearch() async {
-    final text = await Navigator.of(context).push<String>(
+    final explore = controller!;
+    await Navigator.of(context).push<void>(
       MaterialPageRoute(
         fullscreenDialog: true,
-        builder: (_) => const AgentSearchPage(),
+        builder: (_) => AgentSearchPage(
+          search: (q) async => explore.agentSearch(q, await mapCenter()),
+          preferences: widget.preferences,
+          onOpen: (page, place) =>
+              showPlaceSheet(page, explore.details(place, widget.preferences)),
+          onSetSaved: explore.placeContext?.setSaved,
+        ),
       ),
     );
-    if (!mounted || text == null) return;
-    query.text = text;
-    await search(agent: true);
   }
 
   Future<void> locate() async {
@@ -197,8 +160,6 @@ class _ExploreScreenState extends State<ExploreScreen> {
     try {
       final location = await controller!.locate();
       if (!mounted) return;
-      query.clear();
-      setState(() => searchMode = false);
       await map?.animateCamera(
         CameraUpdate.newLatLngZoom(
           LatLng(location.latitude, location.longitude),
@@ -262,67 +223,6 @@ class _ExploreScreenState extends State<ExploreScreen> {
     } catch (_) {
       return controller!.viewport;
     }
-  }
-
-  void showResults() {
-    if (!mounted ||
-        !widget.isActive ||
-        !searchMode ||
-        controller!.loading ||
-        controller!.error != null ||
-        visiblePlaces.isEmpty) {
-      return;
-    }
-    showModalBottomSheet<void>(
-      context: context,
-      isScrollControlled: true,
-      useSafeArea: true,
-      builder: (sheetContext) => DraggableScrollableSheet(
-        expand: false,
-        initialChildSize: .62,
-        builder: (_, scroll) => ListView(
-          controller: scroll,
-          padding: const EdgeInsets.all(20),
-          children: [
-            Text(
-              '$category · ${visiblePlaces.length}곳',
-              style: Theme.of(context).textTheme.headlineSmall,
-            ),
-            const SizedBox(height: 16),
-            for (final place in visiblePlaces)
-              ListTile(
-                contentPadding: const EdgeInsets.symmetric(vertical: 8),
-                leading: place.imageUrl == null
-                    ? const Icon(Icons.restaurant)
-                    : ClipRRect(
-                        borderRadius: BorderRadius.circular(12),
-                        child: Image(
-                          image: PindImage(place.imageUrl!),
-                          width: 56,
-                          height: 56,
-                          fit: BoxFit.cover,
-                          errorBuilder: (_, error, stack) =>
-                              const Icon(Icons.restaurant),
-                        ),
-                      ),
-                title: Text(place.name),
-                subtitle: Text('${place.address}\n${place.sourceLabel}'),
-                trailing: const Icon(Icons.chevron_right),
-                onTap: () {
-                  Navigator.pop(sheetContext);
-                  showPlace(place);
-                },
-              ),
-            Center(
-              child: Text(
-                visiblePlaces.map((p) => p.sourceLabel).toSet().join(' · '),
-                style: const TextStyle(fontWeight: FontWeight.w700),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
   }
 
   // Figma 524:28096. Keep the exported icons at their original dimensions.
@@ -395,15 +295,11 @@ class _ExploreScreenState extends State<ExploreScreen> {
                             child: Align(
                               alignment: Alignment.centerLeft,
                               child: Text(
-                                query.text.trim().isEmpty
-                                    ? '무엇을 먹고 싶나요?'
-                                    : query.text.trim(),
+                                '무엇을 먹고 싶나요?',
                                 maxLines: 1,
                                 overflow: TextOverflow.ellipsis,
                                 style: textStyle.copyWith(
-                                  color: query.text.trim().isEmpty
-                                      ? const Color(0xFFABABAB)
-                                      : PindTheme.ink,
+                                  color: const Color(0xFFABABAB),
                                 ),
                               ),
                             ),
@@ -499,7 +395,7 @@ class _ExploreScreenState extends State<ExploreScreen> {
                     child: ListTile(
                       title: Text(controller!.error!),
                       trailing: TextButton(
-                        onPressed: search,
+                        onPressed: controller!.load,
                         child: const Text('재시도'),
                       ),
                     ),

@@ -7,6 +7,7 @@ import 'package:pind_flutter/model/profile_model.dart';
 import 'package:pind_flutter/view/components/pind_glass.dart';
 import 'package:pind_flutter/view/components/pind_image.dart';
 import 'package:pind_flutter/view/components/post_card.dart';
+import 'package:pind_flutter/view/explore/post_photo_viewer.dart';
 import 'package:pind_flutter/view/theme.dart';
 
 void main() {
@@ -117,5 +118,16 @@ void main() {
     // Unchanged trio: an upright center card between two tilted ones.
     expect(three, hasLength(3));
     expect(three.where((r) => r.size == const Size(109, 165)), hasLength(1));
+  });
+
+  testWidgets('tapping a photo opens that photo full screen', (tester) async {
+    await frames(tester, 4);
+    // The +1 card: its centered count must not swallow the tap.
+    await tester.tap(find.byKey(const ValueKey('post-photo-1-2')));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 400));
+    final viewer = tester.widget<PostPhotoViewer>(find.byType(PostPhotoViewer));
+    expect(viewer.initial, 2);
+    expect(viewer.photos, hasLength(4));
   });
 }

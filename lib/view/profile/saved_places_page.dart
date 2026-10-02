@@ -176,7 +176,7 @@ class _SavedPlacesPageState extends State<SavedPlacesPage> {
             for (final card in cards)
               Padding(
                 padding: const EdgeInsets.only(bottom: 12),
-                child: _SavedRow(
+                child: SavedPlaceRow(
                   card: card,
                   match: byTaste || shown.length > 1 ? match(card) : null,
                   meters: here == null
@@ -225,8 +225,11 @@ class _SavedPlacesPageState extends State<SavedPlacesPage> {
   }
 }
 
-class _SavedRow extends StatelessWidget {
-  const _SavedRow({
+/// One 저장한 장소 card. The saved line shows only with [ProfilePlaceCard.savedAt];
+/// the agent search page reuses the card without it.
+class SavedPlaceRow extends StatelessWidget {
+  const SavedPlaceRow({
+    super.key,
     required this.card,
     required this.match,
     this.meters,

@@ -27,6 +27,8 @@ select '98000000-0000-0000-0000-000000000002',p,crit,r,true from qa,lateral (val
  (qa.a,'taste',3),(qa.a,'portion',3),(qa.a,'ambience',3),
  (qa.b,'taste',5),(qa.b,'portion',5),(qa.b,'ambience',4)) v(p,crit,r);
 
+insert into public.saved_places(user_id,place_id) select '98000000-0000-0000-0000-000000000001',b from qa;
+
 set local role authenticated;
 set local request.jwt.claims='{"is_anonymous":false}';
 set local request.jwt.claim.sub='98000000-0000-0000-0000-000000000001';
@@ -35,9 +37,13 @@ do $$ declare q qa; r jsonb; ids bigint[]; begin select * into q from qa;
  r:=public.agent_search_places(array['혼술','포차','이자카야'],null,37.5440,127.0550)->'places';
  select array_agg((e->>'internalId')::bigint) into ids from jsonb_array_elements(r) e;
  assert ids[1:3]=array[q.a,q.b,q.c] or ids[1:3]=array[q.b,q.a,q.c],'posted first: a (name), b (post text), c (name)';
- assert ids @> array[q.d] and not ids @> array[q.e],'unposted only within 3km';
- assert ids[cardinality(ids)]=q.d,'unposted after posted';
+ assert cardinality(ids)=3,'posted places only, even the nearby unposted 포차';
  assert (select (e->>'tasteMatch')::int from jsonb_array_elements(r) e where (e->>'internalId')::bigint=q.b)=95,'b match 95';
+ -- Card fields: averages, review count, my save, distance from the center.
+ assert (select e->'averages'->>'taste' from jsonb_array_elements(r) e where (e->>'internalId')::bigint=q.b)::numeric=5,'b taste average';
+ assert (select (e->>'reviewCount')::int from jsonb_array_elements(r) e where (e->>'internalId')::bigint=q.b)=1,'b one review';
+ assert (select (e->>'saved')::boolean from jsonb_array_elements(r) e where (e->>'internalId')::bigint=q.b),'b saved by me';
+ assert (select (e->>'meters')::int from jsonb_array_elements(r) e where (e->>'internalId')::bigint=q.a)=0,'a at the center';
  -- Equal hits: taste breaks the tie (b 95 > a 50).
  r:=public.agent_search_places(array['좋아요'],null,null,null)->'places';
  assert (select array_agg((e->>'internalId')::bigint) from jsonb_array_elements(r) e)=array[q.b,q.a],'taste order on a tie';

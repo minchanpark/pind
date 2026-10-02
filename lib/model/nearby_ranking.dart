@@ -3,12 +3,16 @@ import 'places.dart';
 import 'preferences.dart';
 import 'profile_model.dart';
 
+/// The agent search page's answer: how the sentence was read, and the
+/// posted places it found, best first.
+typedef AgentAnswer = ({String? notice, List<RankedPlace> places});
+
 /// One row of the map category list (`get_nearby_ranking`).
 class RankedPlace {
   const RankedPlace({
     required this.place,
     this.imageUrl,
-    required this.meters,
+    this.meters,
     this.averages = const {},
     this.reviewCount = 0,
     this.saveCount = 0,
@@ -18,7 +22,9 @@ class RankedPlace {
   });
   final Place place;
   final String? imageUrl;
-  final double meters;
+
+  /// From the search origin; null when there was none.
+  final double? meters;
   final Map<PreferenceCriterion, double> averages;
   final int reviewCount, saveCount;
   final bool saved;
@@ -40,7 +46,7 @@ class RankedPlace {
     return RankedPlace(
       place: Place.fromJson(json),
       imageUrl: json['heroImageUrl'] as String? ?? imageUrl,
-      meters: (json['meters'] as num).toDouble(),
+      meters: (json['meters'] as num?)?.toDouble(),
       averages: parseCriteria(json['averages'], (n) => n.toDouble()),
       reviewCount: (json['reviewCount'] as num?)?.toInt() ?? 0,
       saveCount: (json['saveCount'] as num?)?.toInt() ?? 0,

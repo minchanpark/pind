@@ -11,6 +11,8 @@ import 'package:pind_flutter/model/preferences.dart';
 import 'package:pind_flutter/view/explore/place_sheet.dart';
 import 'package:pind_flutter/view/navigation/pind_navigation_bar.dart';
 
+import 'package:pind_flutter/view/profile/saved_places_page.dart';
+
 import 'support/map_search.dart';
 
 class _Context implements PlaceContextService {
@@ -94,7 +96,8 @@ void main() {
         expect(find.textContaining('곳 보기'), findsNothing);
         await mapSearch(tester, '연결 검증 가게');
         await tester.pumpAndSettle();
-        await tester.tap(find.byType(ListTile).first);
+        // The answer stays on the search page; its card opens the detail.
+        await tester.tap(find.byType(SavedPlaceRow).first);
         await tester.pumpAndSettle();
         expect(find.byType(PlaceSheet), findsOneWidget);
         final detail = tester
@@ -123,7 +126,7 @@ void main() {
         expect(contexts.requestedId, 71);
         expect(actions, [
           'posted',
-          'agent_search', // the map searches through the agent page
+          'agent_search', // the search page answers through the agent
           provider == 'sbiz' ? 'catalog_detail' : 'detail',
         ]);
         if (provider == 'sbiz') {
@@ -154,10 +157,14 @@ void main() {
         await tester.tap(find.byTooltip('닫기'));
         await tester.pumpAndSettle();
         expect(find.byType(PlaceSheet), findsNothing);
+        // Back on the search page, then the map.
+        expect(find.byType(SavedPlaceRow), findsOneWidget);
+        await tester.tap(find.bySemanticsLabel('닫기'));
+        await tester.pumpAndSettle();
         expect(find.byType(PindNavigationBar), findsOneWidget);
         expect(actions, [
           'posted',
-          'agent_search', // the map searches through the agent page
+          'agent_search', // the search page answers through the agent
           provider == 'sbiz' ? 'catalog_detail' : 'detail',
         ]);
         if (provider == 'sbiz') {
