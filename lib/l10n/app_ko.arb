@@ -1,0 +1,1008 @@
+{
+  "@@locale": "ko",
+  "appTitle": "Pind",
+  "@appTitle": {
+    "description": "App name"
+  },
+  "navMap": "지도",
+  "navCompose": "작성",
+  "navMyPage": "마이페이지",
+  "loginTagline": "내 취향에 맞는 맛집만, 지도 위에서",
+  "loginKakao": "카카오로 3초 만에 시작하기",
+  "loginApple": "Apple로 계속하기",
+  "loginGoogle": "Google로 계속하기",
+  "loginPreview": "로그인 없이 화면 체험",
+  "authOpenFailed": "로그인 창을 열지 못했어요. 다시 시도해 주세요.",
+  "authAnonymousDisabled": "개발용 익명 인증이 허용되지 않았어요.",
+  "authPreviewFailed": "체험을 시작하지 못했어요.",
+  "authUnavailable": "로그인에 연결하지 못했어요. 잠시 후 다시 시도해 주세요.",
+  "back": "뒤로",
+  "clear": "지우기",
+  "postPhotoOpen": "게시물 사진 {number} 크게 보기",
+  "@postPhotoOpen": {
+    "placeholders": {
+      "number": {
+        "type": "int"
+      }
+    }
+  },
+  "ratingScore": "{criterion} {score}점",
+  "@ratingScore": {
+    "placeholders": {
+      "criterion": {
+        "type": "String"
+      },
+      "score": {
+        "type": "int"
+      }
+    }
+  },
+  "postDelete": "게시물 삭제",
+  "postDeleteTitle": "게시물을 삭제할까요?",
+  "postDeleteBody": "사진과 별점도 함께 지워지고, 되돌릴 수 없어요.",
+  "delete": "삭제",
+  "close": "닫기",
+  "qrCameraDenied": "카메라를 사용할 수 없어요. 설정에서 카메라 권한을 허용해 주세요.",
+  "qrNotPind": "Pind 친구 코드가 아니에요",
+  "qrHint": "친구의 Pind QR 코드를 네모 안에 맞춰 주세요",
+  "qrTitle": "친구 코드 스캔",
+  "linkCopied": "링크를 복사했어요.",
+  "shareMyCode": "내 코드 공유",
+  "profileLoadFailed": "프로필을 불러오지 못했어요.",
+  "retry": "다시 시도",
+  "kakaoTalk": "카카오톡",
+  "instagram": "인스타",
+  "copyLink": "링크 복사",
+  "scanFriendCode": "친구 코드 스캔하기",
+  "myQrCode": "내 Pind QR 코드",
+  "copyLinkLabel": "링크 복사 {link}",
+  "@copyLinkLabel": {
+    "placeholders": {
+      "link": {
+        "type": "String"
+      }
+    }
+  },
+  "shareTitle": "{name} 님의 Pind",
+  "@shareTitle": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "shareBody": "음식 취향 지도를 구경해 보세요",
+  "viewProfile": "프로필 보기",
+  "inviteToPind": "Pind 친구 초대",
+  "criterionTaste": "맛",
+  "criterionTasteHint": "재료와 조리 완성도",
+  "criterionAmbience": "분위기·공간",
+  "criterionAmbienceHint": "인테리어와 좌석",
+  "criterionValue": "가성비",
+  "criterionValueHint": "가격 대비 만족",
+  "criterionPortion": "양",
+  "criterionPortionHint": "한 끼에 충분한 양",
+  "criterionService": "청결·서비스",
+  "criterionServiceHint": "응대와 위생",
+  "criterionPhotogenic": "사진 잘 나옴",
+  "criterionPhotogenicHint": "찍을 맛 나는 곳",
+  "criterionQuiet": "조용함",
+  "criterionQuietHint": "대화하기 좋은",
+  "criterionParking": "주차",
+  "criterionParkingHint": "차 대기 편한",
+  "occasionSolo": "혼밥",
+  "occasionSoloHint": "혼자서도 편한 자리",
+  "occasionFriends": "친구들이랑",
+  "occasionFriendsHint": "왁자지껄 모임",
+  "occasionDate": "데이트",
+  "occasionDateHint": "분위기 있는 곳",
+  "occasionFamily": "가족 식사",
+  "occasionFamilyHint": "넓고 조용한 곳",
+  "occasionGroup": "회식·모임",
+  "occasionGroupHint": "단체석 있는 곳",
+  "occasionWork": "카공·작업",
+  "occasionWorkHint": "콘센트와 와이파이",
+  "occasionDrinks": "술 한잔",
+  "occasionDrinksHint": "늦게까지 여는 곳",
+  "occasionQuick": "급할 때",
+  "occasionQuickHint": "빨리 나오는 곳",
+  "cuisineKorean": "한식·백반",
+  "cuisineBarbecue": "고기구이",
+  "cuisineSoup": "국물·탕",
+  "cuisineNoodles": "면·국수",
+  "cuisineStreet": "분식",
+  "cuisineJapanese": "일식",
+  "cuisineSushi": "스시·회",
+  "cuisineChinese": "중식",
+  "cuisineWestern": "양식·파스타",
+  "cuisineAsian": "아시안",
+  "cuisineChicken": "치킨",
+  "cuisineDessert": "카페·디저트",
+  "cuisineBakery": "베이커리",
+  "cuisineBar": "술집·바",
+  "pindUser": "Pind 사용자",
+  "photoProvider": "사진 제공자",
+  "sourceSbiz": "소상공인시장진흥공단",
+  "kakaoMap": "카카오맵",
+  "naverMap": "네이버 지도",
+  "unsupportedSource": "지원하지 않는 장소 출처입니다.",
+  "sourceOpenData": "공공데이터 원본",
+  "viewOnMap": "지도에서 확인",
+  "directionsInGoogle": "Google Maps에서 길찾기",
+  "viewInKakao": "카카오맵에서 확인",
+  "searchInNaver": "네이버 지도에서 검색",
+  "friendsVisited": "{others, plural, =0{{name}님이 다녀감} other{{name} 외 {others}명이 다녀감}}",
+  "@friendsVisited": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      },
+      "others": {
+        "type": "int"
+      }
+    }
+  },
+  "friendsSaved": "{others, plural, =0{{name}님이 저장함} other{{name} 외 {others}명이 저장함}}",
+  "@friendsSaved": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      },
+      "others": {
+        "type": "int"
+      }
+    }
+  },
+  "errProfileServer": "프로필 서버에 연결하지 못했어요.",
+  "errSignInRequired": "로그인이 필요해요.",
+  "errHandleTaken": "이미 사용 중인 아이디예요.",
+  "errHandleImmutable": "아이디는 한 번 정하면 바꿀 수 없어요.",
+  "errProfileSave": "프로필을 저장하지 못했어요. 다시 시도해 주세요.",
+  "errProfileNotFound": "프로필을 찾을 수 없어요.",
+  "errFeedServer": "피드 서버에 연결하지 못했어요.",
+  "errNotificationsLoad": "알림을 불러오지 못했어요.",
+  "errNotificationsRead": "알림을 읽음으로 바꾸지 못했어요.",
+  "errFeedLoad": "피드를 불러오지 못했어요.",
+  "errLikeSignIn": "로그인 후 좋아요를 누를 수 있어요.",
+  "errFriendsServer": "친구 서버에 연결하지 못했어요.",
+  "errSuggestionsLoad": "추천 목록을 불러오지 못했어요.",
+  "errSearchFailed": "검색하지 못했어요.",
+  "errFollowersLoad": "팔로워를 불러오지 못했어요.",
+  "errFollowingLoad": "팔로잉을 불러오지 못했어요.",
+  "errFollow": "팔로우하지 못했어요.",
+  "errUnfollow": "팔로우를 취소하지 못했어요.",
+  "errQueryLength": "검색어를 2~120자로 입력해 주세요.",
+  "errPlaceCheck": "장소를 확인하지 못했어요.",
+  "errPlaceSignIn": "장소를 탐색하려면 로그인이 필요해요.",
+  "errSessionStart": "세션을 시작하지 못했어요.",
+  "errPlaceLoad": "장소를 불러오지 못했어요.",
+  "errPlaceServer": "장소 서버에 연결하지 못했어요.",
+  "errPostSignIn": "로그인 후 게시물을 작성해 주세요.",
+  "errPostServer": "게시물 서버에 연결하지 못했어요.",
+  "errPostDeleteRetry": "게시물을 삭제하지 못했어요. 다시 시도해 주세요.",
+  "errAccountChanged": "계정이 변경되었어요. 다시 로그인해 주세요.",
+  "errPostPublishKept": "게시물을 등록하지 못했어요. 입력 내용을 유지했으니 다시 시도해 주세요.",
+  "inviteGeneric": "Pind에서 서로의 음식 취향을 팔로우해요!",
+  "errProfileLoadRetry": "프로필을 불러오지 못했어요. 다시 시도해 주세요.",
+  "errPhotoUpload": "사진을 올리지 못했어요. 다시 시도해 주세요.",
+  "errDistanceNeedsLocation": "거리 표시는 위치 권한과 기기 위치 서비스가 필요해요.",
+  "errLocationUnknown": "현재 위치를 확인하지 못했어요.",
+  "errSaveUnsupported": "이 출처의 장소 저장은 아직 지원하지 않아요. 원본 지도에서 확인해 주세요.",
+  "errSaveUnavailable": "저장 기능을 연결하지 못했어요. 상세 정보를 다시 불러와 주세요.",
+  "errSaveRetry": "저장하지 못했어요. 다시 시도해 주세요.",
+  "errLikeRetry": "좋아요를 반영하지 못했어요. 다시 시도해 주세요.",
+  "errPostDelete": "게시물을 삭제하지 못했어요.",
+  "errLinkOpen": "링크를 열지 못했어요. 다시 시도해 주세요.",
+  "errShareOpen": "공유 창을 열지 못했어요.",
+  "errLoginIncomplete": "로그인을 완료하지 못했어요. 다시 시도해 주세요.",
+  "errPreviewRetry": "체험을 시작하지 못했어요. 다시 시도해 주세요.",
+  "errDraftSave": "입력 내용을 저장하지 못했어요. 다시 시도해 주세요.",
+  "locationSkipHint": "위치를 허용하지 않아도 검색으로 시작할 수 있어요.",
+  "errLocationPermission": "위치 권한을 확인하지 못했어요. 나중에 설정할 수 있어요.",
+  "errSettingsOpen": "설정을 열지 못했어요. 기기 설정에서 위치를 허용해 주세요.",
+  "errCheckInput": "입력 내용을 확인해 주세요.",
+  "errLocationServicesOff": "기기의 위치 서비스를 켜 주세요.",
+  "errLocationDenied": "위치 권한 없이도 지도를 직접 이동하거나 검색할 수 있어요.",
+  "errOutsideKorea": "현재 위치가 한국 밖이에요. 한국의 장소를 검색해 주세요.",
+  "errPhotoTooLarge": "사진은 한 장당 10MB 이하로 선택해 주세요.",
+  "errPhotoFormat": "지원되는 사진 형식을 선택해 주세요.",
+  "errPhotoLoad": "사진을 불러오지 못했어요.",
+  "errPlaceSearchSignIn": "로그인 후 식당을 검색해 주세요.",
+  "errPostPublish": "게시물을 등록하지 못했어요.",
+  "errConnectionRetry": "연결을 확인하고 다시 시도해 주세요.",
+  "inviteFollow": "Pind에서 {who} 님을 팔로우하고 음식 취향을 나눠요!\n{link}",
+  "@inviteFollow": {
+    "placeholders": {
+      "who": {
+        "type": "String"
+      },
+      "link": {
+        "type": "String"
+      }
+    }
+  },
+  "agoWeeks": "{n}주 전",
+  "@agoWeeks": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  },
+  "agoDays": "{n}일 전",
+  "@agoDays": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  },
+  "yesterday": "어제",
+  "agoHours": "{n}시간 전",
+  "@agoHours": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  },
+  "agoMinutes": "{n}분 전",
+  "@agoMinutes": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  },
+  "justNow": "방금",
+  "notifications": "알림",
+  "unreadCount": "안 읽음 {count}",
+  "@unreadCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "markAllRead": "모두 읽음",
+  "noNotifications": "아직 알림이 없어요.",
+  "notifLikeRest": "님이 회원님의 게시물을 좋아해요",
+  "notifVisitMid": "님이 ",
+  "restaurant": "식당",
+  "notifVisitEnd": "에 다녀갔어요",
+  "notifFollowRest": "님이 회원님을 친구로 추가했어요",
+  "following": "팔로잉",
+  "followBack": "맞팔로우",
+  "follow": "팔로우",
+  "unfollowLabel": "{label}, 팔로우 취소",
+  "@unfollowLabel": {
+    "placeholders": {
+      "label": {
+        "type": "String"
+      }
+    }
+  },
+  "unfollowTitle": "{name} 님을 팔로우 취소할까요?",
+  "@unfollowTitle": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "unfollowBody": "취소해도 언제든 다시 팔로우할 수 있어요.",
+  "unfollow": "팔로우 취소",
+  "tasteMatchPercent": "취향 {percent}% 일치",
+  "@tasteMatchPercent": {
+    "placeholders": {
+      "percent": {
+        "type": "int"
+      }
+    }
+  },
+  "unfollowName": "{name} 팔로우 취소",
+  "@unfollowName": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "followName": "{name} 팔로우",
+  "@followName": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "errListLoad": "목록을 불러오지 못했어요.",
+  "tryAgainPlease": "다시 시도해 주세요.",
+  "peopleCount": "{count}명",
+  "@peopleCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "followers": "팔로워",
+  "noFollowers": "아직 팔로워가 없어요.",
+  "noFollowing": "아직 팔로우한 사람이 없어요.",
+  "signOutTitle": "로그아웃할까요?",
+  "signOutBody": "다시 로그인하면 게시물과 저장한 장소를 그대로 볼 수 있어요.",
+  "signOut": "로그아웃",
+  "errSignOut": "로그아웃하지 못했어요. 다시 시도해 주세요.",
+  "profileSettings": "프로필 설정",
+  "changePhoto": "사진 변경",
+  "noHandle": "아이디 없음",
+  "handleLocked": "아이디는 변경할 수 없어요",
+  "name": "이름",
+  "statusMessage": "상태 메시지",
+  "statusHint": "오늘의 상태를 남겨 보세요",
+  "save": "저장",
+  "addFriend": "친구 추가",
+  "newNotifications": "새 알림",
+  "exploreFriendsTaste": "친구들 취향 탐색하기",
+  "inviteFriends": "친구 초대하기",
+  "shareFriendsTaste": "친구들의 음식 취향을 공유하세요",
+  "invite": "초대하기",
+  "noPostsYet": "아직 게시물이 없어요.",
+  "postDeleted": "게시물을 삭제했어요.",
+  "unlike": "좋아요 취소",
+  "like": "좋아요",
+  "searchResultsCount": "검색 결과 {count}명",
+  "@searchResultsCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "searchResults": "검색 결과",
+  "noSearchResults": "검색 결과가 없어요.",
+  "cantFindSomeone": "찾는 사람이 없나요?",
+  "inviteByLink": "링크로 초대하기",
+  "shareMyCodeAction": "내 코드 공유하기",
+  "inviteByLinkHint": "링크로 친구를 초대해요",
+  "similarTaste": "취향이 비슷한 사람",
+  "noSimilarTaste": "아직 취향이 비슷한 사람이 없어요.",
+  "searchIdOrName": "아이디 또는 이름 검색",
+  "seeMore": "더보기 ›",
+  "agentStepRead": "입력한 문장을 분석하고 있어요",
+  "agentStepPlaces": "게시물이 작성된 장소를 살펴보고 있어요",
+  "agentStepTaste": "당신의 취향에 맞는 장소를 검색하고 있어요",
+  "errSearchRetry": "검색하지 못했어요. 잠시 후 다시 시도해 주세요.",
+  "errSaveToggle": "저장 상태를 바꾸지 못했어요. 다시 시도해 주세요.",
+  "agentTitle": "개인 맞춤형 음식 검색",
+  "agentSubtitle": "원하는 취향을 자세히 알려주면 추천 내용이 더 정확해집니다.",
+  "recommendedCount": "추천 장소 {count}곳",
+  "@recommendedCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "agentNoResults": "게시물이 있는 장소 중에 맞는 곳을 찾지 못했어요. 다르게 말해 볼까요?",
+  "askAnything": "무엇이든 물어보세요...",
+  "voiceSearch": "음성 검색",
+  "search": "검색",
+  "voiceComingSoon": "음성 검색은 준비 중이에요.",
+  "rankingFromMapCenter": "현재 위치를 확인하지 못해 지도 중심 10km 기준이에요.",
+  "rankingEmpty": "10km 안에 게시물이 있는 곳이 아직 없어요.",
+  "sortByTaste": "내 취향순",
+  "reviewsCount": "리뷰 {count}",
+  "@reviewsCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "unsave": "저장 취소",
+  "taste": "취향",
+  "ratingScoreText": "{criterion} {score}점",
+  "@ratingScoreText": {
+    "placeholders": {
+      "criterion": {
+        "type": "String"
+      },
+      "score": {
+        "type": "String"
+      }
+    }
+  },
+  "backToMap": "지도로 돌아가기",
+  "checkLocationInSettings": "설정에서 위치 권한 확인",
+  "allowLocationStart": "위치 허용하고 시작하기",
+  "later": "나중에 할게요",
+  "locationTitle": "지금 있는 곳 주변부터\n보여드릴게요",
+  "locationBody": "위치를 허용하면 내 주변 맛집과 취향을 탐색할 수 있어요.",
+  "nearbyFood": "내 주변 맛집",
+  "nearbyFoodHint": "반경 안에서만 추천해요",
+  "friendsFood": "친구들 맛집",
+  "friendsFoodHint": "친구들이 간 맛집을 볼 수 있어요",
+  "localRanking": "동네 랭킹",
+  "localRankingHint": "#1 in 성수동 같은 지역 순위",
+  "recentlyViewed": "최근에 본 장소",
+  "recentlyViewedEmpty": "최근 24시간 안에 본 장소가 여기에 표시돼요.",
+  "savedPlaces": "저장한 장소",
+  "noSavedPlaces": "저장한 장소가 아직 없어요.",
+  "noSharedSaves": "공유한 저장 장소가 없어요.",
+  "noPlacesToShow": "표시할 장소가 없어요.",
+  "settings": "설정",
+  "posts": "게시물",
+  "myMap": "내 지도",
+  "badgeFoodie": "맛잘알",
+  "badgePoster": "게시물왕",
+  "badgeJudge": "맛집 판별가",
+  "badges": "뱃지",
+  "myMapTitle": "나의 지도",
+  "noPostsWritten": "작성한 게시물이 아직 없어요",
+  "mapUnavailable": "지도를 사용할 수 없어요",
+  "viewMap": "맵 보기 ›",
+  "myTaste": "나의 취향",
+  "tasteType": "{criterion} 중시형",
+  "@tasteType": {
+    "placeholders": {
+      "criterion": {
+        "type": "String"
+      }
+    }
+  },
+  "edit": "✎ 수정",
+  "tasteEmpty": "취향을 설정하면 여기에 표시돼요.",
+  "noPublicTaste": "공개한 취향이 없어요.",
+  "tasteOrder": "{first} 먼저, 그다음 {second}·{third}을 봐요.",
+  "@tasteOrder": {
+    "placeholders": {
+      "first": {
+        "type": "String"
+      },
+      "second": {
+        "type": "String"
+      },
+      "third": {
+        "type": "String"
+      }
+    }
+  },
+  "agoYears": "{n}년 전",
+  "@agoYears": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  },
+  "agoMonths": "{n}개월 전",
+  "@agoMonths": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  },
+  "savedAgo": "{ago} 저장",
+  "@savedAgo": {
+    "placeholders": {
+      "ago": {
+        "type": "String"
+      }
+    }
+  },
+  "sortRecentSaved": "최근 저장순",
+  "placesCount": "{count}곳",
+  "@placesCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "onboardingTitlePriorities": "가게 고를 때\n뭘 제일 봐요?",
+  "onboardingTitleOccasions": "외식 선호도를 선택해주세요.",
+  "onboardingTitleCuisines": "좋아하는걸 선택해주세요.",
+  "onboardingHintPriorities": "딱 3개만. 순서대로 50% · 30% · 20%를 반영해요.",
+  "onboardingHintOccasions": "최대 3개. 상황에 맞는 리스트를 만들어 드려요.",
+  "onboardingHintCuisines": "3개 이상 골라주세요. 고를수록 추천이 정확해집니다.",
+  "onboardingPickThree": "중요한 기준 3개를 골라주세요.",
+  "prioritiesOrder": "{order} 순으로 반영됩니다",
+  "@prioritiesOrder": {
+    "placeholders": {
+      "order": {
+        "type": "String"
+      }
+    }
+  },
+  "selectedCount": "{count}개 선택됨",
+  "@selectedCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "previous": "이전",
+  "onboardingStep": "취향 설정 {step} / 3 단계",
+  "@onboardingStep": {
+    "placeholders": {
+      "step": {
+        "type": "int"
+      }
+    }
+  },
+  "saving": "저장 중…",
+  "buildTasteMap": "내 취향 지도 만들기",
+  "next": "다음",
+  "rankLabel": "{rank}순위",
+  "@rankLabel": {
+    "placeholders": {
+      "rank": {
+        "type": "int"
+      }
+    }
+  },
+  "filterNearby": "📍 현재 위치 주변",
+  "filterRecent": "최근 방문",
+  "filterSaved": "저장한 곳",
+  "categoryAll": "전체",
+  "categoryCafe": "카페",
+  "categoryBar": "술집",
+  "categoryMeat": "고기",
+  "categoryNoodles": "면",
+  "categoryDessert": "디저트",
+  "errRestaurantSearch": "식당을 검색하지 못했어요.",
+  "errLocationCheckPermission": "현재 위치를 확인할 수 없어요. 위치 권한을 확인해 주세요.",
+  "notInRecent": "최근 방문한 곳 중에 없어요.",
+  "noRecentViews": "최근 24시간 안에 본 장소가 없어요.",
+  "notInSaved": "저장한 곳 중에 없어요.",
+  "findingRestaurants": "식당을 찾고 있어요.",
+  "noNearbyMatch": "주변 {distance} 안에 맞는 식당이 없어요.",
+  "@noNearbyMatch": {
+    "placeholders": {
+      "distance": {
+        "type": "String"
+      }
+    }
+  },
+  "searchByNameOrAddress": "식당 이름이나 주소로 검색해 주세요.",
+  "whereDidYouGo": "어디에 다녀오셨어요?",
+  "nameOrAddress": "식당 이름 또는 주소",
+  "selectPlace": "{name} 선택",
+  "@selectPlace": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "select": "선택",
+  "errProfileOpen": "프로필을 열지 못했어요.",
+  "postPublished": "게시물을 등록했어요.",
+  "postPhotoOf": "게시물 사진 {number}/{total}",
+  "@postPhotoOf": {
+    "placeholders": {
+      "number": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
+  "noPostsYetMine": "아직 작성한 게시물이 없어요.",
+  "share": "공유",
+  "errTasteSave": "취향을 저장하지 못했어요. 다시 시도해 주세요.",
+  "countrySelected": "{country} 선택됨",
+  "@countrySelected": {
+    "placeholders": {
+      "country": {
+        "type": "String"
+      }
+    }
+  },
+  "countryTitle": "국가를 선택해\n주세요",
+  "countryBody": "서비스 지역과 언어, 통화 표기가 함께 설정돼요.",
+  "countrySearch": "국가 검색",
+  "countryPopular": "자주 선택하는 국가",
+  "countryKoreaOnly": "현재 맛집 탐색은 대한민국에서 제공해요.",
+  "basicTitle": "기본 정보를\n알려주세요",
+  "basicBody": "또래가 좋아하는 맛집을 추천하는 데만 쓰여요.\n프로필에는 공개되지 않습니다.",
+  "enterName": "이름을 입력해주세요",
+  "gender": "성별",
+  "male": "남성",
+  "female": "여성",
+  "preferNotToSay": "선택 안 함",
+  "birthDate": "생년월일",
+  "ageBand": "{age}세 · {decade}대 {part, select, early{초반} mid{중반} other{후반}}",
+  "@ageBand": {
+    "placeholders": {
+      "age": {
+        "type": "int"
+      },
+      "decade": {
+        "type": "int"
+      },
+      "part": {
+        "type": "String"
+      }
+    }
+  },
+  "ageUsedFor": "또래 취향 추천에 사용돼요",
+  "ageMinimum": "만 14세 이상부터 이용할 수 있어요.",
+  "consentPrivacy": "개인정보 수집·이용 동의 (필수)",
+  "consentPrivacyBody": "이름, 성별, 생년월일은 기본 정보와 취향 추천에 사용하며 공개 프로필에 표시하지 않습니다.",
+  "consentAge": "만 14세 이상입니다 (필수)",
+  "consentAgeBody": "생년월일을 확인하고 만 14세 이상인 경우 선택해 주세요.",
+  "consentPersonalize": "맞춤 추천을 위한 정보 활용 (선택)",
+  "consentPersonalizeBody": "선택하지 않아도 기본 서비스와 장소 검색을 이용할 수 있습니다.",
+  "year": "년",
+  "month": "월",
+  "day": "일",
+  "viewDetails": "{title} 내용 보기",
+  "@viewDetails": {
+    "placeholders": {
+      "title": {
+        "type": "String"
+      }
+    }
+  },
+  "startPind": "Pind 시작하기",
+  "handleTitle": "어떻게\n불러드릴까요?",
+  "handleBody": "아이디는 나중에 바꿀 수 없어요. 닉네임은 언제든 변경 가능합니다.",
+  "chooseAvatar": "아바타 선택",
+  "handle": "아이디",
+  "enterHandle": "아이디를 입력해주세요",
+  "handleValid": "✓ 사용할 수 있는 형식이에요",
+  "handleRule": "영문, 숫자, 밑줄로 3~20자를 입력해주세요.",
+  "chooseEmoji": "나를 표현하는 이모지를 골라주세요",
+  "pickFromAlbum": "앨범에서 사진 선택",
+  "errDetailLoad": "상세 정보를 불러오지 못했어요.",
+  "errContextLoad": "취향·팔로잉 정보를 불러오지 못했어요.",
+  "detailSwipeHint": "⌃  위로 올려서 소개 · 게시물 보기",
+  "hoursUnknown": "운영시간 확인 필요",
+  "openNow": "영업 중",
+  "closedNow": "영업 종료",
+  "locating": "위치 확인 중",
+  "checkDistance": "거리 확인",
+  "pindPostCount": "Pind 게시물 {count}개",
+  "@pindPostCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "reviewCountUnknown": "리뷰 수 확인 필요",
+  "reviewCountLong": "리뷰 {count}개",
+  "@reviewCountLong": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "tasteMatchHelp": "전체 공개 평균을 1·2·3순위 50·30·20%로 반영해요. 1점은 해당 기준의 0%, 5점은 100%를 받아요.",
+  "tasteMatchUnrated": "내 취향 평가 부족",
+  "tasteMatchMine": "내 취향 {percent}%",
+  "@tasteMatchMine": {
+    "placeholders": {
+      "percent": {
+        "type": "int"
+      }
+    }
+  },
+  "axisNoRatingsDot": "{criterion} · 아직 평가가 없어요",
+  "@axisNoRatingsDot": {
+    "placeholders": {
+      "criterion": {
+        "type": "String"
+      }
+    }
+  },
+  "axisAverageDot": "{criterion} · 가게 평균 {score} / 5",
+  "@axisAverageDot": {
+    "placeholders": {
+      "criterion": {
+        "type": "String"
+      },
+      "score": {
+        "type": "String"
+      }
+    }
+  },
+  "axisNoRatings": "{criterion} 아직 평가가 없어요",
+  "@axisNoRatings": {
+    "placeholders": {
+      "criterion": {
+        "type": "String"
+      }
+    }
+  },
+  "axisAverage": "{criterion} 가게 평균 {score}점",
+  "@axisAverage": {
+    "placeholders": {
+      "criterion": {
+        "type": "String"
+      },
+      "score": {
+        "type": "String"
+      }
+    }
+  },
+  "friendsVisitedPlace": "{others, plural, =0{{names}님이 다녀갔어요} other{{names} 외 {others}명님이 다녀갔어요}}",
+  "@friendsVisitedPlace": {
+    "placeholders": {
+      "names": {
+        "type": "String"
+      },
+      "others": {
+        "type": "int"
+      }
+    }
+  },
+  "followingSaved": "팔로잉 {count}명 저장",
+  "@followingSaved": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "placePhotoLabel": "{place} 장소 사진 {number}",
+  "@placePhotoLabel": {
+    "placeholders": {
+      "place": {
+        "type": "String"
+      },
+      "number": {
+        "type": "int"
+      }
+    }
+  },
+  "photoBy": "사진: {name}",
+  "@photoBy": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "photoSource": "사진 출처",
+  "intro": "소개",
+  "oneLineSummaryTitle": "{axes} 한 줄 요약",
+  "@oneLineSummaryTitle": {
+    "placeholders": {
+      "axes": {
+        "type": "String"
+      }
+    }
+  },
+  "noOneLiners": "아직 한 줄 평이 없어요.",
+  "noIntro": "제공된 소개가 없어요.",
+  "dataBy": "정보 제공: {source}",
+  "@dataBy": {
+    "placeholders": {
+      "source": {
+        "type": "String"
+      }
+    }
+  },
+  "saved": "저장됨",
+  "directions": "길찾기",
+  "errWalkRoute": "도보 경로를 찾지 못했어요. 잠시 후 다시 시도해 주세요.",
+  "errLocationUseSearch": "현재 위치를 확인하지 못했어요. 검색으로 계속할 수 있어요.",
+  "walkFinding": "도보 경로를 찾고 있어요…",
+  "walkArrived": "도착했어요",
+  "walkRerouting": "경로를 다시 찾고 있어요…",
+  "walkRemaining": "{distance} · 약 {minutes}분",
+  "@walkRemaining": {
+    "placeholders": {
+      "distance": {
+        "type": "String"
+      },
+      "minutes": {
+        "type": "int"
+      }
+    }
+  },
+  "walkTo": "{place}까지 도보",
+  "@walkTo": {
+    "placeholders": {
+      "place": {
+        "type": "String"
+      }
+    }
+  },
+  "walkEnd": "안내 종료",
+  "openSearch": "검색 열기",
+  "mapSearchHint": "무엇을 먹고 싶나요?",
+  "editTaste": "취향 수정",
+  "mapLoadFailed": "지도를 불러올 수 없어요.",
+  "mapFallbackHint": "장소 검색과 목록으로 탐색할 수 있어요.",
+  "needsBackend": "연결 설정 후 장소를 탐색할 수 있어요.",
+  "zoomIn": "확대",
+  "zoomOut": "축소",
+  "myLocation": "현재 위치",
+  "newPost": "게시물 작성",
+  "addPhotos": "사진 추가",
+  "visitedRestaurant": "방문한 식당",
+  "ratings": "평점",
+  "ratingsRequired": "맛 · 양 · 분위기 (필수)",
+  "myAverageRating": "내 평균 별점",
+  "writeReview": "글 작성하기",
+  "optional": "선택",
+  "visibility": "공개 범위",
+  "visibilityPublic": "전체 공개",
+  "visibilityFriends": "친구 공개",
+  "visibilityPublicHint": "모든 사람이 볼 수 있어요",
+  "visibilityFriendsHint": "나를 팔로우한 친구만 볼 수 있어요",
+  "reviewHint": "이 음식을 고향 음식에 비유하면? 처음 먹어본 외국인으로서 솔직한 후기를 남겨주세요.",
+  "errorPrefix": "오류: {message}",
+  "@errorPrefix": {
+    "placeholders": {
+      "message": {
+        "type": "String"
+      }
+    }
+  },
+  "publish": "게시하기",
+  "photoLongPressDelete": "사진 {number}, 길게 눌러 삭제",
+  "@photoLongPressDelete": {
+    "placeholders": {
+      "number": {
+        "type": "int"
+      }
+    }
+  },
+  "pickVisitedRestaurant": "방문한 식당을 선택해 주세요",
+  "change": "변경",
+  "rateBest": "최고예요",
+  "rateTasty": "맛있어요",
+  "rateOkay": "괜찮아요",
+  "rateMeh": "아쉬워요",
+  "rateBad": "별로예요",
+  "portionHuge": "아주 많아요",
+  "portionGenerous": "넉넉해요",
+  "portionJustRight": "적당해요",
+  "portionSmall": "적어요",
+  "portionTiny": "아주 적어요",
+  "rateGood": "좋아요",
+  "suggestSpicyLevels": "매움 단계를 선택할 수 있는 식당",
+  "suggestKoreanBbq": "한국 BBQ를 즐기면서 분위기 좋은 고깃집",
+  "suggestNepali": "네팔 사람들이 많이 방문한 식당",
+  "suggestVegetarian": "Vegetarian 음식",
+  "suggestKoreanVietnamese": "한국식 베트남 음식",
+  "suggestSoloDrinks": "혼술 하기 좋은 식당",
+  "suggestPho": "느낌 좋은 쌀국수집",
+  "suggestSeongsuBar": "서울 성수동에 분위기 좋은 바",
+  "suggestHomeStyle": "한국 집밥 느낌의 식당",
+  "suggestTouristFavorite": "관광객들이 가장 많이 방문한 식당",
+  "placeKorean": "백반집",
+  "placeBarbecue": "고깃집",
+  "placeSoup": "국밥집",
+  "placeNoodles": "국수집",
+  "placeStreet": "분식집",
+  "placeJapanese": "일식집",
+  "placeSushi": "초밥집",
+  "placeChinese": "중국집",
+  "placeWestern": "파스타집",
+  "placeAsian": "쌀국수집",
+  "placeChicken": "치킨집",
+  "placeDessert": "디저트 카페",
+  "placeBakery": "빵집",
+  "placeBar": "술집",
+  "qualityTaste": "맛있는",
+  "qualityAmbience": "분위기 좋은",
+  "qualityValue": "가성비 좋은",
+  "qualityPortion": "양 많은",
+  "qualityService": "깔끔하고 친절한",
+  "qualityPhotogenic": "사진 잘 나오는",
+  "qualityQuiet": "조용한",
+  "qualityParking": "주차 편한",
+  "occasionPhraseSolo": "혼밥하기 좋은",
+  "occasionPhraseFriends": "친구들이랑 가기 좋은",
+  "occasionPhraseDate": "데이트하기 좋은",
+  "occasionPhraseFamily": "가족이랑 가기 좋은",
+  "occasionPhraseGroup": "회식하기 좋은",
+  "occasionPhraseWork": "카공하기 좋은",
+  "occasionPhraseDrinks": "한잔하기 좋은",
+  "occasionPhraseQuick": "빨리 먹을 수 있는",
+  "genericRestaurant": "식당",
+  "genericDining": "레스토랑",
+  "genericCafe": "카페",
+  "genericBar": "술집",
+  "suggestForMe": "내가 좋아할만한 곳 추천해줘",
+  "suggestQuality": "{quality} {place}",
+  "@suggestQuality": {
+    "placeholders": {
+      "quality": {
+        "type": "String"
+      },
+      "place": {
+        "type": "String"
+      }
+    }
+  },
+  "suggestOccasion": "{phrase} {place}",
+  "@suggestOccasion": {
+    "placeholders": {
+      "phrase": {
+        "type": "String"
+      },
+      "place": {
+        "type": "String"
+      }
+    }
+  },
+  "cat00": "백반/한정식",
+  "cat01": "카페",
+  "cat02": "요리 주점",
+  "cat03": "김밥/만두/분식",
+  "cat04": "돼지고기 구이/찜",
+  "cat05": "빵/도넛",
+  "cat06": "일식 회/초밥",
+  "cat07": "경양식",
+  "cat08": "치킨",
+  "cat09": "국/탕/찌개류",
+  "cat10": "중국집",
+  "cat11": "피자",
+  "cat12": "국수/칼국수",
+  "cat13": "생맥주 전문",
+  "cat14": "일반 유흥 주점",
+  "cat15": "횟집",
+  "cat16": "해산물 구이/찜",
+  "cat17": "베트남식 전문",
+  "cat18": "그 외 기타 간이 음식점",
+  "cat19": "곱창 전골/구이",
+  "cat20": "닭/오리고기 구이/찜",
+  "cat21": "족발/보쌈",
+  "cat22": "떡/한과",
+  "cat23": "버거",
+  "cat24": "소고기 구이/찜",
+  "cat25": "구내식당",
+  "cat26": "마라탕/훠궈",
+  "cat27": "토스트/샌드위치/샐러드",
+  "cat28": "냉면/밀면",
+  "cat29": "일식 면 요리",
+  "cat30": "일식 카레/돈가스/덮밥",
+  "cat31": "아이스크림/빙수",
+  "cat32": "파스타/스테이크",
+  "cat33": "기타 서양식 음식점",
+  "cat34": "기타 한식 음식점",
+  "cat35": "전/부침개",
+  "cat36": "뷔페",
+  "cat37": "기타 일식 음식점",
+  "cat38": "기타 동남아식 전문",
+  "cat39": "무도 유흥 주점",
+  "cat40": "패밀리레스토랑",
+  "cat41": "복 요리 전문",
+  "cat42": "분류 안된 외국식 음식점",
+  "errQueryNotUnderstood": "검색어를 이해하지 못했어요. 다르게 말해 주세요.",
+  "errOutsideKoreaMap": "대한민국 안에서 지도를 이동해 주세요.",
+  "errPlaceNotFound": "공개된 장소를 찾지 못했어요.",
+  "errPlaceServerRetry": "장소 DB에 연결하지 못했어요. 잠시 후 다시 시도해 주세요.",
+  "errRouteKoreaOnly": "한국 안의 출발지와 도착지만 안내할 수 있어요.",
+  "errRouteTooFar": "걸어가기엔 너무 멀어요.",
+  "errRouteUnavailable": "길찾기를 준비 중이에요.",
+  "errGoogleBusy": "Google 검색 요청이 많아요. 잠시 후 다시 시도해 주세요.",
+  "agentNotice": "{label} 기준으로 찾았어요.",
+  "@agentNotice": {
+    "placeholders": {
+      "label": {
+        "type": "String"
+      }
+    }
+  },
+  "agentNoticeTaste": "내 취향 기준으로 찾았어요.",
+  "agentNoticeTasteFoods": "내 취향 · {foods} 기준으로 찾았어요.",
+  "@agentNoticeTasteFoods": {
+    "placeholders": {
+      "foods": {
+        "type": "String"
+      }
+    }
+  }
+}

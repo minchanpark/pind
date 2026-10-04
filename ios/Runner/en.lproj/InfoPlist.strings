@@ -1,0 +1,5 @@
+/* Permission prompts in this language; the Info.plist values are the Korean fallback. */
+"NSCameraUsageDescription" = "Pind uses the camera to scan your friends' Pind codes.";
+"NSLocationWhenInUseUsageDescription" = "Pind finds restaurants around you. Your location is never stored.";
+"NSLocationAlwaysAndWhenInUseUsageDescription" = "Pind finds restaurants around you and gives walking directions. It uses your location only while you use the app and never stores it.";
+"NSPhotoLibraryUsageDescription" = "Choose photos of restaurants you visited to add them to your posts.";

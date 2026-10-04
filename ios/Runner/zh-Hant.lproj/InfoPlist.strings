@@ -1,0 +1,5 @@
+/* Permission prompts in this language; the Info.plist values are the Korean fallback. */
+"NSCameraUsageDescription" = "Pind 使用相機掃描好友的 Pind 碼。";
+"NSLocationWhenInUseUsageDescription" = "為你尋找附近的餐廳。不會儲存你的位置。";
+"NSLocationAlwaysAndWhenInUseUsageDescription" = "為你尋找附近的餐廳並提供步行導航。僅在你使用 App 時使用位置，且不會儲存。";
+"NSPhotoLibraryUsageDescription" = "選擇去過的餐廳的照片加入貼文。";

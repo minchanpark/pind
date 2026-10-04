@@ -1,0 +1,5 @@
+/* Permission prompts in this language; the Info.plist values are the Korean fallback. */
+"NSCameraUsageDescription" = "友だちのPindコードをスキャンするためにカメラを使用します。";
+"NSLocationWhenInUseUsageDescription" = "現在地周辺のお店を探します。位置情報は保存しません。";
+"NSLocationAlwaysAndWhenInUseUsageDescription" = "現在地周辺のお店を探し、徒歩ルートを案内します。位置情報はアプリの使用中のみ利用し、保存しません。";
+"NSPhotoLibraryUsageDescription" = "訪れたお店の写真を投稿に追加するために写真を選択します。";
