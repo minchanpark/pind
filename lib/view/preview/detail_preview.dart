@@ -48,7 +48,11 @@ class _DetailPreviewState extends State<DetailPreview> {
             gradient: LinearGradient(
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
-              colors: [PindColors.pastelSage, PindColors.pastelLavender, PindColors.pastelBlue],
+              colors: [
+                PindColors.pastelSage,
+                PindColors.pastelLavender,
+                PindColors.pastelBlue,
+              ],
             ),
           ),
           child: SafeArea(

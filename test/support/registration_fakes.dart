@@ -25,5 +25,12 @@ class FakeAuthService implements AuthService {
   @override
   Future<AuthIdentity> preview() async =>
       const AuthIdentity('preview-user', development: true);
+  int signOuts = 0;
+  @override
+  Future<void> signOut() async {
+    signOuts++;
+    emit(null);
+  }
+
   Future<void> close() => _events.close();
 }

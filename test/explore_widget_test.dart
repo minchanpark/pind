@@ -83,7 +83,7 @@ void main() {
       );
       await tester.pumpAndSettle();
       expect(find.text('테스트 연결 오류'), findsOneWidget);
-      await tester.tap(find.text('재시도'));
+      await tester.tap(find.text('다시 시도'));
       await tester.pumpAndSettle();
       expect(attempts, 2);
       expect(find.text('테스트 연결 오류'), findsNothing);

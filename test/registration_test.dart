@@ -23,9 +23,15 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import 'support/registration_fakes.dart';
 
+import 'package:pind_flutter/view/components/pind_sheet.dart';
+
 class FakeProfileService implements ProfileService {
-  FakeProfileService({this.saveError});
+  FakeProfileService({this.saveError, this.existing});
   final Object? saveError;
+
+  /// The account's row on the server, as [load] returns it.
+  final UserProfile? existing;
+  int loads = 0;
   final saves = <(String? handle, String? displayName, String? avatarUrl)>[];
   @override
   Future<void> save({
@@ -42,7 +48,11 @@ class FakeProfileService implements ProfileService {
   Future<String> uploadAvatar(PostPhoto photo) async =>
       'https://cdn/avatar.png';
   @override
-  Future<UserProfile?> load() async => null;
+  Future<UserProfile?> load() async {
+    loads++;
+    return existing;
+  }
+
   @override
   Future<ProfileOverview> overview({String? userId}) async =>
       const ProfileOverview(
@@ -170,6 +180,8 @@ void main() {
     final controller = create(profile: profile, photos: FakePhotos());
     addTearDown(controller.dispose);
     auth.emit(const AuthIdentity('user-a'));
+    // Let the returning-account check finish first.
+    await Future<void>.delayed(Duration.zero);
     controller.model.update(() {
       controller.model.draft = validDraft.copyWith(
         step: RegistrationStep.handle,
@@ -191,6 +203,8 @@ void main() {
       final controller = create(profile: profile, photos: FakePhotos());
       addTearDown(controller.dispose);
       auth.emit(const AuthIdentity('user-a'));
+      // Let the returning-account check finish first.
+      await Future<void>.delayed(Duration.zero);
       controller.model.update(() {
         controller.model.draft = validDraft.copyWith(
           step: RegistrationStep.handle,
@@ -231,6 +245,8 @@ void main() {
     );
     addTearDown(controller.dispose);
     auth.emit(const AuthIdentity('user-a'));
+    // Let the returning-account check finish first.
+    await Future<void>.delayed(Duration.zero);
     await controller.pickAvatar();
     expect(controller.model.draft.avatarUrl, 'https://cdn/avatar.png');
     expect(controller.model.error, null);
@@ -491,5 +507,102 @@ void main() {
     await tester.ensureVisible(find.text('맞춤 추천을 위한 정보 활용 (선택)'));
     expect(find.text('맞춤 추천을 위한 정보 활용 (선택)').hitTestable(), findsOneWidget);
     expect(tester.takeException(), null);
+  });
+
+  testWidgets('로그아웃 on My Page asks, then returns to the login screen', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(402, 874);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+    // Already signed in, set up and with a taste: the app opens on the map.
+    auth = FakeAuthService(initial: const AuthIdentity('user-a'));
+    await PreferenceService(storage).save(
+      TastePreferences(
+        priorities: [
+          PreferenceCriterion.taste,
+          PreferenceCriterion.portion,
+          PreferenceCriterion.ambience,
+        ],
+        cuisines: Cuisine.values.take(3),
+      ),
+    );
+    final app = AppController(
+      PreferenceService(storage),
+      auth: auth,
+      profile: FakeProfileService(),
+      registrationService: RegistrationService(storage),
+    );
+    await tester.pumpWidget(PindApp(controller: app));
+    await tester.pumpAndSettle();
+    expect(find.byType(LoginScreen), findsNothing);
+    await tester.tap(find.byKey(const ValueKey('nav-profile')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.bySemanticsLabel('설정'));
+    await tester.pumpAndSettle();
+    final signOut = find.byKey(const ValueKey('profile-sign-out'));
+    await tester.ensureVisible(signOut);
+    await tester.tap(signOut);
+    await tester.pumpAndSettle();
+    expect(find.text('로그아웃할까요?'), findsOneWidget);
+    // 닫기 keeps me signed in.
+    await tester.tap(find.widgetWithText(PindSheetButton, '닫기').last);
+    await tester.pumpAndSettle();
+    expect(auth.signOuts, 0);
+    await tester.tap(signOut);
+    await tester.pumpAndSettle();
+    await tester.tap(find.widgetWithText(PindSheetButton, '로그아웃'));
+    await tester.pumpAndSettle();
+    expect(auth.signOuts, 1);
+    expect(find.byType(LoginScreen), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
+
+  group('an account set up before, on a new install', () {
+    const minchan = UserProfile(
+      id: 'user-a',
+      handle: 'minchan',
+      displayName: 'new dawn',
+      avatarUrl: 'https://cdn/a.png',
+    );
+
+    test('goes straight in, keeping the server handle', () async {
+      final profile = FakeProfileService(existing: minchan);
+      final controller = create(profile: profile);
+      addTearDown(controller.dispose);
+      auth.emit(const AuthIdentity('user-a'));
+      await Future<void>.delayed(Duration.zero);
+      expect(profile.loads, 1);
+      expect(controller.model.completed, isTrue);
+      expect(controller.model.draft.handle, 'minchan');
+      expect(controller.model.draft.name, 'new dawn');
+      // Nothing is written back: the handle is already there.
+      expect(profile.saves, isEmpty);
+      // And it stays done on the next launch.
+      expect(RegistrationService(storage).load('user-a')!.completed, isTrue);
+    });
+
+    test('no handle yet, or the check fails: sign-up as usual', () async {
+      final fresh = FakeProfileService(
+        existing: const UserProfile(id: 'user-a', displayName: ''),
+      );
+      final controller = create(profile: fresh);
+      addTearDown(controller.dispose);
+      auth.emit(const AuthIdentity('user-a'));
+      await Future<void>.delayed(Duration.zero);
+      expect(controller.model.step, RegistrationStep.country);
+    });
+
+    test('signed out while checking: nothing is shown', () async {
+      final controller = create(profile: FakeProfileService(existing: minchan));
+      addTearDown(controller.dispose);
+      auth.emit(const AuthIdentity('user-a'));
+      auth.emit(null);
+      await Future<void>.delayed(Duration.zero);
+      expect(controller.model.step, RegistrationStep.login);
+      expect(controller.model.identity, isNull);
+      expect(controller.model.busy, isFalse);
+    });
   });
 }

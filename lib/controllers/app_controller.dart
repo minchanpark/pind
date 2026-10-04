@@ -62,6 +62,10 @@ class AppController {
 
   final PreferenceService preferences;
   final AppModel model;
+
+  /// Logs out; the login screen follows from the auth change. Uses the
+  /// registration's auth, the one session the app tracks.
+  Future<void> signOut() async => registration?.auth.signOut();
   final ExploreController? explore;
   final PostService? posts;
   final ProfileService? profile;

@@ -8,6 +8,7 @@ import '../services/place_action_service.dart';
 import '../services/post_photo_service.dart';
 import '../services/profile_service.dart';
 import '../services/data_revision.dart';
+import '../l10n/l10n.dart';
 
 class ProfileController {
   ProfileController({required this.profile, this.userId, this.friends});
@@ -49,7 +50,7 @@ class ProfileController {
       if (_disposed || request != _request) return;
       model.update(() {
         model.loading = false;
-        model.error = _message(caught, '프로필을 불러오지 못했어요. 다시 시도해 주세요.');
+        model.error = _message(caught, l10n.errProfileLoadRetry);
       });
     }
   }
@@ -92,7 +93,7 @@ class ProfileController {
       if (_disposed) return false;
       model.error = _message(
         caught,
-        target ? '팔로우하지 못했어요.' : '팔로우를 취소하지 못했어요.',
+        target ? l10n.errFollow : l10n.errUnfollow,
       );
       apply(!target);
       return false;
@@ -117,7 +118,7 @@ class ProfileController {
       if (!_disposed) _patch((p) => p.copyWith(avatarUrl: url));
     } catch (caught) {
       if (!_disposed) {
-        model.error = _message(caught, '사진을 올리지 못했어요. 다시 시도해 주세요.');
+        model.error = _message(caught, l10n.errPhotoUpload);
       }
     } finally {
       if (!_disposed) model.update(() => model.saving = false);
@@ -138,7 +139,7 @@ class ProfileController {
       return true;
     } catch (caught) {
       if (!_disposed) {
-        model.error = _message(caught, '프로필을 저장하지 못했어요. 다시 시도해 주세요.');
+        model.error = _message(caught, l10n.errProfileSave);
       }
       return false;
     } finally {

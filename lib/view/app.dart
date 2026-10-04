@@ -6,6 +6,7 @@ import 'design_system.dart';
 import 'navigation/main_shell.dart';
 import 'onboarding/onboarding_screen.dart';
 import 'onboarding/registration_screen.dart';
+import '../l10n/l10n.dart';
 
 class PindApp extends StatefulWidget {
   const PindApp({
@@ -78,6 +79,19 @@ class _PindAppState extends State<PindApp> {
     navigatorKey: navigator,
     debugShowCheckedModeBanner: false,
     theme: PindTheme.data,
+    // The phone's language; everything but what people wrote follows it.
+    localizationsDelegates: AppLocalizations.localizationsDelegates,
+    supportedLocales: pindLocales,
+    localeListResolutionCallback: (locales, _) {
+      final locale = resolvePindLocale(locales);
+      setL10nLocale(locale);
+      return locale;
+    },
+    // A language change rebuilds every screen, so none keeps old strings.
+    builder: (context, child) => KeyedSubtree(
+      key: ValueKey(Localizations.localeOf(context)),
+      child: child!,
+    ),
     home:
         widget.controller.registration != null &&
             !widget.controller.registration!.model.completed
@@ -101,6 +115,7 @@ class _PindAppState extends State<PindApp> {
             mapsEnabled: widget.mapsEnabled,
             onEditPreferences: editPreferences,
             pendingLink: widget.controller.link,
+            onSignOut: widget.controller.signOut,
           ),
   );
 }

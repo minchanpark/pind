@@ -2,8 +2,8 @@ import 'jsr:@supabase/functions-js/edge-runtime.d.ts';
 import { createClient } from 'npm:@supabase/supabase-js@2.112.3';
 import { GoogleGenAI } from 'npm:@google/genai@2.24.0';
 import { catalogRequest, CatalogError } from './catalog.ts';
-import { INSIGHT_SCHEMA, INSIGHT_SYSTEM, INSIGHT_MODELS, insightPrompt, parseInsight, withFallback } from './insights.ts';
-import { AGENT_SCHEMA, AGENT_SYSTEM, type AgentPlan, fallbackPlan, parseAgentPlan } from './agent.ts';
+import { INSIGHT_SCHEMA, INSIGHT_SYSTEM, INSIGHT_MODELS, TRANSLATE_SYSTEM, insightPrompt, parseInsight, translatePrompt, withFallback } from './insights.ts';
+import { AGENT_SCHEMA, AGENT_SYSTEM, type AgentPlan, fallbackPlan, parseAgentPlan, tastePlan } from './agent.ts';
 import { walkingRoute } from './walking.ts';
 import { groqJson } from './llm.ts';
 import { geocodeArea } from './area.ts';
@@ -77,14 +77,35 @@ async function refreshInsight(placeId:number,claimed=false) {
   }
 }
 /// Sentence → search plan; if no model can read it, the sentence's words.
-async function agentPlan(query:string): Promise<AgentPlan> {
+const LANGS = new Set(['ko','en','ja','zh-Hans','zh-Hant']);
+/// The app's language as a tag the agent prompt knows; Korean otherwise.
+const langOf = (v:unknown) => {
+  const tag = typeof v === 'string' ? (v === 'zh' ? 'zh-Hans' : v) : 'ko';
+  return LANGS.has(tag) ? tag : 'ko';
+};
+async function agentPlan(query:string,lang='ko'): Promise<AgentPlan> {
   if (!hasLlm) return fallbackPlan(query);
   try {
-    return parseAgentPlan(await askJson(AGENT_SYSTEM,`<query>${query}</query>`,AGENT_SCHEMA,500));
+    return parseAgentPlan(await askJson(AGENT_SYSTEM,
+      `<query>${query}</query>\n<label_language>${lang}</label_language>`,AGENT_SCHEMA,500));
   } catch (error) {
     console.error('agent plan failed',error);
     return fallbackPlan(query);
   }
+}
+
+/// A summary in another language, cached until the place's post count
+/// moves; any failure keeps the Korean.
+async function translateInsight(placeId:number,postCount:number,insight:Record<string,unknown>,lang:string) {
+  if (!hasLlm) return null;
+  const {data:cached} = await admin.from('place_insight_translations').select('summary,criteria,post_count')
+    .eq('place_id',placeId).eq('lang',lang).maybeSingle();
+  if (cached && cached.post_count === postCount) return {summary:cached.summary,criteria:cached.criteria};
+  const source = {summary:String(insight.summary ?? ''),criteria:(insight.criteria ?? {}) as Record<string,string>};
+  const translated = parseInsight(await askJson(TRANSLATE_SYSTEM,translatePrompt(source,lang),INSIGHT_SCHEMA));
+  await admin.from('place_insight_translations').upsert({place_id:placeId,lang,post_count:postCount,
+    summary:translated.summary,criteria:translated.criteria,updated_at:new Date().toISOString()});
+  return translated;
 }
 
 const queueInsight = (placeId:number,claimed=false) => {
@@ -119,7 +140,9 @@ Deno.serve(async request => {
     if (body.action === 'agent_search') {
       const q = typeof body.query === 'string' ? body.query.trim() : '';
       if (q.length < 2 || q.length > 120) throw new CatalogError(400,'INVALID_QUERY','검색어를 2~120자로 입력해 주세요.');
-      const plan = await agentPlan(q);
+      let plan:AgentPlan = await agentPlan(q,langOf(body.lang));
+      // "Pick for me": the app's onboarding foods and occasions fill it in.
+      if (plan.personal) plan = tastePlan(plan,body.cuisines,body.occasions);
       // A named area searches around it instead of the map center.
       const area = plan.area ? await geocodeArea(plan.area,Deno.env.get('GOOGLE_PLACES_API_KEY')) : null;
       body = {...body,...plan,...(area ?? {})};
@@ -135,7 +158,7 @@ Deno.serve(async request => {
       return error ? paths.map(() => null) : data.map(item => item.error ? null : item.signedUrl);
     },
     Deno.env.get('GOOGLE_FALLBACK_ENABLED') !== 'false',
-    queueInsight));
+    queueInsight,translateInsight));
   } catch(error) {
     if (error instanceof CatalogError) return json({error:{code:error.code,message:error.message}},error.status);
     return json({error:{code:'CATALOG_UNAVAILABLE',message:'장소 DB에 연결하지 못했어요.'}},503);

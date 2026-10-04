@@ -20,7 +20,7 @@ select u::uuid,case k when 'a' then qa.a when 'b' then qa.b else qa.c end,'',pho
  ('60000000-0000-0000-0000-000000000001','a','legacy/a.png','legacy',true,'published',interval '2 days',null,null,null,null),
  ('60000000-0000-0000-0000-000000000001','b','60000000-0000-0000-0000-000000000001/r/0.png','v2 body',true,'published',interval '1 day','70000000-0000-0000-0000-000000000001',5,4,3),
  ('60000000-0000-0000-0000-000000000001','c','hidden.png','hidden',true,'hidden',interval '1 hour',null,null,null,null),
- ('60000000-0000-0000-0000-000000000001','c','private.png','private',false,'published',interval '1 hour',null,null,null,null),
+ ('60000000-0000-0000-0000-000000000001','c','private.png','private',false,'published',interval '3 days',null,null,null,null),
  ('60000000-0000-0000-0000-000000000002','a','u2/a.png','friend',true,'published',interval '1 hour',null,null,null,null)
 ) v(u,k,photo,body,pub,st,age,req,t,po,am);
 insert into public.post_media(post_id,position,path,mime,bytes)
@@ -68,18 +68,18 @@ do $$ declare q qa; d jsonb; begin
  d:=public.get_my_profile_overview();
  assert d ?& array['profile','counts','recentViews','savedPlaces','posts'];
  assert d->'profile'=jsonb_build_object('id',auth.uid(),'handle','pind_me','displayName','민찬','avatarUrl',null,'bio','hello'),'profile';
- assert d->'counts'='{"followers":2,"following":1,"posts":2,"saved":2}'::jsonb,'counts exclude hidden/private';
+ assert d->'counts'='{"followers":2,"following":1,"posts":3,"saved":2}'::jsonb,'counts exclude hidden, keep my friends-only';
  assert jsonb_array_length(d->'recentViews')=2,'>24h view excluded';
  assert (d->'recentViews'->0->>'internalId')::bigint=q.a and (d->'recentViews'->1->>'internalId')::bigint=q.c,'views newest first';
- assert d->'recentViews'->0 ?& array['provider','internalId','externalPlaceId','name','category','address','latitude',
+ assert d->'recentViews'->0 ?& array['provider','internalId','externalPlaceId','name','category','address','addressEn','latitude',
   'longitude','sourceUri','heroImageUrl','pindPhotoPath','pindPhotoBucket']
-  and (select count(*) from jsonb_object_keys(d->'recentViews'->0))=12,'place summary keys';
+  and (select count(*) from jsonb_object_keys(d->'recentViews'->0))=13,'place summary keys';
  assert d->'recentViews'->0->>'pindPhotoPath'='u2/a.png' and d->'recentViews'->0->>'pindPhotoBucket'='post-media','latest public photo';
  assert d->'recentViews'->1->'pindPhotoPath'='null'::jsonb,'hidden/private posts give no photo';
  assert (d->'savedPlaces'->0->>'internalId')::bigint=q.b and (d->'savedPlaces'->1->>'internalId')::bigint=q.a,'saved newest first';
  assert d->'savedPlaces'->0->'averages'='{}'::jsonb and d->'savedPlaces'->0->>'pindPhotoBucket'='post-media-v2';
  assert (d->'savedPlaces'->1->'averages'->>'taste')::numeric=4 and (d->'savedPlaces'->1->'averages'->>'ambience')::numeric=4,'public averages';
- assert jsonb_array_length(d->'posts')=2,'published public posts only';
+ assert jsonb_array_length(d->'posts')=3 and d->'posts'->2->>'body'='private','my published posts, friends-only included';
  assert d->'posts'->0 ?& array['id','place','body','ratings','bucket','photos','createdAt']
   and (select count(*) from jsonb_object_keys(d->'posts'->0))=7,'post keys';
  assert (d->'posts'->0->'place'->>'internalId')::bigint=q.b and d->'posts'->0->>'body'='v2 body';

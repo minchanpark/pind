@@ -1,3 +1,5 @@
+import '../l10n/l10n.dart';
+
 class MapViewport {
   const MapViewport(this.latitude, this.longitude);
   final double latitude, longitude;
@@ -71,7 +73,7 @@ class PlacePost {
 
   factory PlacePost.fromJson(Map<String, dynamic> json) => PlacePost(
     id: (json['id'] as num?)?.toInt(),
-    author: json['author'] as String? ?? 'Pind 사용자',
+    author: json['author'] as String? ?? l10n.pindUser,
     handle: json['handle'] as String?,
     avatar: json['avatar'] as String?,
     body: json['body'] as String? ?? '',
@@ -89,27 +91,35 @@ class PlacePost {
 List<PhotoAttribution> _authors(dynamic raw) => (raw as List? ?? [])
     .map(
       (a) => PhotoAttribution(
-        a['displayName'] as String? ?? '사진 제공자',
+        a['displayName'] as String? ?? l10n.photoProvider,
         a['uri'] as String?,
       ),
     )
     .toList();
 
 enum PlaceProvider {
-  sbiz('sbiz', '소상공인시장진흥공단'),
-  pind('pind', 'Pind'),
-  googlePlaces('google_places', 'Google Maps'),
-  kakaoLocal('kakao_local', '카카오맵'),
-  naverLocal('naver_local', '네이버 지도');
+  sbiz('sbiz'),
+  pind('pind'),
+  googlePlaces('google_places'),
+  kakaoLocal('kakao_local'),
+  naverLocal('naver_local');
 
-  const PlaceProvider(this.wireName, this.label);
-  final String wireName, label;
+  const PlaceProvider(this.wireName);
+  final String wireName;
+
+  String get label => switch (this) {
+    sbiz => l10n.sourceSbiz,
+    pind => 'Pind',
+    googlePlaces => 'Google Maps',
+    kakaoLocal => l10n.kakaoMap,
+    naverLocal => l10n.naverMap,
+  };
 
   static PlaceProvider parse(String? value) => value == null
       ? googlePlaces
       : values.firstWhere(
           (p) => p.wireName == value,
-          orElse: () => throw const FormatException('지원하지 않는 장소 출처입니다.'),
+          orElse: () => throw FormatException(l10n.unsupportedSource),
         );
 }
 
@@ -121,6 +131,7 @@ class Place {
     required this.name,
     required this.category,
     required this.address,
+    this.nativeAddress,
     required this.latitude,
     required this.longitude,
     required this.mapsUri,
@@ -153,13 +164,17 @@ class Place {
   String get key => '${provider.wireName}:$externalId';
   String get sourceLabel => provider.label;
   String get sourceAction => switch (provider) {
-    PlaceProvider.sbiz => '공공데이터 원본',
-    PlaceProvider.pind => '지도에서 확인',
-    PlaceProvider.googlePlaces => 'Google Maps에서 길찾기',
-    PlaceProvider.kakaoLocal => '카카오맵에서 확인',
-    PlaceProvider.naverLocal => '네이버 지도에서 검색',
+    PlaceProvider.sbiz => l10n.sourceOpenData,
+    PlaceProvider.pind => l10n.viewOnMap,
+    PlaceProvider.googlePlaces => l10n.directionsInGoogle,
+    PlaceProvider.kakaoLocal => l10n.viewInKakao,
+    PlaceProvider.naverLocal => l10n.searchInNaver,
   };
   final String externalId, name, category, address, mapsUri;
+
+  /// The Korean address when [address] shows the English one (app not in
+  /// Korean); taxis and Korean maps need it.
+  final String? nativeAddress;
   final double latitude, longitude;
   final String? imageUrl, photoSourceUri, summary, website, phone;
   final bool? isOpen;
@@ -181,6 +196,7 @@ class Place {
         provider == PlaceProvider.googlePlaces ||
         provider == PlaceProvider.sbiz ||
         provider == PlaceProvider.pind;
+    final addressEn = l10nTag == 'ko' ? null : json['addressEn'] as String?;
     return Place(
       provider: provider,
       dataSourceUri: json['dataSourceUri'] as String?,
@@ -191,7 +207,8 @@ class Place {
       externalId: json['externalPlaceId'] as String,
       name: json['name'] as String,
       category: json['category'] as String,
-      address: json['address'] as String,
+      address: addressEn ?? json['address'] as String,
+      nativeAddress: addressEn == null ? null : json['address'] as String,
       latitude: (json['latitude'] as num).toDouble(),
       longitude: (json['longitude'] as num).toDouble(),
       mapsUri: (json['sourceUri'] ?? json['googleMapsUri']) as String,

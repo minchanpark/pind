@@ -1,53 +1,109 @@
-enum PreferenceCriterion {
-  taste('맛', '재료와 조리 완성도', '😋'),
-  ambience('분위기·공간', '인테리어와 좌석', '🕯️'),
-  value('가성비', '가격 대비 만족', '💰'),
-  portion('양', '한 끼에 충분한 양', '🍚'),
-  service('청결·서비스', '응대와 위생', '🧼'),
-  photogenic('사진 잘 나옴', '찍을 맛 나는 곳', '📸'),
-  quiet('조용함', '대화하기 좋은', '🤫'),
-  parking('주차', '차 대기 편한', '🅿️');
+import '../l10n/l10n.dart';
 
-  const PreferenceCriterion(this.label, this.description, this.emoji);
-  final String label;
-  final String description;
+enum PreferenceCriterion {
+  taste('😋'),
+  ambience('🕯️'),
+  value('💰'),
+  portion('🍚'),
+  service('🧼'),
+  photogenic('📸'),
+  quiet('🤫'),
+  parking('🅿️');
+
+  const PreferenceCriterion(this.emoji);
   final String emoji;
+
+  String get label => switch (this) {
+    taste => l10n.criterionTaste,
+    ambience => l10n.criterionAmbience,
+    value => l10n.criterionValue,
+    portion => l10n.criterionPortion,
+    service => l10n.criterionService,
+    photogenic => l10n.criterionPhotogenic,
+    quiet => l10n.criterionQuiet,
+    parking => l10n.criterionParking,
+  };
+
+  String get description => switch (this) {
+    taste => l10n.criterionTasteHint,
+    ambience => l10n.criterionAmbienceHint,
+    value => l10n.criterionValueHint,
+    portion => l10n.criterionPortionHint,
+    service => l10n.criterionServiceHint,
+    photogenic => l10n.criterionPhotogenicHint,
+    quiet => l10n.criterionQuietHint,
+    parking => l10n.criterionParkingHint,
+  };
 }
 
 enum DiningOccasion {
-  solo('혼밥', '혼자서도 편한 자리'),
-  friends('친구들이랑', '왁자지껄 모임'),
-  date('데이트', '분위기 있는 곳'),
-  family('가족 식사', '넓고 조용한 곳'),
-  group('회식·모임', '단체석 있는 곳'),
-  work('카공·작업', '콘센트와 와이파이'),
-  drinks('술 한잔', '늦게까지 여는 곳'),
-  quick('급할 때', '빨리 나오는 곳');
+  solo,
+  friends,
+  date,
+  family,
+  group,
+  work,
+  drinks,
+  quick;
 
-  const DiningOccasion(this.label, this.description);
-  final String label;
-  final String description;
+  String get label => switch (this) {
+    solo => l10n.occasionSolo,
+    friends => l10n.occasionFriends,
+    date => l10n.occasionDate,
+    family => l10n.occasionFamily,
+    group => l10n.occasionGroup,
+    work => l10n.occasionWork,
+    drinks => l10n.occasionDrinks,
+    quick => l10n.occasionQuick,
+  };
+
+  String get description => switch (this) {
+    solo => l10n.occasionSoloHint,
+    friends => l10n.occasionFriendsHint,
+    date => l10n.occasionDateHint,
+    family => l10n.occasionFamilyHint,
+    group => l10n.occasionGroupHint,
+    work => l10n.occasionWorkHint,
+    drinks => l10n.occasionDrinksHint,
+    quick => l10n.occasionQuickHint,
+  };
 }
 
 enum Cuisine {
-  korean('한식·백반', 'korean.png'),
-  barbecue('고기구이', 'barbecue.png'),
-  soup('국물·탕', 'soup.png'),
-  noodles('면·국수', 'noodles.png'),
-  street('분식', 'street.png'),
-  japanese('일식', 'japanese.png'),
-  sushi('스시·회', 'sushi.png'),
-  chinese('중식', 'chinese.png'),
-  western('양식·파스타', 'western.png'),
-  asian('아시안', 'asian.png'),
-  chicken('치킨', 'chicken.png'),
-  dessert('카페·디저트', 'dessert.png'),
-  bakery('베이커리', null),
-  bar('술집·바', null);
+  korean('korean.png'),
+  barbecue('barbecue.png'),
+  soup('soup.png'),
+  noodles('noodles.png'),
+  street('street.png'),
+  japanese('japanese.png'),
+  sushi('sushi.png'),
+  chinese('chinese.png'),
+  western('western.png'),
+  asian('asian.png'),
+  chicken('chicken.png'),
+  dessert('dessert.png'),
+  bakery(null),
+  bar(null);
 
-  const Cuisine(this.label, this.asset);
-  final String label;
+  const Cuisine(this.asset);
   final String? asset;
+
+  String get label => switch (this) {
+    korean => l10n.cuisineKorean,
+    barbecue => l10n.cuisineBarbecue,
+    soup => l10n.cuisineSoup,
+    noodles => l10n.cuisineNoodles,
+    street => l10n.cuisineStreet,
+    japanese => l10n.cuisineJapanese,
+    sushi => l10n.cuisineSushi,
+    chinese => l10n.cuisineChinese,
+    western => l10n.cuisineWestern,
+    asian => l10n.cuisineAsian,
+    chicken => l10n.cuisineChicken,
+    dessert => l10n.cuisineDessert,
+    bakery => l10n.cuisineBakery,
+    bar => l10n.cuisineBar,
+  };
 }
 
 class TastePreferences {

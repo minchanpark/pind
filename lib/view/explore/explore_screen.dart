@@ -19,6 +19,7 @@ import 'place_sheet.dart';
 import 'agent_search_page.dart';
 import 'map_filter_chip.dart';
 import 'nearby_ranking_sheet.dart';
+import '../../l10n/l10n.dart';
 
 class ExploreScreen extends StatefulWidget {
   const ExploreScreen({
@@ -164,7 +165,7 @@ class _ExploreScreenState extends State<ExploreScreen> {
     try {
       final here = await explore.position(true);
       if (here == null) {
-        throw const PlaceFailure('현재 위치를 확인하지 못했어요. 위치 권한을 확인해 주세요.');
+        throw PlaceFailure(l10n.errLocationCheckPermission);
       }
       final found = await explore.repository.walkingRoute(here, target);
       if (!mounted || generation != walkGeneration) return;
@@ -193,9 +194,7 @@ class _ExploreScreenState extends State<ExploreScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
-            error is PlaceFailure
-                ? error.message
-                : '도보 경로를 찾지 못했어요. 잠시 후 다시 시도해 주세요.',
+            error is PlaceFailure ? error.message : l10n.errWalkRoute,
           ),
         ),
       );
@@ -273,7 +272,11 @@ class _ExploreScreenState extends State<ExploreScreen> {
       MaterialPageRoute(
         fullscreenDialog: true,
         builder: (_) => AgentSearchPage(
-          search: (q) async => explore.agentSearch(q, await mapCenter()),
+          search: (q) async => explore.agentSearch(
+            q,
+            await mapCenter(),
+            taste: widget.preferences,
+          ),
           preferences: widget.preferences,
           onOpen: (page, place) =>
               showPlaceSheet(page, explore.details(place, widget.preferences)),
@@ -300,9 +303,7 @@ class _ExploreScreenState extends State<ExploreScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(
-              error is PlaceFailure
-                  ? error.message
-                  : '현재 위치를 확인하지 못했어요. 검색으로 계속할 수 있어요.',
+              error is PlaceFailure ? error.message : l10n.errLocationUseSearch,
             ),
           ),
         );
@@ -324,7 +325,7 @@ class _ExploreScreenState extends State<ExploreScreen> {
     final pattern = categories[label]!;
     await showNearbyRanking(
       context,
-      title: label,
+      title: mapCategoryLabel(label),
       load: () async => explore.nearbyRanking(await mapCenter()),
       include: (p) => pattern.isEmpty || _inCategory(pattern, p),
       preferences: widget.preferences,
@@ -358,18 +359,20 @@ class _ExploreScreenState extends State<ExploreScreen> {
     final p = progress, r = route;
     final String status;
     if (p == null || r == null) {
-      status = '도보 경로를 찾고 있어요…';
+      status = l10n.walkFinding;
     } else if (arrived) {
-      status = '도착했어요';
+      status = l10n.walkArrived;
     } else if (rerouting) {
-      status = '경로를 다시 찾고 있어요…';
+      status = l10n.walkRerouting;
     } else {
       // TMAP's pace for this route, else ~1.2m/s.
       final seconds = r.meters > 0
           ? r.seconds * p.meters / r.meters
           : p.meters / 1.2;
-      status =
-          '${formatDistance(p.meters)} · 약 ${math.max(1, (seconds / 60).round())}분';
+      status = l10n.walkRemaining(
+        formatDistance(p.meters),
+        math.max(1, (seconds / 60).round()),
+      );
     }
     return PindGlass(
       key: const ValueKey('walk-banner'),
@@ -387,7 +390,7 @@ class _ExploreScreenState extends State<ExploreScreen> {
               spacing: 2,
               children: [
                 Text(
-                  '${target.name}까지 도보',
+                  l10n.walkTo(target.name),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: const TextStyle(
@@ -398,7 +401,10 @@ class _ExploreScreenState extends State<ExploreScreen> {
                 ),
                 Text(
                   status,
-                  style: TextStyle(fontSize: PindType.label, color: PindColors.muted),
+                  style: TextStyle(
+                    fontSize: PindType.label,
+                    color: PindColors.muted,
+                  ),
                 ),
               ],
             ),
@@ -406,7 +412,7 @@ class _ExploreScreenState extends State<ExploreScreen> {
           TextButton(
             onPressed: controller!.endWalk,
             child: Text(
-              arrived ? '닫기' : '안내 종료',
+              arrived ? l10n.close : l10n.walkEnd,
               style: const TextStyle(
                 fontWeight: FontWeight.w700,
                 color: PindColors.purple,
@@ -466,7 +472,7 @@ class _ExploreScreenState extends State<ExploreScreen> {
                       SizedBox(
                         width: 41.2927,
                         child: IconButton(
-                          tooltip: '검색',
+                          tooltip: l10n.search,
                           padding: const EdgeInsets.only(left: 9.2667),
                           icon: SvgPicture.asset(
                             'assets/explore/search_icon.svg',
@@ -480,7 +486,7 @@ class _ExploreScreenState extends State<ExploreScreen> {
                       Expanded(
                         child: Semantics(
                           button: true,
-                          label: '검색 열기',
+                          label: l10n.openSearch,
                           excludeSemantics: true,
                           child: InkWell(
                             key: const ValueKey('map-search-button'),
@@ -488,7 +494,7 @@ class _ExploreScreenState extends State<ExploreScreen> {
                             child: Align(
                               alignment: Alignment.centerLeft,
                               child: Text(
-                                '무엇을 먹고 싶나요?',
+                                l10n.mapSearchHint,
                                 maxLines: 1,
                                 overflow: TextOverflow.ellipsis,
                                 style: textStyle.copyWith(
@@ -502,7 +508,7 @@ class _ExploreScreenState extends State<ExploreScreen> {
                       SizedBox(
                         width: 40.2569,
                         child: IconButton(
-                          tooltip: '취향 수정',
+                          tooltip: l10n.editTaste,
                           padding: const EdgeInsets.only(right: 9.2667),
                           icon: SvgPicture.asset(
                             'assets/explore/filter_icon.svg',
@@ -566,15 +572,15 @@ class _ExploreScreenState extends State<ExploreScreen> {
           Container(
             color: PindColors.surface,
             alignment: Alignment.center,
-            child: const Padding(
+            child: Padding(
               padding: EdgeInsets.all(28),
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   Icon(Icons.map_outlined, size: 48, color: PindColors.muted),
                   SizedBox(height: 12),
-                  Text('지도를 불러올 수 없어요.'),
-                  Text('장소 검색과 목록으로 탐색할 수 있어요.', textAlign: TextAlign.center),
+                  Text(l10n.mapLoadFailed),
+                  Text(l10n.mapFallbackHint, textAlign: TextAlign.center),
                 ],
               ),
             ),
@@ -610,14 +616,14 @@ class _ExploreScreenState extends State<ExploreScreen> {
                       title: Text(controller!.error!),
                       trailing: TextButton(
                         onPressed: controller!.load,
-                        child: const Text('재시도'),
+                        child: Text(l10n.retry),
                       ),
                     ),
                   ),
                 if (controller == null)
-                  const Padding(
+                  Padding(
                     padding: EdgeInsets.all(16),
-                    child: Text('연결 설정 후 장소를 탐색할 수 있어요.'),
+                    child: Text(l10n.needsBackend),
                   ),
               ],
             ),
@@ -652,13 +658,13 @@ class _ExploreScreenState extends State<ExploreScreen> {
                             children: [
                               if (widget.mapsEnabled) ...[
                                 _MapGlassButton(
-                                  tooltip: '확대',
+                                  tooltip: l10n.zoomIn,
                                   onPressed: () =>
                                       map?.animateCamera(CameraUpdate.zoomIn()),
                                   child: const Icon(Icons.add),
                                 ),
                                 _MapGlassButton(
-                                  tooltip: '축소',
+                                  tooltip: l10n.zoomOut,
                                   onPressed: () => map?.animateCamera(
                                     CameraUpdate.zoomOut(),
                                   ),
@@ -666,7 +672,7 @@ class _ExploreScreenState extends State<ExploreScreen> {
                                 ),
                               ],
                               _MapGlassButton(
-                                tooltip: '현재 위치',
+                                tooltip: l10n.myLocation,
                                 onPressed: locating ? null : locate,
                                 child: locating
                                     ? const SizedBox(

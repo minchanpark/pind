@@ -1,3 +1,4 @@
+import '../l10n/l10n.dart';
 import 'place_context.dart';
 import 'places.dart';
 import 'preferences.dart';
@@ -29,7 +30,7 @@ class RankedPlace {
   final int reviewCount, saveCount;
   final bool saved;
 
-  /// `하람 외 1명이 다녀감` / `하람님이 저장함`; visits win over saves.
+  /// `하람 외 1명이 다녀감` / `하람님이 저장함` (localized); visits win over saves.
   final String? friendLine;
   final List<String?> friendAvatars;
 
@@ -37,9 +38,8 @@ class RankedPlace {
   factory RankedPlace.fromJson(Map<String, dynamic> json, {String? imageUrl}) {
     final visited = json['visitedBy'] as Map? ?? {};
     final saved = json['savedBy'] as Map? ?? {};
-    final (by, verb) = ((visited['count'] as num?) ?? 0) > 0
-        ? (visited, '다녀감')
-        : (saved, '저장함');
+    final visits = ((visited['count'] as num?) ?? 0) > 0;
+    final by = visits ? visited : saved;
     final count = (by['count'] as num?)?.toInt() ?? 0;
     final people = (by['people'] as List? ?? []).cast<Map>();
     final first = people.firstOrNull?['name'] as String?;
@@ -53,9 +53,9 @@ class RankedPlace {
       saved: json['saved'] == true,
       friendLine: count == 0 || first == null
           ? null
-          : count == 1
-          ? '$first님이 $verb'
-          : '$first 외 ${count - 1}명이 $verb',
+          : visits
+          ? l10n.friendsVisited(first, count - 1)
+          : l10n.friendsSaved(first, count - 1),
       friendAvatars: [for (final p in people) p['avatar'] as String?],
     );
   }

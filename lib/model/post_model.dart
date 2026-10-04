@@ -22,12 +22,16 @@ class PostDraft {
     required List<PostPhoto> photos,
     required Map<PreferenceCriterion, int> ratings,
     required this.body,
+    this.isPublic = true,
   }) : photos = List.unmodifiable(photos),
        ratings = Map.unmodifiable(ratings);
   final Place place;
   final List<PostPhoto> photos;
   final Map<PreferenceCriterion, int> ratings;
   final String body;
+
+  /// False: only the people who follow me see it.
+  final bool isPublic;
 }
 
 class PublishedPost {
@@ -48,6 +52,7 @@ class PostModel extends ChangeNotifier {
   final List<PostPhoto> photos = [];
   final Map<PreferenceCriterion, int> ratings = {};
   String body = '';
+  bool isPublic = true;
   bool pickingPhotos = false, publishing = false;
   String? error;
 
@@ -73,6 +78,7 @@ class PostModel extends ChangeNotifier {
     photos: photos,
     ratings: {for (final c in criteria) c: ratings[c]!},
     body: body,
+    isPublic: isPublic,
   );
   void update(VoidCallback change) {
     change();

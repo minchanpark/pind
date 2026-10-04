@@ -2,13 +2,14 @@ import 'dart:math' as math;
 import 'dart:ui';
 
 import 'package:flutter/material.dart';
-import 'package:flutter_svg/flutter_svg.dart';
+import 'package:lottie/lottie.dart';
 import 'package:flutter/services.dart';
 
 import '../../controllers/registration_controller.dart';
 import '../../model/registration_model.dart';
 import '../design_system.dart';
 import 'registration_components.dart';
+import '../../l10n/l10n.dart';
 
 class LoginScreen extends StatelessWidget {
   const LoginScreen({super.key, required this.controller});
@@ -84,8 +85,8 @@ class LoginScreen extends StatelessWidget {
                                 ),
                               ),
                               const SizedBox(height: 6),
-                              const Text(
-                                '내 취향에 맞는 맛집만, 지도 위에서',
+                              Text(
+                                l10n.loginTagline,
                                 style: TextStyle(
                                   fontSize: PindType.bodyLarge,
                                   color: PindColors.muted,
@@ -93,21 +94,21 @@ class LoginScreen extends StatelessWidget {
                               ),
                               const SizedBox(height: 26),
                               _loginButton(
-                                '카카오로 3초 만에 시작하기',
+                                l10n.loginKakao,
                                 LoginProvider.kakao,
                                 PindColors.kakao,
                                 PindColors.ink,
                               ),
                               const SizedBox(height: 10),
                               _loginButton(
-                                'Apple로 계속하기',
+                                l10n.loginApple,
                                 LoginProvider.apple,
                                 const Color(0xB3141418),
                                 Colors.white,
                               ),
                               const SizedBox(height: 10),
                               _loginButton(
-                                'Google로 계속하기',
+                                l10n.loginGoogle,
                                 LoginProvider.google,
                                 const Color(0xB8FBFBFD),
                                 PindColors.ink,
@@ -123,8 +124,8 @@ class LoginScreen extends StatelessWidget {
                                     onPressed: controller.model.busy
                                         ? null
                                         : controller.preview,
-                                    child: const Text(
-                                      '로그인 없이 화면 체험',
+                                    child: Text(
+                                      l10n.loginPreview,
                                       style: TextStyle(
                                         fontSize: PindType.label,
                                         color: PindColors.muted,
@@ -164,7 +165,10 @@ class LoginScreen extends StatelessWidget {
         foregroundColor: foreground,
         minimumSize: const Size.fromHeight(50),
         padding: const EdgeInsets.symmetric(vertical: 16),
-        textStyle: const TextStyle(fontSize: PindType.bodyLarge, fontWeight: FontWeight.w700),
+        textStyle: const TextStyle(
+          fontSize: PindType.bodyLarge,
+          fontWeight: FontWeight.w700,
+        ),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         side: BorderSide(
           color: provider == LoginProvider.apple
@@ -188,81 +192,44 @@ class LoginScreen extends StatelessWidget {
   );
 }
 
-class _LoginArtwork extends StatelessWidget {
+/// The PIND intro (assets/app/PIND_intro.lottie.json, 402×508, 3.6s): road,
+/// letters, pin and "Find it. Pin it." play once and stay. With reduce motion
+/// on, the finished frame shows at once.
+class _LoginArtwork extends StatefulWidget {
   const _LoginArtwork();
+  @override
+  State<_LoginArtwork> createState() => _LoginArtworkState();
+}
+
+class _LoginArtworkState extends State<_LoginArtwork>
+    with SingleTickerProviderStateMixin {
+  late final intro = AnimationController(vsync: this);
+
+  @override
+  void dispose() {
+    intro.dispose();
+    super.dispose();
+  }
+
   @override
   Widget build(BuildContext context) => SizedBox(
     width: 402,
-    height: 520,
+    height: 508,
     child: ExcludeSemantics(
-      child: Stack(
-        clipBehavior: Clip.none,
-        children: [
-          Positioned(
-            left: 6.856,
-            top: 76.784,
-            // Original Figma export of the individual path node. Its SVG export
-            // produces different dash spacing from the design in Flutter.
-            child: Image.asset(
-              'assets/login/route_path.png',
-              width: 393,
-              height: 281,
-            ),
-          ),
-          const Positioned(
-            left: 27,
-            top: 121,
-            child: Text(
-              'P',
-              textScaler: TextScaler.noScaling,
-              style: TextStyle(
-                fontFamily: 'BraahOne',
-                fontSize: 212.679,
-                height: 1,
-                color: Colors.black,
-              ),
-            ),
-          ),
-          const Positioned(
-            left: 91,
-            top: 242,
-            child: Text(
-              'IND',
-              textScaler: TextScaler.noScaling,
-              style: TextStyle(
-                fontFamily: 'BraahOne',
-                fontSize: 159.509,
-                height: 1,
-                color: Colors.black,
-              ),
-            ),
-          ),
-          Positioned(
-            left: 321,
-            top: 210,
-            child: SvgPicture.asset(
-              'assets/login/pin.svg',
-              width: 58,
-              height: 78.1015,
-            ),
-          ),
-          const Positioned(
-            left: 6,
-            right: 0,
-            top: 411,
-            child: Text(
-              'Find it. Pin it.',
-              textAlign: TextAlign.center,
-              textScaler: TextScaler.noScaling,
-              style: TextStyle(
-                fontFamily: 'Bayon',
-                fontSize: 50.944,
-                height: 1,
-                color: Colors.black,
-              ),
-            ),
-          ),
-        ],
+      child: Lottie.asset(
+        'assets/app/PIND_intro.lottie.json',
+        controller: intro,
+        width: 402,
+        height: 508,
+        fit: BoxFit.contain,
+        onLoaded: (composition) {
+          intro.duration = composition.duration;
+          if (MediaQuery.disableAnimationsOf(context)) {
+            intro.value = 1;
+          } else {
+            intro.forward();
+          }
+        },
       ),
     ),
   );

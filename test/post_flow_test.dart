@@ -136,8 +136,18 @@ void main() {
       expect(saved!.placeId, 42);
       expect(service.drafts.single.body, isEmpty);
       expect(service.drafts.single.photos.length, 2);
+      expect(service.drafts.single.isPublic, true);
     },
   );
+  test('친구 공개 reaches the published draft', () async {
+    final service = TestPosts();
+    final controller = make(service);
+    addTearDown(controller.dispose);
+    await ready(controller);
+    controller.setPublic(false);
+    await controller.publish();
+    expect(service.drafts.single.isPublic, false);
+  });
   test('ratings follow the author onboarding priorities', () async {
     final service = TestPosts();
     final controller = PostController(

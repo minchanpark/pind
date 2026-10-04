@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../model/preferences.dart';
+import '../l10n/l10n.dart';
 
 /// P0 device draft only. Server onboarding completion is a separate P1 contract.
 class PreferenceService {
@@ -26,7 +27,7 @@ class PreferenceService {
       throw StateError('Incomplete taste preferences');
     }
     if (!await storage.setString(key, jsonEncode(preferences.toJson()))) {
-      throw StateError('취향을 저장하지 못했어요. 다시 시도해 주세요.');
+      throw StateError(l10n.errTasteSave);
     }
   }
 }

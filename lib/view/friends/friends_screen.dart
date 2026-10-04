@@ -8,11 +8,13 @@ import '../../model/profile_link.dart';
 import '../../services/place_action_service.dart';
 import '../components/pind_back_header.dart';
 import '../components/pind_glass.dart';
+import '../components/pind_skeleton.dart';
 import '../components/pind_search_field.dart';
 import '../profile/profile_follow.dart' show PersonRow;
 import '../profile/profile_screen.dart' show mutedNote;
 import '../design_system.dart';
 import 'share_code_screen.dart';
+import '../../l10n/l10n.dart';
 
 /// Figma 653:25641: search, share my code, and taste-matched people to follow.
 class FriendsScreen extends StatefulWidget {
@@ -72,7 +74,7 @@ class _FriendsScreenState extends State<FriendsScreen> {
     if (box == null) return;
     final origin = box.localToGlobal(Offset.zero) & box.size;
     final text = await controller.inviteText();
-    await PlaceActionService.share(text, 'Pind 친구 초대', origin);
+    await PlaceActionService.share(text, l10n.inviteToPind, origin);
   }
 
   @override
@@ -92,13 +94,15 @@ class _FriendsScreenState extends State<FriendsScreen> {
         child: ListView(
           padding: const EdgeInsets.fromLTRB(24, 2, 24, 32),
           children: [
-            const PindBackHeader('친구 추가'),
+            PindBackHeader(l10n.addFriend),
             const SizedBox(height: 14),
             searchBar(),
             if (searching) ...[
               const SizedBox(height: 16),
               Text(
-                model.searching ? '검색 결과' : '검색 결과 ${model.results.length}명',
+                model.searching
+                    ? l10n.searchResults
+                    : l10n.searchResultsCount(model.results.length),
                 style: const TextStyle(
                   fontSize: PindType.label,
                   fontWeight: FontWeight.w700,
@@ -109,11 +113,11 @@ class _FriendsScreenState extends State<FriendsScreen> {
               ...list(
                 model.results,
                 busy: model.searching,
-                empty: '검색 결과가 없어요.',
+                empty: l10n.noSearchResults,
               ),
               const SizedBox(height: 20),
-              const Text(
-                '찾는 사람이 없나요?',
+              Text(
+                l10n.cantFindSomeone,
                 style: TextStyle(
                   fontSize: PindType.label,
                   fontWeight: FontWeight.w700,
@@ -121,13 +125,17 @@ class _FriendsScreenState extends State<FriendsScreen> {
                 ),
               ),
               const SizedBox(height: 8),
-              linkCard('링크로 초대하기', shareInvite, icon: '✉'),
+              linkCard(l10n.inviteByLink, shareInvite, icon: '✉'),
             ] else ...[
               const SizedBox(height: 14),
-              linkCard('내 코드 공유하기', openShareCode, subtitle: '링크로 친구를 초대해요'),
+              linkCard(
+                l10n.shareMyCodeAction,
+                openShareCode,
+                subtitle: l10n.inviteByLinkHint,
+              ),
               const SizedBox(height: 22),
               sectionTitle(
-                '취향이 비슷한 사람',
+                l10n.similarTaste,
                 more: model.hasMore && !model.loadingMore
                     ? controller.loadMore
                     : null,
@@ -136,7 +144,7 @@ class _FriendsScreenState extends State<FriendsScreen> {
               ...list(
                 model.matches,
                 busy: model.loading,
-                empty: '아직 취향이 비슷한 사람이 없어요.',
+                empty: l10n.noSimilarTaste,
               ),
               if (model.loadingMore)
                 const Padding(
@@ -162,7 +170,7 @@ class _FriendsScreenState extends State<FriendsScreen> {
                     if (!searching && model.matches.isEmpty)
                       TextButton(
                         onPressed: controller.load,
-                        child: const Text('다시 시도'),
+                        child: Text(l10n.retry),
                       ),
                   ],
                 ),
@@ -175,7 +183,7 @@ class _FriendsScreenState extends State<FriendsScreen> {
 
   Widget searchBar() => PindSearchField(
     controller: query,
-    hint: '아이디 또는 이름 검색',
+    hint: l10n.searchIdOrName,
     onChanged: (text) => search(text, now: text.isEmpty),
     onSubmitted: (text) => search(text, now: true),
   );
@@ -202,7 +210,10 @@ class _FriendsScreenState extends State<FriendsScreen> {
               if (icon != null)
                 Text(
                   icon,
-                  style: const TextStyle(fontSize: PindType.body, color: PindColors.purple),
+                  style: const TextStyle(
+                    fontSize: PindType.body,
+                    color: PindColors.purple,
+                  ),
                 ),
               Expanded(
                 child: Column(
@@ -258,11 +269,14 @@ class _FriendsScreenState extends State<FriendsScreen> {
       if (more != null)
         InkWell(
           onTap: more,
-          child: const Padding(
+          child: Padding(
             padding: EdgeInsets.symmetric(vertical: 4),
             child: Text(
-              '더보기 ›',
-              style: TextStyle(fontSize: PindType.caption, color: PindColors.muted),
+              l10n.seeMore,
+              style: TextStyle(
+                fontSize: PindType.caption,
+                color: PindColors.muted,
+              ),
             ),
           ),
         ),
@@ -274,17 +288,12 @@ class _FriendsScreenState extends State<FriendsScreen> {
     required bool busy,
     required String empty,
   }) {
+    if (people.isEmpty && busy) return [peopleSkeleton()];
     if (people.isEmpty) {
       return [
         Padding(
           padding: const EdgeInsets.symmetric(vertical: 24),
-          child: Center(
-            child: busy
-                ? const CircularProgressIndicator()
-                : model.error == null
-                ? mutedNote(empty)
-                : null,
-          ),
+          child: Center(child: model.error == null ? mutedNote(empty) : null),
         ),
       ];
     }

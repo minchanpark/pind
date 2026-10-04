@@ -9,6 +9,8 @@ import '../components/pind_glass.dart';
 import '../explore/explore_screen.dart';
 import '../design_system.dart';
 import 'post_place_picker.dart';
+import '../../l10n/l10n.dart';
+import '../../l10n/categories.dart';
 
 class PostComposer extends StatefulWidget {
   const PostComposer({super.key, required this.controller});
@@ -68,7 +70,7 @@ class _PostComposerState extends State<PostComposer> {
       appBar: AppBar(
         toolbarHeight: 49.7,
         leading: IconButton(
-          tooltip: '닫기',
+          tooltip: l10n.close,
           onPressed: model.publishing ? null : () => Navigator.pop(context),
           icon: SvgPicture.asset(
             'assets/post_composer/close_icon.svg',
@@ -76,8 +78,8 @@ class _PostComposerState extends State<PostComposer> {
             height: 20.6096,
           ),
         ),
-        title: const Text(
-          '게시물 작성',
+        title: Text(
+          l10n.newPost,
           style: TextStyle(
             fontSize: 15.462,
             fontWeight: FontWeight.w600,
@@ -87,7 +89,11 @@ class _PostComposerState extends State<PostComposer> {
         centerTitle: true,
         bottom: const PreferredSize(
           preferredSize: Size.fromHeight(.7),
-          child: Divider(height: .7, thickness: .7, color: PindColors.pastelSage),
+          child: Divider(
+            height: .7,
+            thickness: .7,
+            color: PindColors.pastelSage,
+          ),
         ),
       ),
       body: CustomScrollView(
@@ -96,10 +102,10 @@ class _PostComposerState extends State<PostComposer> {
             padding: const EdgeInsets.only(top: 32),
             sliver: SliverList.list(
               children: [
-                const Padding(
+                Padding(
                   padding: EdgeInsets.symmetric(horizontal: 16),
                   child: Text(
-                    '사진 추가',
+                    l10n.addPhotos,
                     style: TextStyle(
                       fontSize: PindType.body,
                       height: 1.2,
@@ -115,17 +121,17 @@ class _PostComposerState extends State<PostComposer> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      section('방문한 식당'),
+                      section(l10n.visitedRestaurant),
                       const SizedBox(height: 10),
                       place(),
                       const SizedBox(height: 28),
                       Row(
                         children: [
-                          section('평점'),
+                          section(l10n.ratings),
                           const SizedBox(width: 8),
-                          const Expanded(
+                          Expanded(
                             child: Text(
-                              '맛 · 양 · 분위기 (필수)',
+                              l10n.ratingsRequired,
                               style: TextStyle(
                                 fontSize: PindType.caption,
                                 color: PindColors.muted,
@@ -174,9 +180,9 @@ class _PostComposerState extends State<PostComposer> {
                         ),
                         child: Row(
                           children: [
-                            const Expanded(
+                            Expanded(
                               child: Text(
-                                '내 평균 별점',
+                                l10n.myAverageRating,
                                 style: TextStyle(
                                   fontSize: PindType.label,
                                   height: 1.2,
@@ -210,10 +216,10 @@ class _PostComposerState extends State<PostComposer> {
                       const SizedBox(height: 32),
                       Row(
                         children: [
-                          section('글 작성하기'),
+                          section(l10n.writeReview),
                           const SizedBox(width: 8),
-                          const Text(
-                            '선택',
+                          Text(
+                            l10n.optional,
                             style: TextStyle(
                               fontSize: PindType.caption,
                               color: PindColors.muted,
@@ -246,12 +252,12 @@ class _PostComposerState extends State<PostComposer> {
                                 color: PindColors.ink,
                                 letterSpacing: 0,
                               ),
-                              decoration: const InputDecoration(
+                              decoration: InputDecoration(
                                 isDense: true,
                                 border: InputBorder.none,
                                 contentPadding: EdgeInsets.zero,
                                 counterText: '',
-                                hintText: '이 음식을 고향 음식에 비유하면? 처음 먹어본 외국인으로서 솔직한 후기를 남겨주세요.',
+                                hintText: l10n.reviewHint,
                                 hintStyle: TextStyle(
                                   fontSize: 12.536,
                                   height: 23.767 / 12.536,
@@ -274,6 +280,26 @@ class _PostComposerState extends State<PostComposer> {
                           ],
                         ),
                       ),
+                      const SizedBox(height: 32),
+                      section(l10n.visibility),
+                      const SizedBox(height: 10),
+                      Row(
+                        children: [
+                          Expanded(child: visibility(true)),
+                          const SizedBox(width: 8),
+                          Expanded(child: visibility(false)),
+                        ],
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        model.isPublic
+                            ? l10n.visibilityPublicHint
+                            : l10n.visibilityFriendsHint,
+                        style: TextStyle(
+                          fontSize: PindType.caption,
+                          color: PindColors.muted,
+                        ),
+                      ),
                       if (model.error != null) ...[
                         const SizedBox(height: 16),
                         Text(
@@ -282,7 +308,7 @@ class _PostComposerState extends State<PostComposer> {
                             fontSize: PindType.label,
                             color: Colors.red,
                           ),
-                          semanticsLabel: '오류: ${model.error}',
+                          semanticsLabel: l10n.errorPrefix(model.error!),
                         ),
                       ],
                     ],
@@ -305,9 +331,7 @@ class _PostComposerState extends State<PostComposer> {
                     // Figma 531:18203 / 531:18277: one dark-rimmed pill whose
                     // fill turns solid purple once the post can be published.
                     tone: PindGlassTone.dark,
-                    fillColor: model.canPublish
-                        ? PindColors.purpleLight
-                        : null,
+                    fillColor: model.canPublish ? PindColors.purpleLight : null,
                     radius: 22,
                     child: SizedBox(
                       width: double.infinity,
@@ -328,8 +352,8 @@ class _PostComposerState extends State<PostComposer> {
                                   color: Colors.white,
                                 ),
                               )
-                            : const Text(
-                                '게시하기',
+                            : Text(
+                                l10n.publish,
                                 style: TextStyle(
                                   fontSize: PindType.body,
                                   fontWeight: FontWeight.w600,
@@ -370,7 +394,7 @@ class _PostComposerState extends State<PostComposer> {
           return SizedBox(
             width: 112,
             child: Semantics(
-              label: '사진 추가',
+              label: l10n.addPhotos,
               button: true,
               child: InkWell(
                 onTap: model.publishing || model.pickingPhotos
@@ -417,7 +441,7 @@ class _PostComposerState extends State<PostComposer> {
         return SizedBox(
           width: 112,
           child: Semantics(
-            label: '사진 ${index + 1}, 길게 눌러 삭제',
+            label: l10n.photoLongPressDelete(index + 1),
             child: GestureDetector(
               onLongPress: model.publishing
                   ? null
@@ -427,9 +451,7 @@ class _PostComposerState extends State<PostComposer> {
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(12),
                   border: Border.all(
-                    color: index == 0
-                        ? PindColors.limeDeep
-                        : PindColors.purple,
+                    color: index == 0 ? PindColors.limeDeep : PindColors.purple,
                     width: 2,
                   ),
                 ),
@@ -479,7 +501,7 @@ class _PostComposerState extends State<PostComposer> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      selected?.name ?? '방문한 식당을 선택해 주세요',
+                      selected?.name ?? l10n.pickVisitedRestaurant,
                       style: const TextStyle(
                         fontSize: PindType.bodyLarge,
                         fontWeight: FontWeight.w700,
@@ -490,7 +512,7 @@ class _PostComposerState extends State<PostComposer> {
                     if (selected != null) ...[
                       const SizedBox(height: 3),
                       Text(
-                        '${selected.category} · ${selected.address}',
+                        '${categoryLabel(selected.category)} · ${selected.address}',
                         style: const TextStyle(
                           fontSize: PindType.caption,
                           color: PindColors.muted,
@@ -504,7 +526,7 @@ class _PostComposerState extends State<PostComposer> {
               ),
               const SizedBox(width: 8),
               Text(
-                selected == null ? '선택' : '변경',
+                selected == null ? l10n.select : l10n.change,
                 style: const TextStyle(
                   fontSize: PindType.label,
                   fontWeight: FontWeight.w700,
@@ -512,6 +534,48 @@ class _PostComposerState extends State<PostComposer> {
                 ),
               ),
             ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  /// 공개: everyone. 친구 공개: only my followers.
+  Widget visibility(bool public) {
+    final selected = model.isPublic == public;
+    final color = selected ? PindColors.purple : PindColors.muted;
+    return Semantics(
+      button: true,
+      selected: selected,
+      child: PindGlass(
+        radius: 14,
+        borderColor: selected ? PindColors.purple : null,
+        child: InkWell(
+          onTap: model.publishing ? null : () => controller.setPublic(public),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(vertical: 12),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(
+                  public ? Icons.public : Icons.group_outlined,
+                  size: 16,
+                  color: color,
+                ),
+                const SizedBox(width: 6),
+                Flexible(
+                  child: Text(
+                    public ? l10n.visibilityPublic : l10n.visibilityFriends,
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      fontSize: PindType.label,
+                      fontWeight: FontWeight.w700,
+                      color: selected ? PindColors.purple : PindColors.ink,
+                    ),
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
       ),
@@ -544,7 +608,7 @@ class _PostComposerState extends State<PostComposer> {
       children: [
         for (var n = 1; n <= 5; n++)
           Semantics(
-            label: '${axis.label} $n점',
+            label: l10n.ratingScore(axis.label, n),
             button: true,
             selected: score == n,
             child: GestureDetector(
@@ -612,25 +676,25 @@ class _PostComposerState extends State<PostComposer> {
 
   String scoreLabel(PreferenceCriterion axis, int score) => switch (axis) {
     PreferenceCriterion.taste => switch (score) {
-      5 => '최고예요',
-      4 => '맛있어요',
-      3 => '괜찮아요',
-      2 => '아쉬워요',
-      _ => '별로예요',
+      5 => l10n.rateBest,
+      4 => l10n.rateTasty,
+      3 => l10n.rateOkay,
+      2 => l10n.rateMeh,
+      _ => l10n.rateBad,
     },
     PreferenceCriterion.portion => switch (score) {
-      5 => '아주 많아요',
-      4 => '넉넉해요',
-      3 => '적당해요',
-      2 => '적어요',
-      _ => '아주 적어요',
+      5 => l10n.portionHuge,
+      4 => l10n.portionGenerous,
+      3 => l10n.portionJustRight,
+      2 => l10n.portionSmall,
+      _ => l10n.portionTiny,
     },
     _ => switch (score) {
-      5 => '최고예요',
-      4 => '좋아요',
-      3 => '괜찮아요',
-      2 => '아쉬워요',
-      _ => '별로예요',
+      5 => l10n.rateBest,
+      4 => l10n.rateGood,
+      3 => l10n.rateOkay,
+      2 => l10n.rateMeh,
+      _ => l10n.rateBad,
     },
   };
 }

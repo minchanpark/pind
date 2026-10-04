@@ -5,6 +5,7 @@ import '../model/place_search_result.dart';
 import '../model/profile_model.dart';
 import '../services/data_revision.dart';
 import '../services/discover_service.dart';
+import '../l10n/l10n.dart';
 
 class DiscoverController {
   DiscoverController({required DiscoverService? service, this.deletePost})
@@ -35,7 +36,7 @@ class DiscoverController {
     try {
       await deletePost!(post.post.id);
     } catch (caught) {
-      return caught is PlaceFailure ? caught.message : '게시물을 삭제하지 못했어요.';
+      return caught is PlaceFailure ? caught.message : l10n.errPostDelete;
     }
     _drop(post.post.id);
     return null;
@@ -58,7 +59,34 @@ class DiscoverController {
   int _request = 0;
   final _liking = <int>{};
 
+  /// The bell's badge and the 알림 page. A failure keeps what was there;
+  /// the page shows its own error.
+  Future<void> loadNotifications() async {
+    try {
+      final inbox = await _service.notifications();
+      if (!_disposed) model.update(() => model.inbox = inbox);
+    } catch (_) {
+      if (!_disposed && model.inbox == null) rethrow;
+    }
+  }
+
+  /// 모두 읽음: at once here, then on the server.
+  Future<void> markNotificationsRead() async {
+    final inbox = model.inbox;
+    if (inbox == null || inbox.unread == 0) return;
+    model.update(() => model.inbox = inbox.readAll(DateTime.now()));
+    try {
+      final at = await _service.markNotificationsRead();
+      if (!_disposed) model.update(() => model.inbox = inbox.readAll(at));
+    } catch (_) {
+      if (!_disposed) model.update(() => model.inbox = inbox);
+      rethrow;
+    }
+  }
+
   Future<void> load() async {
+    // The badge follows the feed; its errors stay on the 알림 page.
+    loadNotifications().catchError((_) {});
     final request = ++_request;
     model.update(() {
       model.loading = true;
@@ -141,7 +169,7 @@ class DiscoverController {
   }
 
   String _message(Object caught) =>
-      caught is PlaceFailure ? caught.message : '피드를 불러오지 못했어요.';
+      caught is PlaceFailure ? caught.message : l10n.errFeedLoad;
 
   void dispose() {
     _edits.cancel();

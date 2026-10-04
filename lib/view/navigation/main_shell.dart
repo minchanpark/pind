@@ -1,6 +1,7 @@
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 import '../../controllers/discover_controller.dart';
 import '../../controllers/friends_controller.dart';
@@ -23,6 +24,7 @@ import '../discover/discover_screen.dart';
 import '../friends/friends_screen.dart';
 import '../posts/post_composer.dart';
 import '../profile/profile_screen.dart';
+import '../../l10n/l10n.dart';
 
 class MainShell extends StatefulWidget {
   const MainShell({
@@ -36,6 +38,7 @@ class MainShell extends StatefulWidget {
     required this.onEditPreferences,
     this.preferences,
     this.pendingLink,
+    this.onSignOut,
   });
   final ExploreController? controller;
   final PostService? posts;
@@ -49,13 +52,20 @@ class MainShell extends StatefulWidget {
   /// Shared profile link to open; taken (set to null) once handled.
   final ValueNotifier<ProfileLink?>? pendingLink;
 
+  /// My Page's 로그아웃; null hides it.
+  final Future<void> Function()? onSignOut;
+
   @override
   State<MainShell> createState() => _MainShellState();
 }
 
 class _MainShellState extends State<MainShell> {
   final navigation = NavigationController();
-  late final profile = ProfileController(profile: widget.profile);
+  late final profile = ProfileController(
+    profile: widget.profile,
+    // My 팔로워/팔로잉 lists and following back from them.
+    friends: widget.friends,
+  );
   late final discover = DiscoverController(
     service: widget.discover,
     deletePost: widget.posts?.delete,
@@ -93,6 +103,7 @@ class _MainShellState extends State<MainShell> {
 
   void select(PindTab tab) {
     if (selected == tab) return;
+    HapticFeedback.selectionClick();
     FocusManager.instance.primaryFocus?.unfocus();
     navigation.select(tab);
     // Saves, views and likes change on other tabs; the page keeps showing the
@@ -114,12 +125,12 @@ class _MainShellState extends State<MainShell> {
     try {
       id = link.userId ?? await widget.profile?.findUserId(link.handle!);
     } catch (_) {
-      messenger.showSnackBar(const SnackBar(content: Text('프로필을 열지 못했어요.')));
+      messenger.showSnackBar(SnackBar(content: Text(l10n.errProfileOpen)));
       return;
     }
     if (!mounted) return;
     if (id == null) {
-      messenger.showSnackBar(const SnackBar(content: Text('프로필을 찾을 수 없어요.')));
+      messenger.showSnackBar(SnackBar(content: Text(l10n.errProfileNotFound)));
     } else if (id == widget.posts?.userId) {
       // My own link: back to the shell, on My Page.
       Navigator.of(context).popUntil((route) => route.isFirst);
@@ -204,6 +215,7 @@ class _MainShellState extends State<MainShell> {
         ),
       );
       if (saved != null && mounted) {
+        HapticFeedback.mediumImpact();
         // The new post belongs on My Page and at the top of Discover.
         profile.load();
         discover.load();
@@ -211,7 +223,7 @@ class _MainShellState extends State<MainShell> {
         await widget.controller?.showPublishedPlace(saved.placeId);
         if (mounted) {
           ScaffoldMessenger.of(context)
-              .showSnackBar(const SnackBar(content: Text('게시물을 등록했어요.')));
+              .showSnackBar(SnackBar(content: Text(l10n.postPublished)));
         }
       }
     } finally {
@@ -245,6 +257,7 @@ class _MainShellState extends State<MainShell> {
                     preferences: widget.preferences,
                     bottomClearance: clearance,
                     onFindFriends: openFriends,
+                    onOpenProfile: openProfile,
                   ),
                 ),
                 TickerMode(
@@ -262,6 +275,7 @@ class _MainShellState extends State<MainShell> {
                   enabled: selected == PindTab.profile,
                   child: ProfileScreen(
                     controller: profile,
+                    onSignOut: widget.onSignOut,
                     myId: widget.posts?.userId,
                     onOpenProfile: openProfile,
                     explore: widget.controller,

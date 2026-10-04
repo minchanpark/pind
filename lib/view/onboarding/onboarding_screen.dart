@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 
+import '../components/pind_pressable.dart';
 import '../design_system.dart';
 import 'registration_components.dart';
 import '../../model/preferences.dart';
 import '../../controllers/onboarding_controller.dart';
+import '../../l10n/l10n.dart';
 
 class OnboardingScreen extends StatefulWidget {
   const OnboardingScreen({
@@ -68,17 +70,27 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   @override
   Widget build(BuildContext context) {
     final canContinue = controller.model.canContinue;
-    final titles = ['가게 고를 때\n뭘 제일 봐요?', '외식 선호도를 선택해주세요.', '좋아하는걸 선택해주세요.'];
+    final titles = [
+      l10n.onboardingTitlePriorities,
+      l10n.onboardingTitleOccasions,
+      l10n.onboardingTitleCuisines,
+    ];
     final subtitles = [
-      '딱 3개만. 순서대로 50% · 30% · 20%를 반영해요.',
-      '최대 3개. 상황에 맞는 리스트를 만들어 드려요.',
-      '3개 이상 골라주세요. 고를수록 추천이 정확해집니다.',
+      l10n.onboardingHintPriorities,
+      l10n.onboardingHintOccasions,
+      l10n.onboardingHintCuisines,
     ];
     final summary = step == 0
         ? (preferences.priorities.isEmpty
-              ? '중요한 기준 3개를 골라주세요.'
-              : '${preferences.priorities.map((p) => p.label).join(' › ')} 순으로 반영됩니다')
-        : '${step == 1 ? preferences.occasions.length : preferences.cuisines.length}개 선택됨';
+              ? l10n.onboardingPickThree
+              : l10n.prioritiesOrder(
+                  preferences.priorities.map((p) => p.label).join(' › '),
+                ))
+        : l10n.selectedCount(
+            step == 1
+                ? preferences.occasions.length
+                : preferences.cuisines.length,
+          );
     return PopScope(
       canPop: step == 0 && !saving && widget.onCancel == null,
       onPopInvokedWithResult: (didPop, _) {
@@ -102,7 +114,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                     child: Row(
                       children: [
                         IconButton(
-                          tooltip: '이전',
+                          tooltip: l10n.previous,
                           onPressed: saving
                               ? null
                               : step > 0
@@ -112,7 +124,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                         ),
                         Expanded(
                           child: Semantics(
-                            label: '취향 설정 ${step + 1} / 3 단계',
+                            label: l10n.onboardingStep(step + 1),
                             child: Row(
                               children: [
                                 for (var i = 0; i < 3; i++)
@@ -266,10 +278,10 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                           onPressed: canContinue && !saving ? next : null,
                           child: Text(
                             saving
-                                ? '저장 중…'
+                                ? l10n.saving
                                 : step == 2
-                                ? '내 취향 지도 만들기'
-                                : '다음',
+                                ? l10n.buildTasteMap
+                                : l10n.next,
                           ),
                         ),
                       ],
@@ -304,62 +316,64 @@ class SelectionCard extends StatelessWidget {
     button: true,
     selected: selected,
     label: '$label, $description${rank == null ? '' : ', $rank순위'}',
-    child: Material(
-      color: selected ? PindColors.lime : PindColors.surface,
-      borderRadius: BorderRadius.circular(18),
-      child: InkWell(
-        onTap: onTap,
+    child: PindPressable(
+      child: Material(
+        color: selected ? PindColors.lime : PindColors.surface,
         borderRadius: BorderRadius.circular(18),
-        child: Container(
-          constraints: const BoxConstraints(minHeight: 68),
-          padding: const EdgeInsets.all(14),
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(18),
-            border: Border.all(
-              color: selected ? PindColors.ink : PindColors.border,
-              width: rank == 1 ? 2 : 1,
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(18),
+          child: Container(
+            constraints: const BoxConstraints(minHeight: 68),
+            padding: const EdgeInsets.all(14),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(18),
+              border: Border.all(
+                color: selected ? PindColors.ink : PindColors.border,
+                width: rank == 1 ? 2 : 1,
+              ),
             ),
-          ),
-          child: ExcludeSemantics(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                if (rank != null)
-                  Container(
-                    margin: const EdgeInsets.only(bottom: 5),
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 7,
-                      vertical: 3,
-                    ),
-                    decoration: BoxDecoration(
-                      color: PindColors.ink,
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: Text(
-                      '$rank순위',
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: PindType.micro,
-                        fontWeight: FontWeight.w700,
+            child: ExcludeSemantics(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  if (rank != null)
+                    Container(
+                      margin: const EdgeInsets.only(bottom: 5),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 7,
+                        vertical: 3,
+                      ),
+                      decoration: BoxDecoration(
+                        color: PindColors.ink,
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Text(
+                        l10n.rankLabel(rank!),
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: PindType.micro,
+                          fontWeight: FontWeight.w700,
+                        ),
                       ),
                     ),
+                  Text(
+                    label,
+                    style: const TextStyle(
+                      fontSize: PindType.bodyLarge,
+                      fontWeight: FontWeight.w700,
+                    ),
                   ),
-                Text(
-                  label,
-                  style: const TextStyle(
-                    fontSize: PindType.bodyLarge,
-                    fontWeight: FontWeight.w700,
+                  const SizedBox(height: 4),
+                  Text(
+                    description,
+                    style: TextStyle(
+                      fontSize: PindType.caption,
+                      color: selected ? PindColors.ink : PindColors.muted,
+                    ),
                   ),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  description,
-                  style: TextStyle(
-                    fontSize: PindType.caption,
-                    color: selected ? PindColors.ink : PindColors.muted,
-                  ),
-                ),
-              ],
+                ],
+              ),
             ),
           ),
         ),
@@ -384,71 +398,73 @@ class PhotoChoice extends StatelessWidget {
     button: true,
     selected: selected,
     label: cuisine.label,
-    child: Material(
-      color: PindColors.surface,
-      borderRadius: BorderRadius.circular(16),
-      clipBehavior: Clip.antiAlias,
-      child: InkWell(
-        onTap: onTap,
-        child: SizedBox(
-          height: MediaQuery.textScalerOf(context).scale(84).clamp(84, 148),
-          child: ExcludeSemantics(
-            child: Stack(
-              fit: StackFit.expand,
-              children: [
-                if (cuisine.asset != null)
-                  Image.asset(
-                    'assets/onboarding/cuisines/${cuisine.asset}',
-                    fit: BoxFit.cover,
-                  ),
-                if (cuisine.asset != null)
-                  const DecoratedBox(
-                    decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                        begin: Alignment.topCenter,
-                        end: Alignment.bottomCenter,
-                        colors: [Colors.transparent, Color(0x55000000)],
+    child: PindPressable(
+      child: Material(
+        color: PindColors.surface,
+        borderRadius: BorderRadius.circular(16),
+        clipBehavior: Clip.antiAlias,
+        child: InkWell(
+          onTap: onTap,
+          child: SizedBox(
+            height: MediaQuery.textScalerOf(context).scale(84).clamp(84, 148),
+            child: ExcludeSemantics(
+              child: Stack(
+                fit: StackFit.expand,
+                children: [
+                  if (cuisine.asset != null)
+                    Image.asset(
+                      'assets/onboarding/cuisines/${cuisine.asset}',
+                      fit: BoxFit.cover,
+                    ),
+                  if (cuisine.asset != null)
+                    const DecoratedBox(
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          begin: Alignment.topCenter,
+                          end: Alignment.bottomCenter,
+                          colors: [Colors.transparent, Color(0x55000000)],
+                        ),
                       ),
                     ),
-                  ),
-                if (selected)
-                  Positioned(
-                    right: 10,
-                    top: 8,
-                    child: SizedBox(
-                      width: 34,
-                      height: 34,
-                      child: Stack(
-                        alignment: Alignment.center,
-                        children: [
-                          const SetupCircle.check(24),
-                          const Text(
-                            '✓',
-                            style: TextStyle(
-                              fontSize: PindType.label,
-                              fontWeight: FontWeight.w700,
+                  if (selected)
+                    Positioned(
+                      right: 10,
+                      top: 8,
+                      child: SizedBox(
+                        width: 34,
+                        height: 34,
+                        child: Stack(
+                          alignment: Alignment.center,
+                          children: [
+                            const SetupCircle.check(24),
+                            const Text(
+                              '✓',
+                              style: TextStyle(
+                                fontSize: PindType.label,
+                                fontWeight: FontWeight.w700,
+                              ),
                             ),
-                          ),
-                        ],
+                          ],
+                        ),
+                      ),
+                    ),
+                  Positioned(
+                    left: 12,
+                    bottom: 12,
+                    right: 8,
+                    child: Text(
+                      cuisine.label,
+                      style: TextStyle(
+                        fontSize: PindType.bodyLarge,
+                        fontWeight: FontWeight.w700,
+                        color: cuisine.asset == null
+                            ? PindColors.ink
+                            : Colors.white,
                       ),
                     ),
                   ),
-                Positioned(
-                  left: 12,
-                  bottom: 12,
-                  right: 8,
-                  child: Text(
-                    cuisine.label,
-                    style: TextStyle(
-                      fontSize: PindType.bodyLarge,
-                      fontWeight: FontWeight.w700,
-                      color: cuisine.asset == null
-                          ? PindColors.ink
-                          : Colors.white,
-                    ),
-                  ),
-                ),
-              ],
+                ],
+              ),
             ),
           ),
         ),

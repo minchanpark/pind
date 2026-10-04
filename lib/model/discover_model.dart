@@ -1,6 +1,7 @@
 import 'package:flutter/foundation.dart';
 
 import 'profile_model.dart';
+import 'notification_model.dart';
 
 /// A public post in the Discover feed: the author's post plus its likes.
 class FeedPost {
@@ -35,8 +36,10 @@ class FeedPage {
 
 class DiscoverModel extends ChangeNotifier {
   List<FeedPost> posts = const [];
-  // ponytail: nothing sets this until a notifications backend exists.
-  bool hasNewAlerts = false;
+
+  /// The 알림 page's rows; null until loaded (or when it failed).
+  NotificationInbox? inbox;
+  bool get hasNewAlerts => (inbox?.unread ?? 0) > 0;
   bool loading = false, loadingMore = false, hasMore = true;
   String? error;
 

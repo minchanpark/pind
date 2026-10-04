@@ -94,7 +94,8 @@ class PindSheetButton extends StatelessWidget {
   }
 }
 
-/// A labelled glass text field, as on the sheet and the post composer.
+/// A labelled one-line glass field: label left, `8/40` count right, and a
+/// 48pt box with the text centered in it.
 class PindTextField extends StatelessWidget {
   const PindTextField({
     super.key,
@@ -110,24 +111,51 @@ class PindTextField extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Column(
-    crossAxisAlignment: CrossAxisAlignment.start,
-    spacing: 6,
+    crossAxisAlignment: CrossAxisAlignment.stretch,
+    spacing: 8,
     children: [
-      Text(label, style: PindText.label),
+      Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 4),
+        child: Row(
+          children: [
+            Expanded(child: Text(label, style: PindText.label)),
+            if (maxLength case final max?)
+              ValueListenableBuilder(
+                valueListenable: controller,
+                builder: (_, value, _) => Text(
+                  '${value.text.characters.length}/$max',
+                  style: const TextStyle(
+                    fontSize: PindType.caption,
+                    color: PindColors.subtle,
+                  ),
+                ),
+              ),
+          ],
+        ),
+      ),
       PindGlass(
         radius: PindRadius.field,
-        padding: const EdgeInsets.symmetric(horizontal: 14),
-        child: TextField(
-          controller: controller,
-          maxLength: maxLength,
-          style: PindText.body,
-          decoration: InputDecoration(
-            border: InputBorder.none,
-            hintText: hint,
-            hintStyle: PindText.body.copyWith(color: PindColors.placeholder),
-            counterStyle: const TextStyle(
-              fontSize: PindType.micro,
-              color: PindColors.subtle,
+        padding: const EdgeInsets.symmetric(horizontal: 16),
+        // 46 + the glass's 1pt rim each side = a 48pt box.
+        child: SizedBox(
+          height: 46,
+          child: Center(
+            child: TextField(
+              controller: controller,
+              maxLength: maxLength,
+              maxLines: 1,
+              style: PindText.body,
+              decoration: InputDecoration(
+                isDense: true,
+                border: InputBorder.none,
+                contentPadding: EdgeInsets.zero,
+                // The count sits beside the label instead.
+                counterText: '',
+                hintText: hint,
+                hintStyle: PindText.body.copyWith(
+                  color: PindColors.placeholder,
+                ),
+              ),
             ),
           ),
         ),

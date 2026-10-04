@@ -4,6 +4,7 @@ import 'package:uuid/uuid.dart';
 import '../model/post_model.dart';
 import '../model/place_search_result.dart';
 import 'data_revision.dart';
+import '../l10n/l10n.dart';
 
 abstract class PostService {
   String? get userId;
@@ -25,10 +26,10 @@ class UnavailablePostService implements PostService {
     PostDraft draft,
     String requestId,
     String? authorId,
-  ) async => throw const PlaceFailure('로그인 후 게시물을 작성해 주세요.');
+  ) async => throw PlaceFailure(l10n.errPostSignIn);
   @override
   Future<void> delete(int postId) async =>
-      throw const PlaceFailure('게시물 서버에 연결하지 못했어요.');
+      throw PlaceFailure(l10n.errPostServer);
 }
 
 class SupabasePostService implements PostService {
@@ -44,7 +45,7 @@ class SupabasePostService implements PostService {
     try {
       result = await client.rpc('delete_post', params: {'p_post_id': postId});
     } on PostgrestException {
-      throw const PlaceFailure('게시물을 삭제하지 못했어요. 다시 시도해 주세요.');
+      throw PlaceFailure(l10n.errPostDeleteRetry);
     }
     markDataChanged();
     postDeletions.add(postId);
@@ -84,7 +85,7 @@ class SupabasePostService implements PostService {
     if (authorId == null ||
         userId != authorId ||
         client.auth.currentUser?.isAnonymous == true) {
-      throw const PlaceFailure('로그인 후 게시물을 작성해 주세요.');
+      throw PlaceFailure(l10n.errPostSignIn);
     }
     final uploaded = <String>[];
     var databaseAttempted = false;
@@ -114,7 +115,7 @@ class SupabasePostService implements PostService {
         });
       }
       if (userId != authorId) {
-        throw const PlaceFailure('계정이 변경되었어요. 다시 로그인해 주세요.');
+        throw PlaceFailure(l10n.errAccountChanged);
       }
       databaseAttempted = true;
       final result = await client.rpc(
@@ -128,6 +129,7 @@ class SupabasePostService implements PostService {
           },
           'p_body': draft.body.trim(),
           'p_media': media,
+          'p_is_public': draft.isPublic,
         },
       );
       markDataChanged();
@@ -153,7 +155,7 @@ class SupabasePostService implements PostService {
         }
       }
       if (error is PlaceFailure) rethrow;
-      throw const PlaceFailure('게시물을 등록하지 못했어요. 입력 내용을 유지했으니 다시 시도해 주세요.');
+      throw PlaceFailure(l10n.errPostPublishKept);
     }
   }
 }

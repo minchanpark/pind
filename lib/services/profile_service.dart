@@ -8,6 +8,7 @@ import '../model/preferences.dart';
 import '../model/profile_model.dart';
 import 'post_media_urls.dart';
 import 'data_revision.dart';
+import '../l10n/l10n.dart';
 
 /// Server profile: `public.profiles` row, `avatars` bucket, and the
 /// `get_my_profile_overview` / `get_profile_overview` / `record_place_view`
@@ -47,13 +48,13 @@ class UnavailableProfileService implements ProfileService {
     String? displayName,
     String? bio,
     String? avatarUrl,
-  }) async => throw const PlaceFailure('프로필 서버에 연결하지 못했어요.');
+  }) async => throw PlaceFailure(l10n.errProfileServer);
   @override
   Future<String> uploadAvatar(PostPhoto photo) async =>
-      throw const PlaceFailure('프로필 서버에 연결하지 못했어요.');
+      throw PlaceFailure(l10n.errProfileServer);
   @override
   Future<ProfileOverview> overview({String? userId}) async =>
-      throw const PlaceFailure('프로필 서버에 연결하지 못했어요.');
+      throw PlaceFailure(l10n.errProfileServer);
   @override
   Future<void> recordView(int placeId) async {}
   @override
@@ -67,7 +68,7 @@ class SupabaseProfileService implements ProfileService {
 
   String get _uid {
     final user = client.auth.currentUser;
-    if (user == null) throw const PlaceFailure('로그인이 필요해요.');
+    if (user == null) throw PlaceFailure(l10n.errSignInRequired);
     return user.id;
   }
 
@@ -109,11 +110,11 @@ class SupabaseProfileService implements ProfileService {
       await client.from('profiles').update(patch).eq('id', _uid);
       markDataChanged();
     } on PostgrestException catch (e) {
-      if (e.code == '23505') throw const PlaceFailure('이미 사용 중인 아이디예요.');
+      if (e.code == '23505') throw PlaceFailure(l10n.errHandleTaken);
       if (e.message.contains('handle is immutable')) {
-        throw const PlaceFailure('아이디는 한 번 정하면 바꿀 수 없어요.');
+        throw PlaceFailure(l10n.errHandleImmutable);
       }
-      throw const PlaceFailure('프로필을 저장하지 못했어요. 다시 시도해 주세요.');
+      throw PlaceFailure(l10n.errProfileSave);
     }
   }
 
@@ -151,7 +152,7 @@ class SupabaseProfileService implements ProfileService {
     final Object? response = userId == null
         ? await client.rpc('get_my_profile_overview')
         : await client.rpc('get_profile_overview', params: {'p_user': userId});
-    if (response is! Map) throw const PlaceFailure('프로필을 찾을 수 없어요.');
+    if (response is! Map) throw PlaceFailure(l10n.errProfileNotFound);
     final raw = Map<String, dynamic>.from(response);
     // One signing round-trip for every private photo on the page.
     final posts = raw['posts'] as List? ?? [];

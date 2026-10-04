@@ -6,6 +6,7 @@ import '../../controllers/profile_controller.dart';
 import '../../model/preferences.dart';
 import '../../model/profile_model.dart';
 import '../components/pind_glass.dart';
+import '../components/pind_skeleton.dart';
 import '../explore/place_sheet.dart';
 import '../design_system.dart';
 import 'profile_follow.dart';
@@ -14,6 +15,7 @@ import 'profile_posts_tab.dart';
 import 'profile_saved_tab.dart';
 import 'profile_settings_sheet.dart';
 import '../components/pind_image.dart';
+import '../../l10n/l10n.dart';
 
 /// Figma 531:19957 / 531:20051 / 531:20229; another user's page is 663:5337.
 /// Tabs pad themselves so the post dividers can run edge to edge.
@@ -47,11 +49,15 @@ Widget placeImage(String? url) => url == null
     : Image(
         image: PindImage(url),
         fit: BoxFit.cover,
-        errorBuilder: (_, _, _) => const ColoredBox(color: PindColors.imageFill),
+        frameBuilder: fadeInFrame,
+        errorBuilder: (_, _, _) =>
+            const ColoredBox(color: PindColors.imageFill),
       );
 
-Widget mutedNote(String text) =>
-    Text(text, style: const TextStyle(fontSize: PindType.label, color: PindColors.muted));
+Widget mutedNote(String text) => Text(
+  text,
+  style: const TextStyle(fontSize: PindType.label, color: PindColors.muted),
+);
 
 Widget profileSection(
   String title,
@@ -78,7 +84,10 @@ Widget profileSection(
             onTap: onTrailing,
             child: Text(
               trailing,
-              style: const TextStyle(fontSize: PindType.label, color: PindColors.muted),
+              style: const TextStyle(
+                fontSize: PindType.label,
+                color: PindColors.muted,
+              ),
             ),
           ),
       ],
@@ -107,6 +116,7 @@ class ProfileAvatar extends StatelessWidget {
             : Image(
                 image: PindImage(url!),
                 fit: BoxFit.cover,
+                frameBuilder: fadeInFrame,
                 errorBuilder: (_, _, _) => fallback,
               ),
       ),
@@ -126,6 +136,7 @@ class ProfileScreen extends StatefulWidget {
     this.bottomClearance = 0,
     this.myId,
     this.onOpenProfile,
+    this.onSignOut,
   });
   final ProfileController controller;
   final ExploreController? explore;
@@ -142,6 +153,9 @@ class ProfileScreen extends StatefulWidget {
 
   /// Someone in a 팔로워/팔로잉 list was tapped.
   final void Function(String userId)? onOpenProfile;
+
+  /// 로그아웃 in the settings sheet; only on My Page.
+  final Future<void> Function()? onSignOut;
 
   @override
   State<ProfileScreen> createState() => _ProfileScreenState();
@@ -186,8 +200,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   Future<void> toggleFollow() async {
     if (await controller.toggleFollow() || !mounted) return;
-    ScaffoldMessenger.of(context)
-        .showSnackBar(SnackBar(content: Text(model.error ?? '다시 시도해 주세요.')));
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(SnackBar(content: Text(model.error ?? l10n.tryAgainPlease)));
   }
 
   Widget topBar() => isMe
@@ -195,9 +210,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
           alignment: Alignment.centerRight,
           child: Semantics(
             button: true,
-            label: '설정',
+            label: l10n.settings,
             child: GestureDetector(
-              onTap: () => showProfileSettingsSheet(context, controller),
+              onTap: () => showProfileSettingsSheet(
+                context,
+                controller,
+                onSignOut: widget.onSignOut,
+              ),
               child: const PindGlass(
                 radius: 20,
                 padding: EdgeInsets.all(8),
@@ -209,7 +228,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
       : Align(
           alignment: Alignment.centerLeft,
           child: IconButton(
-            tooltip: '뒤로',
+            tooltip: l10n.back,
             onPressed: () => Navigator.maybePop(context),
             icon: const Icon(
               Icons.chevron_left,
@@ -246,62 +265,94 @@ class _ProfileScreenState extends State<ProfileScreen> {
               children: [
                 Padding(padding: profileInset, child: topBar()),
                 if (o == null && model.loading)
-                  const Padding(
-                    padding: EdgeInsets.only(top: 40),
-                    child: Center(child: CircularProgressIndicator()),
+                  PindSkeleton(
+                    child: Column(
+                      spacing: 10,
+                      children: [
+                        bone(105, 105, radius: 52.5),
+                        bone(120, 16),
+                        bone(180, 12),
+                        const SizedBox(height: 12),
+                        Padding(
+                          padding: profileInset,
+                          child: Row(
+                            children: [
+                              for (var i = 0; i < 4; i++)
+                                Expanded(child: Center(child: bone(40, 34))),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
                   )
                 else if (o == null)
                   Column(
                     children: [
                       Text(
-                        model.error ?? '프로필을 불러오지 못했어요.',
+                        model.error ?? l10n.profileLoadFailed,
                         textAlign: TextAlign.center,
                         style: const TextStyle(color: PindColors.muted),
                       ),
                       TextButton(
                         onPressed: controller.load,
-                        child: const Text('다시 시도'),
+                        child: Text(l10n.retry),
                       ),
                     ],
                   )
-                else ...[
-                  header(o.profile),
-                  stats(o.counts),
-                  if (!isMe)
-                    Padding(
-                      padding: profileInset,
-                      child: FollowButton(overview: o, onToggle: toggleFollow),
+                else
+                  // The page fades in once, when it first arrives.
+                  TweenAnimationBuilder<double>(
+                    tween: Tween(begin: 0, end: 1),
+                    duration: const Duration(milliseconds: 250),
+                    builder: (_, opacity, page) =>
+                        Opacity(opacity: opacity, child: page),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      spacing: 22,
+                      children: [
+                        header(o.profile),
+                        stats(o.counts),
+                        if (!isMe)
+                          Padding(
+                            padding: profileInset,
+                            child: FollowButton(
+                              overview: o,
+                              onToggle: toggleFollow,
+                            ),
+                          ),
+                        Padding(padding: profileInset, child: tabs(model.tab)),
+                        switch (model.tab) {
+                          ProfileTab.map => ProfileMapTab(
+                            overview: o,
+                            mine: isMe,
+                            preferences: taste,
+                            mapsEnabled: widget.mapsEnabled,
+                            onEditPreferences: widget.onEditPreferences,
+                            onShowMap: widget.onShowMap,
+                            onOpenPlace: widget.explore == null
+                                ? null
+                                : (place) =>
+                                      openPlace(ProfilePlaceCard(place: place)),
+                          ),
+                          ProfileTab.saved => ProfileSavedTab(
+                            overview: o,
+                            mine: isMe,
+                            preferences: widget.preferences,
+                            onOpen: widget.explore == null ? null : openPlace,
+                            onSetSaved:
+                                isMe && widget.explore?.placeContext != null
+                                ? setSaved
+                                : null,
+                          ),
+                          ProfileTab.posts => ProfilePostsTab(
+                            overview: o,
+                            preferences: widget.preferences,
+                            onShare: controller.share,
+                          ),
+                        },
+                      ],
                     ),
-                  Padding(padding: profileInset, child: tabs(model.tab)),
-                  switch (model.tab) {
-                    ProfileTab.map => ProfileMapTab(
-                      overview: o,
-                      mine: isMe,
-                      preferences: taste,
-                      mapsEnabled: widget.mapsEnabled,
-                      onEditPreferences: widget.onEditPreferences,
-                      onShowMap: widget.onShowMap,
-                      onOpenPlace: widget.explore == null
-                          ? null
-                          : (place) =>
-                                openPlace(ProfilePlaceCard(place: place)),
-                    ),
-                    ProfileTab.saved => ProfileSavedTab(
-                      overview: o,
-                      mine: isMe,
-                      preferences: widget.preferences,
-                      onOpen: widget.explore == null ? null : openPlace,
-                      onSetSaved: isMe && widget.explore?.placeContext != null
-                          ? setSaved
-                          : null,
-                    ),
-                    ProfileTab.posts => ProfilePostsTab(
-                      overview: o,
-                      preferences: widget.preferences,
-                      onShare: controller.share,
-                    ),
-                  },
-                ],
+                  ),
               ],
             ),
           ),
@@ -346,7 +397,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     await Navigator.of(context).push<void>(
       MaterialPageRoute(
         builder: (_) => FollowListPage(
-          title: followers ? '팔로워' : '팔로잉',
+          title: followers ? l10n.followers : l10n.following,
           load: () => controller.followList(followers),
           setFollowing: controller.setFollowing,
           myId: widget.myId,
@@ -364,10 +415,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
     child: Row(
       children: [
         for (final (label, value, onTap) in [
-          ('팔로워', c.followers, () => openFollows(true)),
-          ('팔로잉', c.following, () => openFollows(false)),
-          ('게시물', c.posts, null),
-          if (isMe) ('저장', c.saved, null),
+          (l10n.followers, c.followers, () => openFollows(true)),
+          (l10n.following, c.following, () => openFollows(false)),
+          (l10n.posts, c.posts, null),
+          if (isMe) (l10n.save, c.saved, null),
         ])
           Expanded(
             child: GestureDetector(
@@ -426,9 +477,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       padding: const EdgeInsets.only(top: 10),
                       child: Text(
                         switch (tab) {
-                          ProfileTab.map => isMe ? '내 지도' : '지도',
-                          ProfileTab.saved => '저장',
-                          ProfileTab.posts => '게시물',
+                          ProfileTab.map => isMe ? l10n.myMap : l10n.navMap,
+                          ProfileTab.saved => l10n.save,
+                          ProfileTab.posts => l10n.posts,
                         },
                         style: TextStyle(
                           fontSize: PindType.body,
@@ -443,9 +494,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     ),
                     Container(
                       height: tab == current ? 3 : 1,
-                      color: tab == current
-                          ? PindColors.ink
-                          : PindColors.chip,
+                      color: tab == current ? PindColors.ink : PindColors.chip,
                     ),
                   ],
                 ),

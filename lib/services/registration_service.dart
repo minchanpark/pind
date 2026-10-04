@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../model/registration_model.dart';
+import '../l10n/l10n.dart';
 
 /// Device drafts only. These records do not represent server registration,
 /// handle uniqueness or a server-verified consent receipt.
@@ -25,7 +26,7 @@ class RegistrationService {
 
   Future<void> save(String userId, RegistrationDraft draft) async {
     if (!await storage.setString(_key(userId), jsonEncode(draft.toJson()))) {
-      throw StateError('입력 내용을 저장하지 못했어요. 다시 시도해 주세요.');
+      throw StateError(l10n.errDraftSave);
     }
   }
 }

@@ -15,6 +15,7 @@ import '../components/pind_glass.dart';
 import '../profile/profile_screen.dart' show ProfileAvatar, mutedNote;
 import '../design_system.dart';
 import 'qr_scan_screen.dart';
+import '../../l10n/l10n.dart';
 
 /// Figma 671:35498: my QR code and link, share targets, and the scanner.
 class ShareCodeScreen extends StatefulWidget {
@@ -46,7 +47,7 @@ class _ShareCodeScreenState extends State<ShareCodeScreen> {
     if (!mounted) return;
     ScaffoldMessenger.of(context)
       ..hideCurrentSnackBar()
-      ..showSnackBar(const SnackBar(content: Text('링크를 복사했어요.')));
+      ..showSnackBar(SnackBar(content: Text(l10n.linkCopied)));
   }
 
   Future<void> instagram(ProfileLink link, Rect at) async {
@@ -81,7 +82,7 @@ class _ShareCodeScreenState extends State<ShareCodeScreen> {
       child: ListView(
         padding: const EdgeInsets.fromLTRB(24, 2, 24, 32),
         children: [
-          const PindBackHeader('내 코드 공유'),
+          PindBackHeader(l10n.shareMyCode),
           const SizedBox(height: 20),
           FutureBuilder(
             future: me,
@@ -98,11 +99,11 @@ class _ShareCodeScreenState extends State<ShareCodeScreen> {
                   padding: const EdgeInsets.symmetric(vertical: 60),
                   child: Column(
                     children: [
-                      mutedNote('프로필을 불러오지 못했어요.'),
+                      mutedNote(l10n.profileLoadFailed),
                       TextButton(
                         onPressed: () =>
                             setState(() => me = widget.controller.me()),
-                        child: const Text('다시 시도'),
+                        child: Text(l10n.retry),
                       ),
                     ],
                   ),
@@ -131,7 +132,7 @@ class _ShareCodeScreenState extends State<ShareCodeScreen> {
           spacing: 10,
           children: [
             tile(
-              '카카오톡',
+              l10n.kakaoTalk,
               SvgPicture.asset(
                 'assets/share/kakaotalk_icon.svg',
                 width: 38,
@@ -141,7 +142,7 @@ class _ShareCodeScreenState extends State<ShareCodeScreen> {
                   widget.shares.kakao(p, FriendsController.inviteFor(p), at),
             ),
             tile(
-              '인스타',
+              l10n.instagram,
               SvgPicture.asset(
                 'assets/share/insta_icon.svg',
                 width: 38,
@@ -150,7 +151,7 @@ class _ShareCodeScreenState extends State<ShareCodeScreen> {
               (at) => instagram(link, at),
             ),
             tile(
-              '링크 복사',
+              l10n.copyLink,
               Container(
                 width: 38,
                 height: 38,
@@ -167,17 +168,17 @@ class _ShareCodeScreenState extends State<ShareCodeScreen> {
         const SizedBox(height: 22),
         Semantics(
           button: true,
-          label: '친구 코드 스캔하기',
+          label: l10n.scanFriendCode,
           child: PindGlass(
             tone: PindGlassTone.purple,
             radius: 18,
             child: InkWell(
               onTap: scan,
-              child: const ExcludeSemantics(
+              child: ExcludeSemantics(
                 child: Padding(
                   padding: EdgeInsets.symmetric(vertical: 16),
                   child: Text(
-                    '친구 코드 스캔하기',
+                    l10n.scanFriendCode,
                     textAlign: TextAlign.center,
                     style: TextStyle(
                       fontSize: PindType.bodyLarge,
@@ -229,7 +230,10 @@ class _ShareCodeScreenState extends State<ShareCodeScreen> {
             if (p.handle != null)
               Text(
                 '@${p.handle}',
-                style: const TextStyle(fontSize: PindType.label, color: PindColors.muted),
+                style: const TextStyle(
+                  fontSize: PindType.label,
+                  color: PindColors.muted,
+                ),
               ),
           ],
         ),
@@ -245,7 +249,7 @@ class _ShareCodeScreenState extends State<ShareCodeScreen> {
           child: Semantics(
             container: true,
             image: true,
-            label: '내 Pind QR 코드',
+            label: l10n.myQrCode,
             child: ExcludeSemantics(
               child: Stack(
                 alignment: Alignment.center,
@@ -292,7 +296,7 @@ class _ShareCodeScreenState extends State<ShareCodeScreen> {
         ),
         Semantics(
           button: true,
-          label: '링크 복사 ${link.display}',
+          label: l10n.copyLinkLabel(link.display),
           child: Material(
             color: const Color.fromRGBO(244, 245, 248, .9),
             borderRadius: BorderRadius.circular(14),

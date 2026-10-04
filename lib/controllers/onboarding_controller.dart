@@ -1,5 +1,6 @@
 import '../model/onboarding_model.dart';
 import '../model/preferences.dart';
+import '../l10n/l10n.dart';
 
 class OnboardingController {
   OnboardingController({TastePreferences? initial, required this.onComplete})
@@ -43,7 +44,7 @@ class OnboardingController {
       await onComplete(model.preferences);
     } catch (_) {
       if (!_disposed) {
-        model.update(() => model.error = '저장하지 못했어요. 다시 시도해 주세요.');
+        model.update(() => model.error = l10n.errSaveRetry);
       }
     } finally {
       if (!_disposed) model.update(() => model.saving = false);

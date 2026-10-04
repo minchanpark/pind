@@ -4,6 +4,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 
 import '../../model/navigation_model.dart';
+import '../components/pind_pressable.dart';
+import '../../l10n/l10n.dart';
 
 /// Figma 531:17799 / 531:19123 / 531:20050. Compose is an action, not a tab.
 class PindNavigationBar extends StatelessWidget {
@@ -55,9 +57,9 @@ class PindNavigationBar extends StatelessWidget {
               child: Stack(
                 children: [
                   _button('discover', 'Discover', 35, PindTab.discover),
-                  _button('map', '지도', 87.0457992553711, PindTab.map),
-                  _button('compose', '작성', 145.9541015625, null),
-                  _button('profile', '마이페이지', 209, PindTab.profile),
+                  _button('map', l10n.navMap, 87.0457992553711, PindTab.map),
+                  _button('compose', l10n.navCompose, 145.9541015625, null),
+                  _button('profile', l10n.navMyPage, 209, PindTab.profile),
                 ],
               ),
             ),
@@ -83,18 +85,23 @@ class PindNavigationBar extends StatelessWidget {
         onTap: action,
         selected: tab == null ? null : active,
         child: ExcludeSemantics(
-          child: IconButton(
-            key: ValueKey('nav-$name'),
-            tooltip: label,
-            padding: EdgeInsets.zero,
-            iconSize: iconFrame,
-            style: IconButton.styleFrom(
-              minimumSize: const Size.square(touchSize),
-              maximumSize: const Size.square(touchSize),
-              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+          child: PindPressable(
+            scale: .85,
+            child: IconButton(
+              key: ValueKey('nav-$name'),
+              tooltip: label,
+              padding: EdgeInsets.zero,
+              iconSize: iconFrame,
+              style: IconButton.styleFrom(
+                minimumSize: const Size.square(touchSize),
+                maximumSize: const Size.square(touchSize),
+                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                // The press shrinks the glyph; no Material circle behind it.
+                overlayColor: Colors.transparent,
+              ),
+              onPressed: action,
+              icon: _FigmaIcon(name: name, active: active),
             ),
-            onPressed: action,
-            icon: _FigmaIcon(name: name, active: active),
           ),
         ),
       ),
@@ -128,14 +135,23 @@ class _FigmaIcon extends StatelessWidget {
         minHeight: 0,
         maxWidth: root,
         maxHeight: root,
-        child: SvgPicture.asset(
-          'assets/navigation/$file.svg',
-          width: root,
-          height: root,
-          excludeFromSemantics: true,
-          colorFilter: active
-              ? const ColorFilter.mode(Colors.black, BlendMode.srcIn)
-              : null,
+        // A newly selected tab pops into place; leaving one stays still.
+        child: TweenAnimationBuilder<double>(
+          key: ValueKey(active),
+          tween: Tween(begin: active ? .8 : 1, end: 1),
+          duration: const Duration(milliseconds: 350),
+          curve: Curves.easeOutBack,
+          builder: (_, scale, glyph) =>
+              Transform.scale(scale: scale, child: glyph),
+          child: SvgPicture.asset(
+            'assets/navigation/$file.svg',
+            width: root,
+            height: root,
+            excludeFromSemantics: true,
+            colorFilter: active
+                ? const ColorFilter.mode(Colors.black, BlendMode.srcIn)
+                : null,
+          ),
         ),
       ),
     );

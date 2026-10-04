@@ -7,8 +7,11 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:pind_flutter/view/design_system.dart';
 import 'package:pind_flutter/services/place_service.dart';
 import 'package:pind_flutter/services/profile_service.dart';
+import 'package:pind_flutter/services/friends_service.dart';
+import 'package:pind_flutter/model/friends_model.dart';
+import 'package:pind_flutter/model/profile_model.dart';
 
-import 'profile_test.dart' show FakeProfileService;
+import 'profile_test.dart' show FakeFollows, FakeProfileService;
 
 import 'package:pind_flutter/view/explore/explore_screen.dart';
 import 'package:pind_flutter/view/navigation/main_shell.dart';
@@ -28,6 +31,7 @@ Future<void> shell(
   WidgetTester tester, {
   PlaceService? repository,
   ProfileService? profile,
+  FriendsService? friends,
 }) async {
   await tester.pumpWidget(
     MaterialApp(
@@ -35,6 +39,7 @@ Future<void> shell(
       home: MainShell(
         controller: repository == null ? null : ExploreController(repository),
         profile: profile,
+        friends: friends,
         mapsEnabled: false,
         onEditPreferences: () {},
       ),
@@ -294,5 +299,25 @@ void main() {
     markDataChanged(); // e.g. a save on the map tab
     await visit();
     expect(profile.overviewCalls, first + 1);
+  });
+
+  testWidgets('My Page 팔로잉 lists the people I follow from the server', (
+    tester,
+  ) async {
+    final follows = FakeFollows()
+      ..lists[(null, false)] = [
+        const FriendCandidate(
+          profile: UserProfile(id: 'h', handle: 'qa_haram', displayName: '하람'),
+          following: true,
+        ),
+      ];
+    await shell(tester, profile: FakeProfileService(), friends: follows);
+    await tester.tap(find.byKey(const ValueKey('nav-profile')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const ValueKey('profile-stat-팔로잉')));
+    await tester.pumpAndSettle();
+    expect(follows.listed, [(null, false)]);
+    expect(find.text('@qa_haram'), findsOneWidget);
+    expect(find.text('친구 서버에 연결하지 못했어요.'), findsNothing);
   });
 }

@@ -46,7 +46,7 @@ void main() {
         });
         expect((await repo.details(place)).id, 93);
         expect(calls, [
-          {'action': 'catalog_detail', 'internalPlaceId': 93},
+          {'action': 'catalog_detail', 'internalPlaceId': 93, 'lang': 'ko'},
         ]);
       },
     );

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 import '../../model/nearby_ranking.dart';
 import '../../model/place_context.dart';
@@ -11,6 +12,7 @@ import '../components/pind_glass.dart';
 import '../profile/profile_screen.dart';
 import '../profile/saved_places_page.dart';
 import '../design_system.dart';
+import '../../l10n/l10n.dart';
 
 /// One question and its answer on the search page.
 class AgentTurn {
@@ -53,10 +55,10 @@ class AgentSearchPage extends StatefulWidget {
   final Duration stepDelay;
 
   /// Progress lines while the server reads the sentence and searches.
-  static const steps = [
-    '입력한 문장을 분석하고 있어요',
-    '게시물이 작성된 장소를 살펴보고 있어요',
-    '당신의 취향에 맞는 장소를 검색하고 있어요',
+  static final steps = [
+    l10n.agentStepRead,
+    l10n.agentStepPlaces,
+    l10n.agentStepTaste,
   ];
 
   @override
@@ -129,7 +131,7 @@ class _AgentSearchPageState extends State<AgentSearchPage> {
     } catch (error) {
       turn.failure = error is PlaceFailure
           ? error.message
-          : '검색하지 못했어요. 잠시 후 다시 시도해 주세요.';
+          : l10n.errSearchRetry;
     }
     if (mounted && turn.steps == AgentSearchPage.steps.length) {
       setState(() {});
@@ -168,6 +170,7 @@ class _AgentSearchPageState extends State<AgentSearchPage> {
   });
 
   Future<void> toggleSave(RankedPlace p) async {
+    HapticFeedback.lightImpact();
     final id = p.place.id!, save = !p.saved;
     markSaved(id, save);
     try {
@@ -175,9 +178,8 @@ class _AgentSearchPageState extends State<AgentSearchPage> {
     } catch (_) {
       if (!mounted) return;
       markSaved(id, !save);
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('저장 상태를 바꾸지 못했어요. 다시 시도해 주세요.')),
-      );
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text(l10n.errSaveToggle)));
     }
   }
 
@@ -194,7 +196,7 @@ class _AgentSearchPageState extends State<AgentSearchPage> {
               alignment: Alignment.centerRight,
               child: Semantics(
                 button: true,
-                label: '닫기',
+                label: l10n.close,
                 child: GestureDetector(
                   onTap: () => Navigator.maybePop(context),
                   child: const PindGlass(
@@ -208,14 +210,14 @@ class _AgentSearchPageState extends State<AgentSearchPage> {
               ),
             ),
           ),
-          const Padding(
+          Padding(
             padding: EdgeInsets.fromLTRB(22.5, 18, 22.5, 0),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               spacing: 8,
               children: [
                 Text(
-                  '개인 맞춤형 음식 검색',
+                  l10n.agentTitle,
                   style: TextStyle(
                     fontSize: PindType.display,
                     height: 36 / 28,
@@ -224,7 +226,7 @@ class _AgentSearchPageState extends State<AgentSearchPage> {
                   ),
                 ),
                 Text(
-                  '원하는 취향을 자세히 알려주면 추천 내용이 더 정확해집니다.',
+                  l10n.agentSubtitle,
                   style: TextStyle(
                     fontSize: PindType.bodySmall,
                     height: 20 / 13,
@@ -282,7 +284,10 @@ class _AgentSearchPageState extends State<AgentSearchPage> {
         ),
         child: Text(
           t.question,
-          style: const TextStyle(fontSize: PindType.bodySmall, color: Colors.white),
+          style: const TextStyle(
+            fontSize: PindType.bodySmall,
+            color: Colors.white,
+          ),
         ),
       ),
     ),
@@ -334,7 +339,10 @@ class _AgentSearchPageState extends State<AgentSearchPage> {
             Flexible(
               child: Text(
                 text,
-                style: const TextStyle(fontSize: PindType.bodySmall, color: PindColors.ink),
+                style: const TextStyle(
+                  fontSize: PindType.bodySmall,
+                  color: PindColors.ink,
+                ),
               ),
             ),
           ],
@@ -360,7 +368,7 @@ class _AgentSearchPageState extends State<AgentSearchPage> {
               children: [
                 Expanded(
                   child: Text(
-                    '추천 장소 ${places.length}곳',
+                    l10n.recommendedCount(places.length),
                     style: const TextStyle(
                       fontSize: PindType.body,
                       fontWeight: FontWeight.w700,
@@ -389,7 +397,7 @@ class _AgentSearchPageState extends State<AgentSearchPage> {
             : Padding(
                 padding: const EdgeInsets.only(top: 12),
                 child: places.isEmpty
-                    ? mutedNote('게시물이 있는 장소 중에 맞는 곳을 찾지 못했어요. 다르게 말해 볼까요?')
+                    ? mutedNote(l10n.agentNoResults)
                     : Column(
                         spacing: 12,
                         children: [for (final p in places) card(p)],
@@ -468,24 +476,30 @@ class _AgentSearchPageState extends State<AgentSearchPage> {
             onChanged: (_) => setState(() {}),
             onSubmitted: submit,
             textInputAction: TextInputAction.search,
-            style: const TextStyle(fontSize: PindType.body, color: PindColors.ink),
-            decoration: const InputDecoration(
+            style: const TextStyle(
+              fontSize: PindType.body,
+              color: PindColors.ink,
+            ),
+            decoration: InputDecoration(
               isDense: true,
               border: InputBorder.none,
-              hintText: '무엇이든 물어보세요...',
-              hintStyle: TextStyle(fontSize: PindType.body, color: Color(0x73000000)),
+              hintText: l10n.askAnything,
+              hintStyle: TextStyle(
+                fontSize: PindType.body,
+                color: Color(0x73000000),
+              ),
             ),
           ),
         ),
         // Mic until there is text to send; voice input is not built yet.
         Semantics(
           button: true,
-          label: query.text.trim().isEmpty ? '음성 검색' : '검색',
+          label: query.text.trim().isEmpty ? l10n.voiceSearch : l10n.search,
           child: GestureDetector(
             onTap: () => query.text.trim().isEmpty
-                ? ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('음성 검색은 준비 중이에요.')),
-                  )
+                ? ScaffoldMessenger.of(
+                    context,
+                  ).showSnackBar(SnackBar(content: Text(l10n.voiceComingSoon)))
                 : submit(query.text),
             child: PindGlass(
               tone: PindGlassTone.purple,

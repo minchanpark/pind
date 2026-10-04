@@ -1,14 +1,19 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 import '../../model/nearby_ranking.dart';
 import '../../model/place_context.dart';
 import '../../model/places.dart';
 import '../../model/preferences.dart';
 import '../components/pind_glass.dart';
+import '../components/pind_pressable.dart';
+import '../components/pind_skeleton.dart';
 import '../profile/profile_screen.dart';
 import '../design_system.dart';
 import 'explore_screen.dart';
 import 'place_sheet.dart';
+import '../../l10n/l10n.dart';
+import '../../l10n/categories.dart';
 
 typedef NearbyLoad = Future<({List<RankedPlace> places, bool nearMe})>;
 
@@ -100,6 +105,7 @@ class _NearbyRankingSheetState extends State<NearbyRankingSheet> {
   }
 
   Future<void> toggleSave(RankedPlace p) async {
+    HapticFeedback.lightImpact();
     final save = !p.saved, id = p.place.id!;
     void apply(bool saved) => setState(() {
       places = [
@@ -125,9 +131,8 @@ class _NearbyRankingSheetState extends State<NearbyRankingSheet> {
     } catch (_) {
       if (!mounted) return;
       apply(!save);
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('저장 상태를 바꾸지 못했어요. 다시 시도해 주세요.')),
-      );
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text(l10n.errSaveToggle)));
     }
   }
 
@@ -179,7 +184,7 @@ class _NearbyRankingSheetState extends State<NearbyRankingSheet> {
                 if (!nearMe)
                   Padding(
                     padding: const EdgeInsets.fromLTRB(20, 0, 20, 10),
-                    child: mutedNote('현재 위치를 확인하지 못해 지도 중심 10km 기준이에요.'),
+                    child: mutedNote(l10n.rankingFromMapCenter),
                   ),
                 Expanded(child: body()),
               ],
@@ -200,14 +205,21 @@ class _NearbyRankingSheetState extends State<NearbyRankingSheet> {
     final all = places;
     if (failed) {
       return Center(
-        child: TextButton(onPressed: fetch, child: const Text('다시 시도')),
+        child: TextButton(onPressed: fetch, child: Text(l10n.retry)),
       );
     }
-    if (all == null) return const Center(child: CircularProgressIndicator());
+    if (all == null) {
+      // Just the rows' shapes, where the rows will land inside the card.
+      return SingleChildScrollView(
+        physics: const NeverScrollableScrollPhysics(),
+        padding: const EdgeInsets.fromLTRB(35, 5, 35, 96),
+        child: placesSkeleton(),
+      );
+    }
     if (all.isEmpty) {
       return Padding(
         padding: const EdgeInsets.symmetric(horizontal: 20),
-        child: mutedNote('10km 안에 게시물이 있는 곳이 아직 없어요.'),
+        child: mutedNote(l10n.rankingEmpty),
       );
     }
     final ranked = rankPlaces(all, widget.preferences, by);
@@ -238,7 +250,7 @@ class _NearbyRankingSheetState extends State<NearbyRankingSheet> {
   Widget sortChip(PreferenceCriterion? c) {
     final on = by == c;
     final label = Text(
-      c == null ? '내 취향순' : c.label,
+      c == null ? l10n.sortByTaste : c.label,
       style: TextStyle(
         fontSize: PindType.label,
         fontWeight: FontWeight.w700,
@@ -267,7 +279,10 @@ class _NearbyRankingSheetState extends State<NearbyRankingSheet> {
                     mainAxisSize: MainAxisSize.min,
                     spacing: 4,
                     children: [
-                      Text(c.emoji, style: const TextStyle(fontSize: PindType.caption)),
+                      Text(
+                        c.emoji,
+                        style: const TextStyle(fontSize: PindType.caption),
+                      ),
                       label,
                     ],
                   )
@@ -289,163 +304,172 @@ class _NearbyRankingSheetState extends State<NearbyRankingSheet> {
         Navigator.maybePop(context);
         widget.onOpen(p.place);
       },
-      child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: 14),
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          spacing: 14,
-          children: [
-            Container(
-              width: 76,
-              height: 76,
-              clipBehavior: Clip.antiAlias,
-              alignment: Alignment.center,
-              decoration: BoxDecoration(
-                color: PindColors.fill,
-                borderRadius: BorderRadius.circular(14),
+      child: PindPressable(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 14),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            spacing: 14,
+            children: [
+              Container(
+                width: 76,
+                height: 76,
+                clipBehavior: Clip.antiAlias,
+                alignment: Alignment.center,
+                decoration: BoxDecoration(
+                  color: PindColors.fill,
+                  borderRadius: BorderRadius.circular(14),
+                ),
+                child: p.imageUrl == null
+                    ? Text(
+                        markerEmoji(p.place),
+                        style: const TextStyle(fontSize: PindType.display),
+                      )
+                    : SizedBox.expand(child: placeImage(p.imageUrl)),
               ),
-              child: p.imageUrl == null
-                  ? Text(
-                      markerEmoji(p.place),
-                      style: const TextStyle(fontSize: PindType.display),
-                    )
-                  : SizedBox.expand(child: placeImage(p.imageUrl)),
-            ),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                spacing: 6,
-                children: [
-                  Row(
-                    spacing: 8,
-                    children: [
-                      Text(
-                        '$rank',
-                        style: TextStyle(
-                          fontSize: PindType.title,
-                          fontWeight: FontWeight.w700,
-                          color: by == null
-                              ? PindColors.purple
-                              : criterionColor(by!),
-                        ),
-                      ),
-                      Expanded(
-                        child: Text(
-                          p.place.name,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: const TextStyle(
-                            fontSize: PindType.bodyLarge,
-                            fontWeight: FontWeight.w700,
-                            color: PindColors.ink,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                  Text(
-                    [
-                      if (p.place.category.isNotEmpty) p.place.category,
-                      if (p.meters case final m?) formatDistance(m),
-                      '리뷰 ${p.reviewCount}',
-                    ].join(' · '),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(
-                      fontSize: PindType.caption,
-                      color: PindColors.muted,
-                    ),
-                  ),
-                  FittedBox(
-                    fit: BoxFit.scaleDown,
-                    alignment: Alignment.centerLeft,
-                    child: Row(
-                      spacing: 4,
-                      children: [
-                        if (by == null && match != null) matchChip(match),
-                        for (final c in shown)
-                          if (p.averages[c] case final avg?) rating(c, avg),
-                      ],
-                    ),
-                  ),
-                  if (p.friendLine case final line?)
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  spacing: 6,
+                  children: [
                     Row(
-                      spacing: 7,
+                      spacing: 8,
                       children: [
-                        SizedBox(
-                          width: 16 + (p.friendAvatars.length - 1) * 10,
-                          height: 16,
-                          child: Stack(
-                            children: [
-                              for (var i = 0; i < p.friendAvatars.length; i++)
-                                Positioned(
-                                  left: i * 10,
-                                  child: ProfileAvatar(p.friendAvatars[i], 16),
-                                ),
-                            ],
+                        Text(
+                          '$rank',
+                          style: TextStyle(
+                            fontSize: PindType.title,
+                            fontWeight: FontWeight.w700,
+                            color: by == null
+                                ? PindColors.purple
+                                : criterionColor(by!),
                           ),
                         ),
                         Expanded(
                           child: Text(
-                            line,
+                            p.place.name,
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
                             style: const TextStyle(
-                              fontSize: PindType.micro,
-                              fontWeight: FontWeight.w500,
-                              color: profileBody,
+                              fontSize: PindType.bodyLarge,
+                              fontWeight: FontWeight.w700,
+                              color: PindColors.ink,
                             ),
                           ),
                         ),
                       ],
                     ),
-                ],
-              ),
-            ),
-            Column(
-              spacing: 4,
-              children: [
-                Semantics(
-                  button: true,
-                  selected: p.saved,
-                  label: p.saved ? '저장 취소' : '저장',
-                  child: GestureDetector(
-                    onTap: widget.onSetSaved == null || p.place.id == null
-                        ? null
-                        : () => toggleSave(p),
-                    child: Container(
-                      width: 28,
-                      height: 28,
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        color: p.saved
-                            ? PindColors.purple.withValues(alpha: .12)
-                            : Colors.white,
-                        border: Border.all(
-                          color: p.saved
-                              ? PindColors.purple.withValues(alpha: .4)
-                              : PindColors.border,
-                        ),
+                    Text(
+                      [
+                        if (p.place.category.isNotEmpty)
+                          categoryLabel(p.place.category),
+                        if (p.meters case final m?) formatDistance(m),
+                        l10n.reviewsCount(p.reviewCount),
+                      ].join(' · '),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                        fontSize: PindType.caption,
+                        color: PindColors.muted,
                       ),
-                      child: Icon(
-                        p.saved ? Icons.bookmark : Icons.bookmark_border,
-                        size: 16,
-                        color: p.saved ? PindColors.purple : PindColors.ink,
+                    ),
+                    FittedBox(
+                      fit: BoxFit.scaleDown,
+                      alignment: Alignment.centerLeft,
+                      child: Row(
+                        spacing: 4,
+                        children: [
+                          if (by == null && match != null) matchChip(match),
+                          for (final c in shown)
+                            if (p.averages[c] case final avg?) rating(c, avg),
+                        ],
+                      ),
+                    ),
+                    if (p.friendLine case final line?)
+                      Row(
+                        spacing: 7,
+                        children: [
+                          SizedBox(
+                            width: 16 + (p.friendAvatars.length - 1) * 10,
+                            height: 16,
+                            child: Stack(
+                              children: [
+                                for (var i = 0; i < p.friendAvatars.length; i++)
+                                  Positioned(
+                                    left: i * 10,
+                                    child: ProfileAvatar(
+                                      p.friendAvatars[i],
+                                      16,
+                                    ),
+                                  ),
+                              ],
+                            ),
+                          ),
+                          Expanded(
+                            child: Text(
+                              line,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: const TextStyle(
+                                fontSize: PindType.micro,
+                                fontWeight: FontWeight.w500,
+                                color: profileBody,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                  ],
+                ),
+              ),
+              Column(
+                spacing: 4,
+                children: [
+                  Semantics(
+                    button: true,
+                    selected: p.saved,
+                    label: p.saved ? l10n.unsave : l10n.save,
+                    child: GestureDetector(
+                      onTap: widget.onSetSaved == null || p.place.id == null
+                          ? null
+                          : () => toggleSave(p),
+                      child: PindPressable(
+                        scale: .85,
+                        child: Container(
+                          width: 28,
+                          height: 28,
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            color: p.saved
+                                ? PindColors.purple.withValues(alpha: .12)
+                                : Colors.white,
+                            border: Border.all(
+                              color: p.saved
+                                  ? PindColors.purple.withValues(alpha: .4)
+                                  : PindColors.border,
+                            ),
+                          ),
+                          child: Icon(
+                            p.saved ? Icons.bookmark : Icons.bookmark_border,
+                            size: 16,
+                            color: p.saved ? PindColors.purple : PindColors.ink,
+                          ),
+                        ),
                       ),
                     ),
                   ),
-                ),
-                Text(
-                  thousands(p.saveCount),
-                  style: const TextStyle(
-                    fontSize: PindType.tiny,
-                    fontWeight: FontWeight.w700,
-                    color: PindColors.muted,
+                  Text(
+                    thousands(p.saveCount),
+                    style: const TextStyle(
+                      fontSize: PindType.tiny,
+                      fontWeight: FontWeight.w700,
+                      color: PindColors.muted,
+                    ),
                   ),
-                ),
-              ],
-            ),
-          ],
+                ],
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -459,8 +483,8 @@ class _NearbyRankingSheetState extends State<NearbyRankingSheet> {
       mainAxisSize: MainAxisSize.min,
       spacing: 2,
       children: [
-        const Text(
-          '취향',
+        Text(
+          l10n.taste,
           style: TextStyle(
             fontSize: PindType.tiny,
             fontWeight: FontWeight.w500,
@@ -485,7 +509,7 @@ class _NearbyRankingSheetState extends State<NearbyRankingSheet> {
         ? '${avg.round()}'
         : avg.toStringAsFixed(1);
     return Semantics(
-      label: '${c.label} $value점',
+      label: l10n.ratingScoreText(c.label, value),
       excludeSemantics: true,
       child: Container(
         padding: const EdgeInsets.fromLTRB(6, 4, 7, 4),
@@ -517,31 +541,34 @@ class _NearbyRankingSheetState extends State<NearbyRankingSheet> {
     button: true,
     child: GestureDetector(
       onTap: () => Navigator.maybePop(context),
-      child: const PindGlass(
-        tone: PindGlassTone.dark,
-        radius: 26,
-        padding: EdgeInsets.fromLTRB(22, 13, 24, 13),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          spacing: 8,
-          children: [
-            Text(
-              '▲',
-              style: TextStyle(
-                fontSize: PindType.label,
-                fontWeight: FontWeight.w700,
-                color: Colors.white,
+      child: PindPressable(
+        scale: .9,
+        child: PindGlass(
+          tone: PindGlassTone.dark,
+          radius: 26,
+          padding: EdgeInsets.fromLTRB(22, 13, 24, 13),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            spacing: 8,
+            children: [
+              Text(
+                '▲',
+                style: TextStyle(
+                  fontSize: PindType.label,
+                  fontWeight: FontWeight.w700,
+                  color: Colors.white,
+                ),
               ),
-            ),
-            Text(
-              '지도로 돌아가기',
-              style: TextStyle(
-                fontSize: PindType.body,
-                fontWeight: FontWeight.w700,
-                color: Colors.white,
+              Text(
+                l10n.backToMap,
+                style: TextStyle(
+                  fontSize: PindType.body,
+                  fontWeight: FontWeight.w700,
+                  color: Colors.white,
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     ),

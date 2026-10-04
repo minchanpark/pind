@@ -33,8 +33,8 @@ do $$ declare q qa; d jsonb; begin
  assert d->'profile'->>'handle'='haram','their profile';
  assert (d->>'following')::boolean and (d->>'followsMe')::boolean,'mutual follow';
  assert d->'taste'='["taste","ambience","portion"]'::jsonb,'consenting user shows priorities';
- assert d->'counts'='{"followers":2,"following":1,"posts":1,"saved":1}'::jsonb,'public post, shared save only';
- assert jsonb_array_length(d->'posts')=1 and d->'posts'->0->>'body'='public','private post hidden';
+ assert d->'counts'='{"followers":2,"following":1,"posts":2,"saved":1}'::jsonb,'friends-only post and shared save for a follower';
+ assert jsonb_array_length(d->'posts')=2,'follower sees friends-only post';
  assert jsonb_array_length(d->'savedPlaces')=1 and (d->'savedPlaces'->0->>'internalId')::bigint=q.a,'shared save visible to a follower';
  assert d->'recentViews'='[]'::jsonb,'their recently viewed stays private';
 
@@ -65,8 +65,8 @@ do $$ declare d jsonb := public.get_profile_overview('90000000-0000-0000-0000-00
 end $$;
 delete from public.follows where follower_id=auth.uid();
 do $$ declare d jsonb := public.get_profile_overview('90000000-0000-0000-0000-000000000002'); begin
- assert not (d->>'following')::boolean and d->'savedPlaces'='[]'::jsonb and (d->'counts'->>'saved')::int=0,
-  'unfollowed: shared saves hidden';
+ assert not (d->>'following')::boolean and d->'savedPlaces'='[]'::jsonb and (d->'counts'->>'saved')::int=0
+  and (d->'counts'->>'posts')::int=1,'unfollowed: shared saves and friends-only posts hidden';
 end $$;
 
 set local request.jwt.claim.sub='';

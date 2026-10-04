@@ -2,8 +2,10 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../model/nearby_ranking.dart';
 import '../model/places.dart';
+import '../model/preferences.dart';
 import '../model/walking_route.dart';
 import '../model/place_search_result.dart';
+import '../l10n/l10n.dart';
 
 typedef PlacesInvoker = Future<Map<String, dynamic>> Function(
   Map<String, dynamic> body,
@@ -28,12 +30,12 @@ class PlaceService {
     final trimmed = query.trim();
     if (trimmed.isEmpty) return const PlaceSearchResult([]);
     if (trimmed.length < 2 || trimmed.length > 120) {
-      throw const PlaceFailure('검색어를 2~120자로 입력해 주세요.');
+      throw PlaceFailure(l10n.errQueryLength);
     }
     final data = await invoke({
       'action': supplemental ? 'google_search' : 'search',
       'query': trimmed,
-      'languageCode': 'ko',
+      'languageCode': googleLanguage(l10nTag),
       if (supplemental) 'userInitiated': true,
     });
     return PlaceSearchResult(
@@ -46,19 +48,42 @@ class PlaceService {
   /// Taste-based agent search: the server reads the sentence with Gemini and
   /// ranks posted places by matched terms, my taste, then distance from
   /// [near]. [notice] is how it read the sentence.
-  Future<AgentAnswer> agentSearch(String query, {MapViewport? near}) async {
+  /// [taste]'s foods and occasions let "내가 좋아할만한 곳" pick for me; the
+  /// server already knows my priorities.
+  Future<AgentAnswer> agentSearch(
+    String query, {
+    MapViewport? near,
+    TastePreferences? taste,
+  }) async {
     final trimmed = query.trim();
     if (trimmed.length < 2 || trimmed.length > 120) {
-      throw const PlaceFailure('검색어를 2~120자로 입력해 주세요.');
+      throw PlaceFailure(l10n.errQueryLength);
     }
     final data = await invoke({
       'action': 'agent_search',
       'query': trimmed,
       'latitude': ?near?.latitude,
       'longitude': ?near?.longitude,
+      if (taste != null) ...{
+        'cuisines': [for (final c in taste.cuisines) c.name],
+        'occasions': [for (final o in taste.occasions) o.name],
+      },
+      // The AI's reading comes back in the app's language.
+      'lang': l10nTag,
     });
+    final label = data['label'] as String?;
+    final foods = [
+      for (final c in Cuisine.values)
+        if (taste?.cuisines.contains(c) ?? false) c.label,
+    ];
     return (
-      notice: data['notice'] as String?,
+      notice: data['personal'] == true
+          ? (foods.isEmpty
+                ? l10n.agentNoticeTaste
+                : l10n.agentNoticeTasteFoods(foods.join(' · ')))
+          : label != null && label.isNotEmpty
+          ? l10n.agentNotice(label)
+          : data['notice'] as String?,
       places: [
         for (final p in data['places'] as List? ?? [])
           RankedPlace.fromJson(Map<String, dynamic>.from(p as Map)),
@@ -83,6 +108,8 @@ class PlaceService {
       final data = await invoke({
         'action': 'catalog_detail',
         'internalPlaceId': place.id,
+        // The AI summary comes back in the app's language.
+        'lang': l10nTag == 'zh' ? 'zh-Hans' : l10nTag,
       });
       return Place.fromJson(Map<String, dynamic>.from(data['place'] as Map));
     }
@@ -99,7 +126,7 @@ class PlaceService {
             ),
           )
         : place;
-    if (resolved.id == null) throw const PlaceFailure('장소를 확인하지 못했어요.');
+    if (resolved.id == null) throw PlaceFailure(l10n.errPlaceCheck);
     return Place.fromJson(
       Map<String, dynamic>.from(
         (await invoke({
@@ -126,9 +153,9 @@ class SupabasePlacesGateway {
 
   Future<void> _authenticate() async {
     if (client.auth.currentSession != null) return;
-    if (!allowAnonymous) throw const PlaceFailure('장소를 탐색하려면 로그인이 필요해요.');
+    if (!allowAnonymous) throw PlaceFailure(l10n.errPlaceSignIn);
     final result = await client.auth.signInAnonymously();
-    if (result.session == null) throw const PlaceFailure('세션을 시작하지 못했어요.');
+    if (result.session == null) throw PlaceFailure(l10n.errSessionStart);
   }
 
   Future<Map<String, dynamic>> call(Map<String, dynamic> body) async {
@@ -146,17 +173,45 @@ class SupabasePlacesGateway {
         body: body,
       );
       final data = Map<String, dynamic>.from(response.data as Map);
-      if (data['error'] != null) {
+      if (data['error'] case final Map error) {
         throw PlaceFailure(
-          data['error']['message'] as String? ?? '장소를 불러오지 못했어요.',
+          serverErrorMessage(error['code'], l10n.errPlaceLoad),
         );
       }
       return data;
     } on FunctionException catch (error) {
       final details = error.details;
       final remoteError = details is Map ? details['error'] : null;
-      final message = remoteError is Map ? remoteError['message'] : null;
-      throw PlaceFailure(message is String ? message : '장소 서버에 연결하지 못했어요.');
+      throw PlaceFailure(
+        serverErrorMessage(
+          remoteError is Map ? remoteError['code'] : null,
+          l10n.errPlaceServer,
+        ),
+      );
     }
   }
 }
+
+/// The places functions answer errors with a code and a Korean message; the
+/// user sees the code's message in the app's language instead.
+String serverErrorMessage(Object? code, String fallback) => switch (code) {
+  'UNAUTHORIZED' => l10n.errSignInRequired,
+  'INVALID_QUERY' => l10n.errQueryLength,
+  'QUERY_NOT_UNDERSTOOD' => l10n.errQueryNotUnderstood,
+  'INVALID_VIEWPORT' => l10n.errOutsideKoreaMap,
+  'INVALID_PLACE' || 'PLACE_NOT_FOUND' => l10n.errPlaceNotFound,
+  'CATALOG_UNAVAILABLE' => l10n.errPlaceServerRetry,
+  'INVALID_ROUTE' => l10n.errRouteKoreaOnly,
+  'ROUTE_TOO_FAR' => l10n.errRouteTooFar,
+  'ROUTE_UNAVAILABLE' => l10n.errRouteUnavailable,
+  'ROUTE_FAILED' => l10n.errWalkRoute,
+  'GOOGLE_RATE_LIMITED' => l10n.errGoogleBusy,
+  _ => fallback,
+};
+
+/// Google Places' code for the app's language.
+String googleLanguage(String tag) => switch (tag) {
+  'zh' || 'zh-Hans' => 'zh-CN',
+  'zh-Hant' => 'zh-TW',
+  _ => tag,
+};

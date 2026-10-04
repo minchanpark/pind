@@ -53,7 +53,10 @@ void main() {
     final withHandle = ProfileLink.of(
       const UserProfile(id: id, handle: 'pind_junhwan', displayName: '이준환'),
     );
-    expect('${withHandle.uri}', 'https://pind-profile-links.vercel.app/@pind_junhwan');
+    expect(
+      '${withHandle.uri}',
+      'https://pind-profile-links.vercel.app/@pind_junhwan',
+    );
     expect(withHandle.display, 'pind-profile-links.vercel.app/@pind_junhwan');
     final noHandle = ProfileLink.of(
       const UserProfile(id: id, displayName: '이준환'),

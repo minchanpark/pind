@@ -3,6 +3,7 @@ import 'package:geolocator/geolocator.dart';
 import '../model/place_search_result.dart';
 import '../model/places.dart';
 import '../model/registration_model.dart';
+import '../l10n/l10n.dart';
 
 class LocationService {
   static Future<RegistrationPermission> requestPermission() async {
@@ -38,7 +39,7 @@ class LocationService {
 
   static Future<MapViewport> mapPosition() async {
     if (!await Geolocator.isLocationServiceEnabled()) {
-      throw const PlaceFailure('기기의 위치 서비스를 켜 주세요.');
+      throw PlaceFailure(l10n.errLocationServicesOff);
     }
     var permission = await Geolocator.checkPermission();
     if (permission == LocationPermission.denied) {
@@ -46,7 +47,7 @@ class LocationService {
     }
     if (permission == LocationPermission.denied ||
         permission == LocationPermission.deniedForever) {
-      throw const PlaceFailure('위치 권한 없이도 지도를 직접 이동하거나 검색할 수 있어요.');
+      throw PlaceFailure(l10n.errLocationDenied);
     }
     final position = await Geolocator.getCurrentPosition(
       locationSettings: const LocationSettings(
@@ -55,7 +56,7 @@ class LocationService {
     );
     final viewport = MapViewport(position.latitude, position.longitude);
     if (!viewport.inKorea) {
-      throw const PlaceFailure('현재 위치가 한국 밖이에요. 한국의 장소를 검색해 주세요.');
+      throw PlaceFailure(l10n.errOutsideKorea);
     }
     return viewport;
   }

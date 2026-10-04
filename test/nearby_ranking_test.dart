@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:pind_flutter/controllers/explore_controller.dart';
@@ -5,6 +7,7 @@ import 'package:pind_flutter/model/nearby_ranking.dart';
 import 'package:pind_flutter/model/places.dart';
 import 'package:pind_flutter/model/preferences.dart';
 import 'package:pind_flutter/services/place_service.dart';
+import 'package:pind_flutter/view/components/pind_skeleton.dart';
 import 'package:pind_flutter/view/explore/nearby_ranking_sheet.dart';
 import 'package:pind_flutter/view/design_system.dart';
 
@@ -155,6 +158,28 @@ void main() {
     await tester.pumpAndSettle();
     return saves;
   }
+
+  testWidgets('places show as placeholders until they arrive', (tester) async {
+    final rows = Completer<({List<RankedPlace> places, bool nearMe})>();
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: NearbyRankingSheet(
+            title: '☕ 카페',
+            load: () => rows.future,
+            include: (_) => true,
+            onOpen: (_) {},
+          ),
+        ),
+      ),
+    );
+    await tester.pump();
+    expect(find.byType(PindSkeleton), findsOneWidget);
+    expect(find.byType(CircularProgressIndicator), findsNothing);
+    rows.complete((places: const <RankedPlace>[], nearMe: true));
+    await tester.pumpAndSettle();
+    expect(find.byType(PindSkeleton), findsNothing);
+  });
 
   double top(WidgetTester tester, String text) =>
       tester.getTopLeft(find.text(text)).dy;

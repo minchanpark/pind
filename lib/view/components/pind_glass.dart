@@ -3,6 +3,7 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 
 import '../design_system.dart';
+import 'pind_pressable.dart';
 
 enum PindGlassTone { light, dark, purple, lime }
 
@@ -57,7 +58,7 @@ class PindGlass extends StatelessWidget {
       ),
     };
     final corners = BorderRadius.circular(radius);
-    return DecoratedBox(
+    final glass = DecoratedBox(
       decoration: BoxDecoration(
         borderRadius: corners,
         boxShadow: [
@@ -105,6 +106,11 @@ class PindGlass extends StatelessWidget {
         ),
       ),
     );
+    // A glass around a live tap target is a button: it gives under the finger.
+    final target = child;
+    return target is InkWell && target.onTap != null
+        ? PindPressable(child: glass)
+        : glass;
   }
 }
 

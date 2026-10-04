@@ -2,6 +2,7 @@ import 'dart:math' as math;
 import 'dart:ui';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 
 import '../design_system.dart';
@@ -9,8 +10,10 @@ import '../../model/places.dart';
 import '../../model/preferences.dart';
 import '../../model/place_context.dart';
 import '../../controllers/place_detail_controller.dart';
+import '../components/pind_skeleton.dart';
 import '../components/post_card.dart';
 import 'post_photo_viewer.dart';
+import '../../l10n/l10n.dart';
 
 /// Flutter rendering of Figma glass, not an iOS-only native control.
 class DetailGlass extends StatelessWidget {
@@ -99,6 +102,10 @@ class _PlaceSheetState extends State<PlaceSheet> {
   Place get place => controller.model.place;
   PlaceContext? get social => controller.model.social;
   bool get loading => controller.model.loading;
+  bool get hasIntro => [
+    place.insightSummary,
+    place.summary,
+  ].any((text) => text?.trim().isNotEmpty == true);
   bool get detailError => controller.model.detailError;
   bool get contextError => controller.model.contextError;
   bool get saving => controller.model.saving;
@@ -194,6 +201,7 @@ class _PlaceSheetState extends State<PlaceSheet> {
   }
 
   Future<void> save() async {
+    HapticFeedback.lightImpact();
     final error = await controller.save();
     if (mounted && error != null) message(error);
   }
@@ -260,9 +268,11 @@ class _PlaceSheetState extends State<PlaceSheet> {
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
                       header(),
-                      if (loading) const LinearProgressIndicator(minHeight: 2),
-                      if (detailError) errorRow('상세 정보를 불러오지 못했어요.'),
-                      if (contextError) errorRow('취향·팔로잉 정보를 불러오지 못했어요.'),
+                      // Rich places show placeholders in the body instead.
+                      if (loading && !place.hasRichContent)
+                        const LinearProgressIndicator(minHeight: 2),
+                      if (detailError) errorRow(l10n.errDetailLoad),
+                      if (contextError) errorRow(l10n.errContextLoad),
                       if (place.hasRichContent) expandHint(),
                     ],
                   ),
@@ -309,8 +319,8 @@ class _PlaceSheetState extends State<PlaceSheet> {
         duration: const Duration(milliseconds: 280),
         curve: Curves.easeOutCubic,
       ),
-      child: const Text(
-        '⌃  위로 올려서 소개 · 게시물 보기',
+      child: Text(
+        l10n.detailSwipeHint,
         style: TextStyle(fontSize: PindType.caption, color: PindColors.muted),
       ),
     ),
@@ -322,20 +332,17 @@ class _PlaceSheetState extends State<PlaceSheet> {
       crossAxisAlignment: WrapCrossAlignment.center,
       children: [
         Text(text, style: const TextStyle(fontSize: PindType.label)),
-        TextButton(
-          onPressed: loading ? null : load,
-          child: const Text('다시 시도'),
-        ),
+        TextButton(onPressed: loading ? null : load, child: Text(l10n.retry)),
       ],
     ),
   );
   Widget header() {
     final hours = todayHours(place, DateTime.now());
     final status = place.isOpen == null
-        ? '운영시간 확인 필요'
+        ? l10n.hoursUnknown
         : place.isOpen!
-        ? '영업 중'
-        : '영업 종료';
+        ? l10n.openNow
+        : l10n.closedNow;
     final score = social == null
         ? null
         : tasteMatch(controller.preferences, social!);
@@ -365,7 +372,7 @@ class _PlaceSheetState extends State<PlaceSheet> {
                 ),
               ),
               IconButton(
-                tooltip: '닫기',
+                tooltip: l10n.close,
                 onPressed: () => Navigator.pop(context),
                 padding: EdgeInsets.zero,
                 constraints: const BoxConstraints(minWidth: 44, minHeight: 44),
@@ -389,7 +396,10 @@ class _PlaceSheetState extends State<PlaceSheet> {
                     ),
                     child: Text(
                       '$status${hours == null ? '' : ' · $hours'}',
-                      style: const TextStyle(fontSize: PindType.caption, color: Colors.black),
+                      style: const TextStyle(
+                        fontSize: PindType.caption,
+                        color: Colors.black,
+                      ),
                     ),
                   ),
                 ),
@@ -400,7 +410,7 @@ class _PlaceSheetState extends State<PlaceSheet> {
                   padding: const EdgeInsets.symmetric(vertical: 8),
                   child: Text(
                     distance == null
-                        ? (locating ? '위치 확인 중' : '거리 확인')
+                        ? (locating ? l10n.locating : l10n.checkDistance)
                         : formatDistance(distance!),
                     style: const TextStyle(
                       fontSize: PindType.caption,
@@ -411,11 +421,14 @@ class _PlaceSheetState extends State<PlaceSheet> {
               ),
               Text(
                 place.isCatalog
-                    ? 'Pind 게시물 ${place.pindPostCount ?? 0}개'
+                    ? l10n.pindPostCount(place.pindPostCount ?? 0)
                     : place.reviewCount == null
-                    ? '리뷰 수 확인 필요'
-                    : '리뷰 ${place.reviewCount}개',
-                style: const TextStyle(fontSize: PindType.caption, color: PindColors.muted),
+                    ? l10n.reviewCountUnknown
+                    : l10n.reviewCountLong(place.reviewCount!),
+                style: const TextStyle(
+                  fontSize: PindType.caption,
+                  color: PindColors.muted,
+                ),
               ),
             ],
           ),
@@ -430,7 +443,7 @@ class _PlaceSheetState extends State<PlaceSheet> {
               const SizedBox(width: 5),
               Expanded(
                 child: Text(
-                  place.address,
+                  [place.address, ?place.nativeAddress].join('\n'),
                   style: const TextStyle(
                     fontSize: PindType.label,
                     color: PindColors.muted,
@@ -446,9 +459,7 @@ class _PlaceSheetState extends State<PlaceSheet> {
             crossAxisAlignment: WrapCrossAlignment.center,
             children: [
               Tooltip(
-                message:
-                    '전체 공개 평균을 1·2·3순위 50·30·20%로 반영해요. '
-                    '1점은 해당 기준의 0%, 5점은 100%를 받아요.',
+                message: l10n.tasteMatchHelp,
                 child: DetailGlass(
                   radius: 16,
                   purple: true,
@@ -458,7 +469,9 @@ class _PlaceSheetState extends State<PlaceSheet> {
                       vertical: 6,
                     ),
                     child: Text(
-                      '내 취향 ${score == null ? '평가 부족' : '$score%'}',
+                      score == null
+                          ? l10n.tasteMatchUnrated
+                          : l10n.tasteMatchMine(score),
                       key: const ValueKey('taste-match'),
                       style: const TextStyle(
                         fontSize: PindType.caption,
@@ -500,8 +513,8 @@ class _PlaceSheetState extends State<PlaceSheet> {
     final color = axisColors[index % 3], text = average(axis);
     return Tooltip(
       message: text == '—'
-          ? '${axis.label} · 아직 평가가 없어요'
-          : '${axis.label} · 가게 평균 $text / 5',
+          ? l10n.axisNoRatingsDot(axis.label)
+          : l10n.axisAverageDot(axis.label, text),
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
         decoration: BoxDecoration(
@@ -511,8 +524,8 @@ class _PlaceSheetState extends State<PlaceSheet> {
         ),
         child: Semantics(
           label: text == '—'
-              ? '${axis.label} 아직 평가가 없어요'
-              : '${axis.label} 가게 평균 $text점',
+              ? l10n.axisNoRatings(axis.label)
+              : l10n.axisAverage(axis.label, text),
           child: Text(
             '${axis.emoji} ★ $text',
             style: TextStyle(
@@ -559,65 +572,73 @@ class _PlaceSheetState extends State<PlaceSheet> {
         const SizedBox(width: 8),
         Expanded(
           child: Text(
-            '$names${visitors.length > 2 ? ' 외 ${visitors.length - 2}명' : ''}님이 다녀갔어요'
-            '${social!.friendSaveCount > 0 ? ' · 팔로잉 ${social!.friendSaveCount}명 저장' : ''}',
-            style: const TextStyle(fontSize: PindType.label, color: PindColors.body),
+            [
+              l10n.friendsVisitedPlace(
+                names,
+                visitors.length > 2 ? visitors.length - 2 : 0,
+              ),
+              if (social!.friendSaveCount > 0)
+                l10n.followingSaved(social!.friendSaveCount),
+            ].join(' · '),
+            style: const TextStyle(
+              fontSize: PindType.label,
+              color: PindColors.body,
+            ),
           ),
         ),
       ],
     );
   }
 
-  Widget gallery(List<PlacePhoto> photos, [String key = 'detail-photo']) =>
-      Padding(
-        padding: const EdgeInsets.only(top: 16),
-        child: SingleChildScrollView(
-          scrollDirection: Axis.horizontal,
-          padding: const EdgeInsets.symmetric(horizontal: 8),
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              for (var index = 0; index < photos.length; index++)
-                Padding(
-                  padding: EdgeInsets.only(
-                    right: index == photos.length - 1 ? 0 : 8,
-                  ),
-                  child: SizedBox(
-                    key: ValueKey('$key-$index'),
-                    width: index == 0 ? 140 : 210,
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Semantics(
-                          label: '${place.name} 장소 사진 ${index + 1}',
-                          child: ClipRRect(
-                            borderRadius: BorderRadius.circular(8),
-                            child: SizedBox(
-                              width: double.infinity,
-                              height: 182,
-                              child: placePhoto(
-                                photos[index].uri,
-                                BoxFit.cover,
-                              ),
-                            ),
-                          ),
+  Widget gallery(
+    List<PlacePhoto> photos, [
+    String key = 'detail-photo',
+  ]) => Padding(
+    padding: const EdgeInsets.only(top: 16),
+    child: SingleChildScrollView(
+      scrollDirection: Axis.horizontal,
+      padding: const EdgeInsets.symmetric(horizontal: 8),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          for (var index = 0; index < photos.length; index++)
+            Padding(
+              padding: EdgeInsets.only(
+                right: index == photos.length - 1 ? 0 : 8,
+              ),
+              child: SizedBox(
+                key: ValueKey('$key-$index'),
+                width: index == 0 ? 140 : 210,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Semantics(
+                      label: l10n.placePhotoLabel(place.name, index + 1),
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(8),
+                        child: SizedBox(
+                          width: double.infinity,
+                          height: 182,
+                          child: placePhoto(photos[index].uri, BoxFit.cover),
                         ),
-                        // Google requires photo credits; Pind post photos
-                        // show their author in the posts tab instead.
-                        if (place.isGoogle) ...[
-                          for (final author in photos[index].authors)
-                            photoCredit('사진: ${author.name}', author.uri),
-                          if (photos[index].sourceUri != null)
-                            photoCredit('사진 출처', photos[index].sourceUri),
-                        ],
-                      ],
+                      ),
                     ),
-                  ),
+                    // Google requires photo credits; Pind post photos
+                    // show their author in the posts tab instead.
+                    if (place.isGoogle) ...[
+                      for (final author in photos[index].authors)
+                        photoCredit(l10n.photoBy(author.name), author.uri),
+                      if (photos[index].sourceUri != null)
+                        photoCredit(l10n.photoSource, photos[index].sourceUri),
+                    ],
+                  ],
                 ),
-            ],
-          ),
-        ),
-      );
+              ),
+            ),
+        ],
+      ),
+    ),
+  );
 
   Widget photoCredit(String label, String? uri) => Semantics(
     link: uri != null,
@@ -654,16 +675,14 @@ class _PlaceSheetState extends State<PlaceSheet> {
                   Padding(
                     padding: const EdgeInsets.symmetric(vertical: 10),
                     child: Text(
-                      ['소개', '게시물'][i],
+                      [l10n.intro, l10n.posts][i],
                       style: TextStyle(
                         fontSize: PindType.body,
                         height: 17 / 14,
                         fontWeight: tab == i
                             ? FontWeight.w700
                             : FontWeight.w500,
-                        color: tab == i
-                            ? PindColors.ink
-                            : PindColors.subtle,
+                        color: tab == i ? PindColors.ink : PindColors.subtle,
                       ),
                     ),
                   ),
@@ -674,9 +693,7 @@ class _PlaceSheetState extends State<PlaceSheet> {
                       child: Container(
                         key: ValueKey('detail-tab-line-$i'),
                         height: tab == i ? 3 : 1,
-                        color: tab == i
-                            ? PindColors.ink
-                            : PindColors.chip,
+                        color: tab == i ? PindColors.ink : PindColors.chip,
                       ),
                     ),
                   ),
@@ -746,7 +763,7 @@ class _PlaceSheetState extends State<PlaceSheet> {
                       ? PostDeleteButton(
                           onConfirmed: () async {
                             final error = await controller.delete(post);
-                            if (mounted) message(error ?? '게시물을 삭제했어요.');
+                            if (mounted) message(error ?? l10n.postDeleted);
                           },
                         )
                       : null,
@@ -803,12 +820,15 @@ class _PlaceSheetState extends State<PlaceSheet> {
 
   /// The feed's heart, same look and count.
   Widget likeButton(PlacePost post) => PostCardButton(
-    label: post.liked ? '좋아요 취소' : '좋아요',
+    label: post.liked ? l10n.unlike : l10n.like,
     selected: post.liked,
     leading: post.likeCount > 0
         ? Text(
             '${post.likeCount}',
-            style: const TextStyle(fontSize: PindType.micro, color: PindColors.muted),
+            style: const TextStyle(
+              fontSize: PindType.micro,
+              color: PindColors.muted,
+            ),
           )
         : null,
     icon: Icon(
@@ -817,6 +837,7 @@ class _PlaceSheetState extends State<PlaceSheet> {
       color: post.liked ? PindColors.purple : null,
     ),
     onTap: (_) async {
+      HapticFeedback.lightImpact();
       final error = await controller.toggleLike(post);
       if (mounted && error != null) message(error);
     },
@@ -930,25 +951,18 @@ class _PlaceSheetState extends State<PlaceSheet> {
     );
   }
 
-  Widget openable(PlacePost post, int index, Widget child) => Semantics(
-    button: true,
-    label: '게시물 사진 ${index + 1} 크게 보기',
-    child: GestureDetector(
-      key: ValueKey('post-photo-${post.hashCode}-$index'),
-      onTap: () => Navigator.of(context).push(
-        MaterialPageRoute<void>(
-          builder: (_) => PostPhotoViewer(photos: post.photos, initial: index),
-        ),
-      ),
-      child: child,
-    ),
+  Widget openable(PlacePost post, int index, Widget child) => PostPhotoOpener(
+    key: ValueKey('post-photo-${post.hashCode}-$index'),
+    photos: post.photos,
+    index: index,
+    child: child,
   );
 
   Widget postRatingChip(PreferenceCriterion axis, int score, int index) {
     const borders = [Color(0x66E8336E), Color(0x66FF8A1F), Color(0x663563FF)];
     const colors = [PindColors.taste, PindColors.portion, PindColors.ambience];
     return Semantics(
-      label: '${axis.label} $score점',
+      label: l10n.ratingScore(axis.label, score),
       excludeSemantics: true,
       child: Container(
         padding: const EdgeInsets.fromLTRB(9, 8, 10, 8),
@@ -1000,8 +1014,11 @@ class _PlaceSheetState extends State<PlaceSheet> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          '${axes.map((a) => a.label).join(' · ')} 한 줄 요약',
-          style: const TextStyle(fontSize: PindType.label, fontWeight: FontWeight.w700),
+          l10n.oneLineSummaryTitle(axes.map((a) => a.label).join(' · ')),
+          style: const TextStyle(
+            fontSize: PindType.label,
+            fontWeight: FontWeight.w700,
+          ),
         ),
         const SizedBox(height: 10),
         DetailGlass(
@@ -1021,7 +1038,10 @@ class _PlaceSheetState extends State<PlaceSheet> {
                   child: Row(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(axes[i].emoji, style: const TextStyle(fontSize: PindType.body)),
+                      Text(
+                        axes[i].emoji,
+                        style: const TextStyle(fontSize: PindType.body),
+                      ),
                       const SizedBox(width: 8),
                       Expanded(
                         child: Column(
@@ -1038,7 +1058,7 @@ class _PlaceSheetState extends State<PlaceSheet> {
                             const SizedBox(height: 2),
                             Text(
                               place.insightLines[axes[i].name] ??
-                                  '아직 한 줄 평이 없어요.',
+                                  l10n.noOneLiners,
                               style: const TextStyle(
                                 fontSize: PindType.caption,
                                 color: PindColors.body,
@@ -1073,29 +1093,45 @@ class _PlaceSheetState extends State<PlaceSheet> {
           children: [
             if (place.hasRichContent)
               if (tab == 0) ...[
-                Text(
-                  [place.insightSummary, place.summary].firstWhere(
-                        (text) => text?.trim().isNotEmpty == true,
-                        orElse: () => null,
-                      ) ??
-                      '제공된 소개가 없어요.',
-                  key: const ValueKey('detail-intro'),
-                  style: const TextStyle(
-                    fontSize: PindType.label,
-                    height: 1.5,
-                    color: PindColors.muted,
+                if (loading && !hasIntro)
+                  PindSkeleton(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      spacing: 8,
+                      children: [
+                        bone(double.infinity, 12),
+                        bone(double.infinity, 12),
+                        bone(180, 12),
+                      ],
+                    ),
+                  )
+                else
+                  Text(
+                    [place.insightSummary, place.summary].firstWhere(
+                          (text) => text?.trim().isNotEmpty == true,
+                          orElse: () => null,
+                        ) ??
+                        l10n.noIntro,
+                    key: const ValueKey('detail-intro'),
+                    style: const TextStyle(
+                      fontSize: PindType.label,
+                      height: 1.5,
+                      color: PindColors.muted,
+                    ),
                   ),
-                ),
                 const SizedBox(height: 20),
                 reviewSummary(),
               ] else if (controller.model.posts.isEmpty)
-                const Text('아직 게시물이 없어요.'),
+                loading ? postsSkeleton(count: 1) : Text(l10n.noPostsYet),
             // Google, Kakao and Naver terms require naming the source.
             if (!place.isCatalog) ...[
               const SizedBox(height: 12),
               Text(
-                '정보 제공: ${place.sourceLabel}',
-                style: const TextStyle(fontSize: PindType.label, color: PindColors.muted),
+                l10n.dataBy(place.sourceLabel),
+                style: const TextStyle(
+                  fontSize: PindType.label,
+                  color: PindColors.muted,
+                ),
               ),
             ],
             if (!place.hasRichContent)
@@ -1120,7 +1156,7 @@ class _PlaceSheetState extends State<PlaceSheet> {
       child: Row(
         children: [
           action(
-            saved ? '저장됨' : '저장',
+            saved ? l10n.saved : l10n.save,
             saved ? 'saved' : 'save',
             13.4603,
             saving ? null : save,
@@ -1130,7 +1166,7 @@ class _PlaceSheetState extends State<PlaceSheet> {
           const SizedBox(width: 8),
           Builder(
             builder: (ctx) => action(
-              '공유',
+              l10n.share,
               'share',
               13.542,
               () => share(ctx),
@@ -1140,7 +1176,7 @@ class _PlaceSheetState extends State<PlaceSheet> {
           const SizedBox(width: 8),
           Expanded(
             child: action(
-              '길찾기',
+              l10n.directions,
               'directions',
               15.4546,
               () {

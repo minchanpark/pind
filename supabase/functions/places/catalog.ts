@@ -10,6 +10,9 @@ export async function catalogRequest(
   photoUrls: (paths: string[], bucket: string) => Promise<(string | null)[]>,
   googleEnabled: boolean,
   refreshInsight: (placeId: number) => void = () => {},
+  /// The insight in another app language; null keeps the Korean.
+  translateInsight: (placeId: number, postCount: number, insight: Payload, lang: string) =>
+    Promise<Payload | null> = async () => null,
 ): Promise<Payload> {
   const args: Payload = {};
   let fn = 'get_catalog_places';
@@ -17,13 +20,15 @@ export async function catalogRequest(
     // index.ts fills terms from the sentence, and center/radius from its area.
     const list = (v: unknown) => Array.isArray(v) ? (v as unknown[]).filter(t => typeof t === 'string' && t.trim()) : [];
     const terms = list(body.terms), kinds = list(body.kinds);
-    if (!terms.length && !kinds.length) throw new CatalogError(400,'INVALID_QUERY','검색어를 이해하지 못했어요. 다르게 말해 주세요.');
+    const byTaste = body.byTaste === true;
+    if (!terms.length && !kinds.length && !byTaste) throw new CatalogError(400,'QUERY_NOT_UNDERSTOOD','검색어를 이해하지 못했어요. 다르게 말해 주세요.');
     const lat = body.latitude, lng = body.longitude;
     const near = typeof lat === 'number' && typeof lng === 'number' && lat >= 33 && lat <= 38.8 && lng >= 124.5 && lng <= 132;
     const radius = body.radiusMeters;
     const circle = near && typeof radius === 'number' && Number.isInteger(radius) && radius >= 100 && radius <= 50000;
     Object.assign(args,{p_terms:terms,p_lat:near ? lat : null,p_lng:near ? lng : null,
-      ...(circle ? {p_radius:radius} : {}),...(kinds.length ? {p_kinds:kinds} : {})});
+      ...(circle ? {p_radius:radius} : {}),...(kinds.length ? {p_kinds:kinds} : {}),
+      ...(byTaste ? {p_by_taste:true} : {})});
     fn = 'agent_search_places';
   } else if (body.action === 'nearby') {
     const lat = body.latitude, lng = body.longitude, radius = body.radiusMeters;
@@ -101,10 +106,19 @@ export async function catalogRequest(
   });
   if (body.action === 'catalog_detail') {
     if (!places.length) throw new CatalogError(404,'PLACE_NOT_FOUND','공개된 장소를 찾지 못했어요.');
-    return {place:places[0],googleSearchEnabled:googleEnabled};
+    const place = places[0], lang = body.lang;
+    if (place.insight && typeof lang === 'string' && ['en','ja','zh-Hans','zh-Hant'].includes(lang)) {
+      const translated = await translateInsight(Number(place.internalId), Number(place.pindPostCount ?? 0),
+        place.insight as Payload, lang).catch(() => null);
+      if (translated) place.insight = translated;
+    }
+    return {place,googleSearchEnabled:googleEnabled};
   }
   if (body.action === 'agent_search') {
-    return {places,googleSearchEnabled:googleEnabled,notice:`${body.label} 기준으로 찾았어요.`};
+    // The app words the notice in its own language from label/personal;
+    // notice stays for builds that predate that.
+    return {places,googleSearchEnabled:googleEnabled,label:body.label ?? null,
+      personal:body.personal === true,notice:`${body.label} 기준으로 찾았어요.`};
   }
   return {places,googleSearchEnabled:googleEnabled,
     notice:result.catalogReady === false ? '공공 장소 데이터를 준비 중이에요. 준비된 지역부터 표시됩니다.' : null};

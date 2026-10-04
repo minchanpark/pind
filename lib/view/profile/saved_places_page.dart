@@ -9,19 +9,20 @@ import '../components/pind_back_header.dart';
 import '../components/pind_glass.dart';
 import '../design_system.dart';
 import 'profile_screen.dart';
+import '../../l10n/l10n.dart';
 
 /// `2일 전 저장`: under an hour is 방금, then hours, days, weeks, months, years.
 String savedAgo(DateTime at, DateTime now) {
   final d = now.difference(at);
   final ago = switch (d.inDays) {
-    >= 365 => '${d.inDays ~/ 365}년 전',
-    >= 30 => '${d.inDays ~/ 30}개월 전',
-    >= 7 => '${d.inDays ~/ 7}주 전',
-    >= 1 => '${d.inDays}일 전',
-    _ when d.inHours >= 1 => '${d.inHours}시간 전',
-    _ => '방금',
+    >= 365 => l10n.agoYears(d.inDays ~/ 365),
+    >= 30 => l10n.agoMonths(d.inDays ~/ 30),
+    >= 7 => l10n.agoWeeks(d.inDays ~/ 7),
+    >= 1 => l10n.agoDays(d.inDays),
+    _ when d.inHours >= 1 => l10n.agoHours(d.inHours),
+    _ => l10n.justNow,
   };
-  return '$ago 저장';
+  return l10n.savedAgo(ago);
 }
 
 /// Highest [score] first; unscored places last; ties keep saved order.
@@ -72,7 +73,7 @@ class SavedPlacesPage extends StatefulWidget {
 }
 
 class _SavedPlacesPageState extends State<SavedPlacesPage> {
-  String sort = '최근 저장순';
+  String sort = l10n.sortRecentSaved;
 
   /// null = 최근 저장순 (server order).
   num? Function(ProfilePlaceCard)? score;
@@ -110,17 +111,16 @@ class _SavedPlacesPageState extends State<SavedPlacesPage> {
     } catch (_) {
       if (!mounted) return;
       apply(!save);
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('저장 상태를 바꾸지 못했어요. 다시 시도해 주세요.')),
-      );
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text(l10n.errSaveToggle)));
     }
   }
 
   @override
   Widget build(BuildContext context) {
     final sorts = <(String, num? Function(ProfilePlaceCard)?)>[
-      ('최근 저장순', null),
-      if (hasTaste) ('내 취향순', match),
+      (l10n.sortRecentSaved, null),
+      if (hasTaste) (l10n.sortByTaste, match),
       for (final c in criteria) (c.label, (card) => card.averages[c]),
     ];
     final cards = score == null
@@ -128,7 +128,7 @@ class _SavedPlacesPageState extends State<SavedPlacesPage> {
         : rankSaved(widget.cards, score!);
     // Chips follow the sort: 내 취향순 shows only the match, a criterion
     // only its rating, 최근 저장순 everything.
-    final byTaste = sort == '내 취향순';
+    final byTaste = sort == l10n.sortByTaste;
     final picked = criteria.where((c) => c.label == sort).toList();
     final shown = byTaste
         ? const <PreferenceCriterion>[]
@@ -143,9 +143,9 @@ class _SavedPlacesPageState extends State<SavedPlacesPage> {
           children: [
             Row(
               children: [
-                const Expanded(child: PindBackHeader('저장한 장소')),
+                Expanded(child: PindBackHeader(l10n.savedPlaces)),
                 Text(
-                  '${widget.total}곳',
+                  l10n.placesCount(widget.total),
                   style: const TextStyle(
                     fontSize: PindType.label,
                     fontWeight: FontWeight.w700,
@@ -172,7 +172,7 @@ class _SavedPlacesPageState extends State<SavedPlacesPage> {
               ),
             ),
             const SizedBox(height: 14),
-            if (cards.isEmpty) mutedNote('저장한 장소가 아직 없어요.'),
+            if (cards.isEmpty) mutedNote(l10n.noSavedPlaces),
             for (final card in cards)
               Padding(
                 padding: const EdgeInsets.only(bottom: 12),
@@ -281,9 +281,12 @@ class SavedPlaceRow extends StatelessWidget {
                   [
                     placeArea(card.place.address),
                     if (meters != null) formatDistance(meters!),
-                    '리뷰 ${card.reviewCount}',
+                    l10n.reviewsCount(card.reviewCount),
                   ].join(' · '),
-                  style: const TextStyle(fontSize: PindType.label, color: PindColors.muted),
+                  style: const TextStyle(
+                    fontSize: PindType.label,
+                    color: PindColors.muted,
+                  ),
                 ),
                 // One line always: shrinks rather than wraps when narrow.
                 FittedBox(
@@ -346,7 +349,7 @@ class SavedPlaceRow extends StatelessWidget {
             Semantics(
               button: true,
               selected: saved,
-              label: saved ? '저장 취소' : '저장',
+              label: saved ? l10n.unsave : l10n.save,
               child: GestureDetector(
                 onTap: onToggle,
                 child: Container(
@@ -379,7 +382,7 @@ class SavedPlaceRow extends StatelessWidget {
   Widget rating(PreferenceCriterion c, double avg) {
     final color = criterionColor(c);
     return Semantics(
-      label: '${c.label} ${avg.toStringAsFixed(1)}점',
+      label: l10n.ratingScoreText(c.label, avg.toStringAsFixed(1)),
       excludeSemantics: true,
       child: Container(
         padding: const EdgeInsets.fromLTRB(6, 4, 7, 4),

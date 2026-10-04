@@ -1,6 +1,7 @@
 # Miscellaneous
 /config/local.json
 /config/juso.local.env
+/config/tourapi.local.env
 /artifacts/
 *.class
 *.log
@@ -60,3 +61,6 @@ app.*.map.json
 
 # Supabase local state
 supabase/.temp/
+
+# App Store Connect API keys never belong in the repo.
+*.p8

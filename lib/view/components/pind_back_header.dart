@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../design_system.dart';
+import '../../l10n/l10n.dart';
 
 /// `‹ Title` page header that pops the route.
 class PindBackHeader extends StatelessWidget {
@@ -12,7 +13,7 @@ class PindBackHeader extends StatelessWidget {
     children: [
       Semantics(
         button: true,
-        label: '뒤로',
+        label: l10n.back,
         child: InkWell(
           onTap: () => Navigator.maybePop(context),
           // An icon, not a '‹' glyph: glyphs sit off-center in system fonts.

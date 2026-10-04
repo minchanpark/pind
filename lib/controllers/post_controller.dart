@@ -9,6 +9,7 @@ import '../services/location_service.dart';
 import '../services/place_service.dart';
 import '../services/post_service.dart';
 import '../services/post_photo_service.dart';
+import '../l10n/l10n.dart';
 
 class PostController {
   PostController({
@@ -78,6 +79,11 @@ class PostController {
     });
   }
 
+  void setPublic(bool value) {
+    if (_disposed || model.publishing) return;
+    model.update(() => model.isPublic = value);
+  }
+
   void removePhoto(int index) {
     if (_disposed || model.publishing || model.pickingPhotos) return;
     model.update(() => model.photos.removeAt(index));
@@ -100,7 +106,7 @@ class PostController {
       model.photos.addAll(selected.take(10 - model.photos.length));
     } catch (error) {
       if (!_disposed) {
-        model.error = error is PlaceFailure ? error.message : '사진을 불러오지 못했어요.';
+        model.error = error is PlaceFailure ? error.message : l10n.errPhotoLoad;
       }
     } finally {
       if (!_disposed) model.update(() => model.pickingPhotos = false);
@@ -108,7 +114,7 @@ class PostController {
   }
 
   Future<List<Place>> searchPlaces(String query) async {
-    if (places == null) throw const PlaceFailure('로그인 후 식당을 검색해 주세요.');
+    if (places == null) throw PlaceFailure(l10n.errPlaceSearchSignIn);
     return (await places!.search(query))
         .where((p) => p.isCatalog && p.id != null)
         .toList();
@@ -135,7 +141,9 @@ class PostController {
       return _disposed ? null : saved;
     } catch (error) {
       if (!_disposed) {
-        model.error = error is PlaceFailure ? error.message : '게시물을 등록하지 못했어요.';
+        model.error = error is PlaceFailure
+            ? error.message
+            : l10n.errPostPublish;
       }
       return null;
     } finally {

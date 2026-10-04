@@ -2,6 +2,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../model/place_context.dart';
 import 'data_revision.dart';
+import '../l10n/l10n.dart';
 
 abstract interface class PlaceContextService {
   Future<PlaceContext> load(int placeId);
@@ -23,7 +24,7 @@ class SupabasePlaceContextService implements PlaceContextService {
   @override
   Future<void> setSaved(int placeId, bool saved) async {
     final user = client.auth.currentUser;
-    if (user == null) throw StateError('로그인이 필요해요.');
+    if (user == null) throw StateError(l10n.errSignInRequired);
     if (saved) {
       await client.from('saved_places').upsert({
         'user_id': user.id,

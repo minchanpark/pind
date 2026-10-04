@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 
 import '../components/pind_glass.dart';
 import '../design_system.dart';
+import '../../l10n/l10n.dart';
 
 class SetupPage extends StatelessWidget {
   const SetupPage({
@@ -52,7 +53,7 @@ class SetupPage extends StatelessWidget {
                                 left: -14,
                                 top: -7,
                                 child: IconButton(
-                                  tooltip: '이전',
+                                  tooltip: l10n.previous,
                                   onPressed: onBack,
                                   icon: const Icon(
                                     Icons.chevron_left,

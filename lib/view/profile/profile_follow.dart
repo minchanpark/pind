@@ -1,12 +1,15 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 import '../../model/friends_model.dart';
 import '../../model/place_search_result.dart';
 import '../../model/profile_model.dart';
 import '../components/pind_back_header.dart';
 import '../components/pind_glass.dart';
+import '../components/pind_skeleton.dart';
 import '../components/pind_sheet.dart';
 import '../design_system.dart';
+import '../../l10n/l10n.dart';
 import 'profile_screen.dart' show ProfileAvatar, mutedNote;
 
 /// Figma 663:5336. 팔로우 / 맞팔로우 (they follow me) are purple; 팔로잉 is
@@ -23,6 +26,7 @@ class FollowButton extends StatelessWidget {
   Future<void> tap(BuildContext context) async {
     if (!overview.following ||
         await confirmUnfollow(context, overview.profile)) {
+      HapticFeedback.lightImpact();
       onToggle();
     }
   }
@@ -31,14 +35,14 @@ class FollowButton extends StatelessWidget {
   Widget build(BuildContext context) {
     final following = overview.following;
     final label = following
-        ? '팔로잉'
+        ? l10n.following
         : overview.followsMe
-        ? '맞팔로우'
-        : '팔로우';
+        ? l10n.followBack
+        : l10n.follow;
     final color = following ? PindColors.ink : Colors.white;
     return Semantics(
       button: true,
-      label: following ? '$label, 팔로우 취소' : label,
+      label: following ? l10n.unfollowLabel(label) : label,
       child: PindGlass(
         tone: following ? PindGlassTone.light : PindGlassTone.purple,
         radius: 14,
@@ -91,24 +95,29 @@ Future<bool> confirmUnfollow(BuildContext context, UserProfile p) async =>
           Center(child: ProfileAvatar(p.avatarUrl, 64)),
           const SizedBox(height: 12),
           Text(
-            '${p.handle == null ? p.displayName : '@${p.handle}'} 님을 팔로우 취소할까요?',
+            l10n.unfollowTitle(
+              p.handle == null ? p.displayName : '@${p.handle}',
+            ),
             textAlign: TextAlign.center,
             style: PindText.title,
           ),
           const SizedBox(height: 6),
-          const Text(
-            '취소해도 언제든 다시 팔로우할 수 있어요.',
+          Text(
+            l10n.unfollowBody,
             textAlign: TextAlign.center,
             style: PindText.caption,
           ),
           const SizedBox(height: 18),
           PindSheetButton(
-            '팔로우 취소',
+            l10n.unfollow,
             tone: PindSheetButtonTone.danger,
             onTap: () => Navigator.pop(context, true),
           ),
           const SizedBox(height: 10),
-          PindSheetButton('닫기', onTap: () => Navigator.pop(context, false)),
+          PindSheetButton(
+            l10n.close,
+            onTap: () => Navigator.pop(context, false),
+          ),
         ],
       ),
     ) ??
@@ -171,7 +180,7 @@ class PersonRow extends StatelessWidget {
                           ),
                         if (c.match != null)
                           Text(
-                            '취향 ${c.match}% 일치',
+                            l10n.tasteMatchPercent(c.match!),
                             style: const TextStyle(
                               fontSize: PindType.micro,
                               fontWeight: FontWeight.w500,
@@ -194,18 +203,23 @@ class PersonRow extends StatelessWidget {
   Widget followButton(FriendCandidate c) => Semantics(
     button: true,
     label: c.following
-        ? '${c.profile.displayName} 팔로우 취소'
-        : '${c.profile.displayName} 팔로우',
+        ? l10n.unfollowName(c.profile.displayName)
+        : l10n.followName(c.profile.displayName),
     child: PindGlass(
       tone: c.following ? PindGlassTone.light : PindGlassTone.purple,
       radius: 14,
       child: InkWell(
-        onTap: onToggleFollow,
+        onTap: onToggleFollow == null
+            ? null
+            : () {
+                HapticFeedback.lightImpact();
+                onToggleFollow!();
+              },
         child: ExcludeSemantics(
           child: Padding(
             padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
             child: Text(
-              c.following ? '팔로우 취소' : '팔로우',
+              c.following ? l10n.unfollow : l10n.follow,
               style: TextStyle(
                 fontSize: PindType.caption,
                 fontWeight: FontWeight.w700,
@@ -260,7 +274,7 @@ class _FollowListPageState extends State<FollowListPage> {
     } catch (e) {
       if (mounted) {
         setState(
-          () => error = e is PlaceFailure ? e.message : '목록을 불러오지 못했어요.',
+          () => error = e is PlaceFailure ? e.message : l10n.errListLoad,
         );
       }
     }
@@ -282,7 +296,9 @@ class _FollowListPageState extends State<FollowListPage> {
       if (!mounted) return;
       mark(!target);
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(e is PlaceFailure ? e.message : '다시 시도해 주세요.')),
+        SnackBar(
+          content: Text(e is PlaceFailure ? e.message : l10n.tryAgainPlease),
+        ),
       );
     }
   }
@@ -301,7 +317,7 @@ class _FollowListPageState extends State<FollowListPage> {
                 Expanded(child: PindBackHeader(widget.title)),
                 if (list != null)
                   Text(
-                    '${list.length}명',
+                    l10n.peopleCount(list.length),
                     style: const TextStyle(
                       fontSize: PindType.label,
                       fontWeight: FontWeight.w700,
@@ -315,17 +331,16 @@ class _FollowListPageState extends State<FollowListPage> {
               Column(
                 children: [
                   mutedNote(error!),
-                  TextButton(onPressed: fetch, child: const Text('다시 시도')),
+                  TextButton(onPressed: fetch, child: Text(l10n.retry)),
                 ],
               )
             else if (list == null)
-              const Padding(
-                padding: EdgeInsets.only(top: 40),
-                child: Center(child: CircularProgressIndicator()),
-              )
+              peopleSkeleton()
             else if (list.isEmpty)
               mutedNote(
-                widget.title == '팔로워' ? '아직 팔로워가 없어요.' : '아직 팔로우한 사람이 없어요.',
+                widget.title == l10n.followers
+                    ? l10n.noFollowers
+                    : l10n.noFollowing,
               )
             else
               for (final c in list)

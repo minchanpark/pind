@@ -8,6 +8,7 @@ import '../model/profile_link.dart';
 import '../model/profile_model.dart';
 import 'config.dart';
 import 'place_action_service.dart';
+import '../l10n/l10n.dart';
 
 /// Sends my profile out: a KakaoTalk card, or the system share sheet.
 class ProfileShareService {
@@ -40,18 +41,18 @@ class ProfileShareService {
           return await ShareClient.instance.shareDefault(
             template: FeedTemplate(
               content: Content(
-                title: '${me.displayName} 님의 Pind',
-                description: '음식 취향 지도를 구경해 보세요',
+                title: l10n.shareTitle(me.displayName),
+                description: l10n.shareBody,
                 imageUrl: avatar == null ? null : Uri.tryParse(avatar),
                 link: link,
               ),
-              buttons: [Button(title: '프로필 보기', link: link)],
+              buttons: [Button(title: l10n.viewProfile, link: link)],
             ),
           );
         }
       } catch (_) {}
     }
-    await share(invite, 'Pind 친구 초대', origin);
+    await share(invite, l10n.inviteToPind, origin);
   }
 
   /// The code card as an image, so the user can pick Instagram.

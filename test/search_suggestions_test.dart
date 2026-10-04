@@ -28,6 +28,8 @@ void main() {
       ),
     );
     expect(s.map((e) => e.$2), [
+      // Taste alone first.
+      '내가 좋아할만한 곳 추천해줘',
       // Enum order: date before work.
       '데이트하기 좋은 파스타집',
       '카공하기 좋은 디저트 카페',
@@ -39,9 +41,9 @@ void main() {
       '가성비 좋은 디저트 카페',
       '사진 잘 나오는 고깃집',
       '분위기 좋은 디저트 카페',
-      '가성비 좋은 고깃집',
     ]);
-    expect(s.first.$1, '🍝');
+    expect(s.first, forMeSuggestion);
+    expect(s[1].$1, '🍝');
   });
 
   test('an occasion with no matching cuisine names a plain place', () {
@@ -51,7 +53,8 @@ void main() {
         cuisines: [Cuisine.korean],
       ),
     );
-    expect(s.take(3).map((e) => e.$2), [
+    expect(s.take(4).map((e) => e.$2), [
+      '내가 좋아할만한 곳 추천해줘',
       '카공하기 좋은 카페',
       '한잔하기 좋은 술집',
       '맛있는 백반집',
@@ -59,17 +62,17 @@ void main() {
     // Few pairs: topped up from the design set, ten in all, no repeats.
     expect(s, hasLength(10));
     expect(s.map((e) => e.$2).toSet(), hasLength(10));
-    expect(s.last, defaultSuggestions[6]);
+    expect(s.last, defaultSuggestions[5]);
   });
 
   test('every cuisine and occasion has words', () {
     for (final c in Cuisine.values) {
       final s = suggestionsFor(TastePreferences(cuisines: [c]));
-      expect(s.first.$2, isNot(contains('null')), reason: c.name);
+      expect(s[1].$2, isNot(contains('null')), reason: c.name);
     }
     for (final o in DiningOccasion.values) {
       final s = suggestionsFor(TastePreferences(occasions: [o]));
-      expect(s.first.$2, isNot(contains('null')), reason: o.name);
+      expect(s[1].$2, isNot(contains('null')), reason: o.name);
     }
   });
 }

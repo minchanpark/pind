@@ -9,14 +9,15 @@ import '../components/pind_glass.dart';
 import '../explore/explore_screen.dart';
 import '../design_system.dart';
 import 'profile_screen.dart';
+import '../../l10n/l10n.dart';
 
 /// (emoji, label, earned).
 // ponytail: thresholds on the two counts we have; a server badge table when
 // badges become a real feature.
 List<(String, String, bool)> profileBadges(ProfileCounts c) => [
-  ('😋', '맛잘알', c.posts >= 1),
-  ('📝', '게시물왕', c.posts >= 10),
-  ('🤔', '맛집 판별가', c.saved >= 5),
+  ('😋', l10n.badgeFoodie, c.posts >= 1),
+  ('📝', l10n.badgePoster, c.posts >= 10),
+  ('🤔', l10n.badgeJudge, c.saved >= 5),
   ('🔒', '???', false),
 ];
 
@@ -53,51 +54,58 @@ class ProfileMapTab extends StatelessWidget {
         spacing: 22,
         children: [
           _TasteCard(preferences, mine ? onEditPreferences : null, mine),
-          profileSection('뱃지', badges(), trailing: '더보기 ›'),
-          profileSection(
-            mine ? '나의 지도' : '지도',
-            map(places),
-          ),
+          profileSection(l10n.badges, badges(), trailing: l10n.seeMore),
+          profileSection(mine ? l10n.myMapTitle : l10n.navMap, map(places)),
         ],
       ),
     );
   }
 
-  Widget badges() => Row(
-    spacing: 8,
-    children: [
-      for (final (emoji, label, earned) in profileBadges(overview.counts))
-        Expanded(
-          child: Opacity(
-            opacity: earned ? 1 : .5,
-            child: PindGlass(
-              radius: 16,
-              padding: const EdgeInsets.only(top: 12, bottom: 10),
-              child: Column(
-                spacing: 4,
-                children: [
-                  Text(emoji, style: const TextStyle(fontSize: PindType.titleLarge)),
-                  Text(
-                    label,
-                    style: const TextStyle(
-                      fontSize: PindType.micro,
-                      fontWeight: FontWeight.w500,
-                      color: profileBody,
+  // Same height for every card when one label wraps (e.g. "Restaurant judge").
+  Widget badges() => IntrinsicHeight(
+    child: Row(
+      spacing: 8,
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        for (final (emoji, label, earned) in profileBadges(overview.counts))
+          Expanded(
+            child: Opacity(
+              opacity: earned ? 1 : .5,
+              child: PindGlass(
+                radius: 16,
+                padding: const EdgeInsets.only(top: 12, bottom: 10),
+                child: Column(
+                  spacing: 4,
+                  children: [
+                    Text(
+                      emoji,
+                      style: const TextStyle(fontSize: PindType.titleLarge),
                     ),
-                  ),
-                ],
+                    Text(
+                      label,
+                      textAlign: TextAlign.center,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                        fontSize: PindType.micro,
+                        fontWeight: FontWeight.w500,
+                        color: profileBody,
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ),
           ),
-        ),
-    ],
+      ],
+    ),
   );
 
   Widget map(List<Place> places) {
     final content = places.isEmpty
-        ? _note('작성한 게시물이 아직 없어요')
+        ? _note(l10n.noPostsWritten)
         : !mapsEnabled
-        ? _note('지도를 사용할 수 없어요')
+        ? _note(l10n.mapUnavailable)
         : _PostsMap(overview, onOpenPlace);
     return PindGlass(
       radius: 20,
@@ -118,11 +126,11 @@ class ProfileMapTab extends StatelessWidget {
                 bottom: 12,
                 child: GestureDetector(
                   onTap: () => onShowMap!(places.firstOrNull?.id),
-                  child: const PindGlass(
+                  child: PindGlass(
                     radius: 56,
                     padding: EdgeInsets.symmetric(horizontal: 24, vertical: 4),
                     child: Text(
-                      '맵 보기 ›',
+                      l10n.viewMap,
                       style: TextStyle(
                         fontSize: PindType.label,
                         fontWeight: FontWeight.w600,
@@ -228,7 +236,11 @@ class _TasteCard extends StatelessWidget {
   final TastePreferences? preferences;
   final VoidCallback? onEdit;
   final bool mine;
-  static const bars = [PindColors.pink, PindColors.ratingBlue, PindColors.ratingOrange];
+  static const bars = [
+    PindColors.pink,
+    PindColors.ratingBlue,
+    PindColors.ratingOrange,
+  ];
   static const values = [
     PindColors.taste,
     PindColors.ambience,
@@ -250,7 +262,7 @@ class _TasteCard extends StatelessWidget {
             spacing: 8,
             children: [
               Text(
-                mine ? '나의 취향' : '취향',
+                mine ? l10n.myTaste : l10n.taste,
                 style: const TextStyle(
                   fontSize: PindType.body,
                   fontWeight: FontWeight.w700,
@@ -258,7 +270,7 @@ class _TasteCard extends StatelessWidget {
               ),
               if (ready)
                 _pill(
-                  '${p[0].label} 중시형',
+                  l10n.tasteType(p[0].label),
                   background: const Color.fromRGBO(99, 0, 219, .7),
                   border: const Color.fromRGBO(58, 0, 136, .6),
                   color: Colors.white,
@@ -270,7 +282,7 @@ class _TasteCard extends StatelessWidget {
                 GestureDetector(
                   onTap: onEdit,
                   child: _pill(
-                    '✎ 수정',
+                    l10n.edit,
                     background: const Color.fromRGBO(251, 251, 253, .9),
                     border: PindColors.imageFill,
                     color: profileBody,
@@ -282,7 +294,7 @@ class _TasteCard extends StatelessWidget {
           ),
           if (!ready)
             Text(
-              mine ? '취향을 설정하면 여기에 표시돼요.' : '공개한 취향이 없어요.',
+              mine ? l10n.tasteEmpty : l10n.noPublicTaste,
               style: const TextStyle(
                 fontSize: PindType.label,
                 height: 17 / 12,
@@ -312,7 +324,7 @@ class _TasteCard extends StatelessWidget {
               children: [for (var i = 0; i < 3; i++) _chip(p[i], i)],
             ),
             Text(
-              '${p[0].label} 먼저, 그다음 ${p[1].label}·${p[2].label}을 봐요.',
+              l10n.tasteOrder(p[0].label, p[1].label, p[2].label),
               style: const TextStyle(
                 fontSize: PindType.label,
                 height: 17 / 12,
@@ -341,7 +353,11 @@ class _TasteCard extends StatelessWidget {
     ),
     child: Text(
       text,
-      style: TextStyle(fontSize: PindType.caption, fontWeight: weight, color: color),
+      style: TextStyle(
+        fontSize: PindType.caption,
+        fontWeight: weight,
+        color: color,
+      ),
     ),
   );
 

@@ -12,6 +12,7 @@ import 'location_permission_screen.dart';
 import 'onboarding_screen.dart';
 import 'registration_components.dart';
 import '../components/pind_image.dart';
+import '../../l10n/l10n.dart';
 
 class RegistrationScreen extends StatefulWidget {
   const RegistrationScreen({
@@ -110,17 +111,20 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
     key: const ValueKey('country-screen'),
     progress: 1,
     onBack: controller.back,
-    footer: _footer('다음', caption: '${draft.country.label} 선택됨'),
+    footer: _footer(
+      l10n.next,
+      caption: l10n.countrySelected(draft.country.label),
+    ),
     children: [
-      const SetupTitle('국가를 선택해\n주세요', '서비스 지역과 언어, 통화 표기가 함께 설정돼요.'),
+      SetupTitle(l10n.countryTitle, l10n.countryBody),
       const SizedBox(height: 20),
       SetupGlass(
         padding: EdgeInsets.zero,
         child: TextField(
           key: const ValueKey('country-search'),
           onChanged: controller.searchCountries,
-          decoration: const InputDecoration(
-            hintText: '국가 검색',
+          decoration: InputDecoration(
+            hintText: l10n.countrySearch,
             prefixIcon: Icon(Icons.search, size: 22, color: PindColors.muted),
             border: InputBorder.none,
             contentPadding: EdgeInsets.symmetric(vertical: 13, horizontal: 16),
@@ -129,8 +133,8 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
         ),
       ),
       const SizedBox(height: 20),
-      const Text(
-        '자주 선택하는 국가',
+      Text(
+        l10n.countryPopular,
         style: TextStyle(
           fontSize: PindType.label,
           fontWeight: FontWeight.w700,
@@ -204,10 +208,10 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
           ),
         ),
       if (controller.countries.isEmpty)
-        const Padding(padding: EdgeInsets.all(24), child: Text('검색 결과가 없어요.')),
+        Padding(padding: EdgeInsets.all(24), child: Text(l10n.noSearchResults)),
       const SizedBox(height: 8),
-      const Text(
-        '현재 맛집 탐색은 대한민국에서 제공해요.',
+      Text(
+        l10n.countryKoreaOnly,
         style: TextStyle(fontSize: PindType.caption, color: PindColors.muted),
       ),
     ],
@@ -217,14 +221,11 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
     key: const ValueKey('basic-screen'),
     progress: 2,
     onBack: controller.back,
-    footer: _footer('다음'),
+    footer: _footer(l10n.next),
     children: [
-      const SetupTitle(
-        '기본 정보를\n알려주세요',
-        '또래가 좋아하는 맛집을 추천하는 데만 쓰여요.\n프로필에는 공개되지 않습니다.',
-      ),
+      SetupTitle(l10n.basicTitle, l10n.basicBody),
       const SizedBox(height: 24),
-      _label('이름'),
+      _label(l10n.name),
       SetupGlass(
         padding: EdgeInsets.zero,
         child: TextFormField(
@@ -234,7 +235,7 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
           maxLength: 40,
           textInputAction: TextInputAction.done,
           decoration: InputDecoration(
-            hintText: '이름을 입력해주세요',
+            hintText: l10n.enterName,
             counterText: '',
             border: InputBorder.none,
             contentPadding: const EdgeInsets.symmetric(
@@ -245,11 +246,14 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
                 ? null
                 : const Icon(Icons.check, color: PindColors.success, size: 16),
           ),
-          style: const TextStyle(fontSize: PindType.bodyLarge, fontWeight: FontWeight.w700),
+          style: const TextStyle(
+            fontSize: PindType.bodyLarge,
+            fontWeight: FontWeight.w700,
+          ),
         ),
       ),
       const SizedBox(height: 22),
-      _label('성별'),
+      _label(l10n.gender),
       Row(
         children: [
           for (final gender in ProfileGender.values) ...[
@@ -282,9 +286,9 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
                 ),
                 child: Text(
                   switch (gender) {
-                    ProfileGender.male => '남성',
-                    ProfileGender.female => '여성',
-                    ProfileGender.unspecified => '선택 안 함',
+                    ProfileGender.male => l10n.male,
+                    ProfileGender.female => l10n.female,
+                    ProfileGender.unspecified => l10n.preferNotToSay,
                   },
                   textAlign: TextAlign.center,
                   style: const TextStyle(fontSize: PindType.bodySmall),
@@ -295,7 +299,7 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
         ],
       ),
       const SizedBox(height: 22),
-      _label('생년월일'),
+      _label(l10n.birthDate),
       _birthday(),
       const SizedBox(height: 10),
       if (draft.ageAt(DateTime.now()) case final int age)
@@ -311,24 +315,31 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
                 border: Border.all(color: const Color(0x80A3AD00)),
               ),
               child: Text(
-                '$age세 · ${age ~/ 10 * 10}대 ${age % 10 < 4
-                    ? '초반'
-                    : age % 10 < 7
-                    ? '중반'
-                    : '후반'}',
+                l10n.ageBand(
+                  age,
+                  age ~/ 10 * 10,
+                  age % 10 < 4
+                      ? 'early'
+                      : age % 10 < 7
+                      ? 'mid'
+                      : 'late',
+                ),
                 style: const TextStyle(
                   fontSize: PindType.micro,
                   fontWeight: FontWeight.w700,
                 ),
               ),
             ),
-            const Text(
-              '또래 취향 추천에 사용돼요',
-              style: TextStyle(fontSize: PindType.caption, color: PindColors.muted),
+            Text(
+              l10n.ageUsedFor,
+              style: TextStyle(
+                fontSize: PindType.caption,
+                color: PindColors.muted,
+              ),
             ),
             if (age < 14)
-              const Text(
-                '만 14세 이상부터 이용할 수 있어요.',
+              Text(
+                l10n.ageMinimum,
                 style: TextStyle(fontSize: PindType.label, color: Colors.red),
               ),
           ],
@@ -339,25 +350,25 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
         child: Column(
           children: [
             _consent(
-              '개인정보 수집·이용 동의 (필수)',
+              l10n.consentPrivacy,
               draft.privacyConsent,
               (value) => controller.edit(draft.copyWith(privacyConsent: value)),
-              '이름, 성별, 생년월일은 기본 정보와 취향 추천에 사용하며 공개 프로필에 표시하지 않습니다.',
+              l10n.consentPrivacyBody,
             ),
             const Divider(height: 1, color: PindColors.line),
             _consent(
-              '만 14세 이상입니다 (필수)',
+              l10n.consentAge,
               draft.ageConsent,
               (value) => controller.edit(draft.copyWith(ageConsent: value)),
-              '생년월일을 확인하고 만 14세 이상인 경우 선택해 주세요.',
+              l10n.consentAgeBody,
             ),
             const Divider(height: 1, color: PindColors.line),
             _consent(
-              '맞춤 추천을 위한 정보 활용 (선택)',
+              l10n.consentPersonalize,
               draft.recommendationConsent,
               (value) =>
                   controller.edit(draft.copyWith(recommendationConsent: value)),
-              '선택하지 않아도 기본 서비스와 장소 검색을 이용할 수 있습니다.',
+              l10n.consentPersonalizeBody,
             ),
           ],
         ),
@@ -379,13 +390,13 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
 
   Widget _birthday() {
     final fields = [
-      _dateField('년', draft.birthDate?.year, [
+      _dateField(l10n.year, draft.birthDate?.year, [
         for (var year = DateTime.now().year; year >= 1900; year--) year,
       ], (value) => _birth(year: value)),
-      _dateField('월', draft.birthDate?.month, [
+      _dateField(l10n.month, draft.birthDate?.month, [
         for (var month = 1; month <= 12; month++) month,
       ], (value) => _birth(month: value)),
-      _dateField('일', draft.birthDate?.day, [
+      _dateField(l10n.day, draft.birthDate?.day, [
         for (
           var day = 1;
           day <=
@@ -431,7 +442,10 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
       underline: const SizedBox.shrink(),
       hint: Text(
         label,
-        style: const TextStyle(fontSize: PindType.bodySmall, color: PindColors.muted),
+        style: const TextStyle(
+          fontSize: PindType.bodySmall,
+          color: PindColors.muted,
+        ),
       ),
       icon: const Text(
         '▾',
@@ -505,7 +519,10 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
                   ),
                   const SizedBox(width: 10),
                   Expanded(
-                    child: Text(title, style: const TextStyle(fontSize: PindType.label)),
+                    child: Text(
+                      title,
+                      style: const TextStyle(fontSize: PindType.label),
+                    ),
                   ),
                 ],
               ),
@@ -514,8 +531,12 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
         ),
       ),
       IconButton(
-        tooltip: '$title 내용 보기',
-        icon: const Icon(Icons.chevron_right, size: 16, color: PindColors.muted),
+        tooltip: l10n.viewDetails(title),
+        icon: const Icon(
+          Icons.chevron_right,
+          size: 16,
+          color: PindColors.muted,
+        ),
         onPressed: () => showModalBottomSheet<void>(
           context: context,
           useSafeArea: true,
@@ -534,7 +555,7 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
                   alignment: Alignment.centerRight,
                   child: TextButton(
                     onPressed: () => Navigator.pop(context),
-                    child: const Text('닫기'),
+                    child: Text(l10n.close),
                   ),
                 ),
               ],
@@ -549,9 +570,9 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
     key: const ValueKey('handle-screen'),
     progress: 3,
     onBack: controller.back,
-    footer: _footer('Pind 시작하기'),
+    footer: _footer(l10n.startPind),
     children: [
-      const SetupTitle('어떻게\n불러드릴까요?', '아이디는 나중에 바꿀 수 없어요. 닉네임은 언제든 변경 가능합니다.'),
+      SetupTitle(l10n.handleTitle, l10n.handleBody),
       const SizedBox(height: 20),
       Center(
         child: SizedBox(
@@ -599,11 +620,14 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
                 left: 60,
                 top: 58,
                 child: IconButton(
-                  tooltip: '아바타 선택',
+                  tooltip: l10n.chooseAvatar,
                   onPressed: _chooseAvatar,
                   icon: const Text(
                     '✚',
-                    style: TextStyle(fontSize: PindType.bodySmall, fontWeight: FontWeight.w700),
+                    style: TextStyle(
+                      fontSize: PindType.bodySmall,
+                      fontWeight: FontWeight.w700,
+                    ),
                   ),
                 ),
               ),
@@ -612,7 +636,7 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
         ),
       ),
       const SizedBox(height: 26),
-      _label('아이디'),
+      _label(l10n.handle),
       SetupGlass(
         padding: EdgeInsets.zero,
         child: TextFormField(
@@ -628,15 +652,21 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
           ],
           decoration: InputDecoration(
             prefixText: '@',
-            hintText: '아이디를 입력해주세요',
+            hintText: l10n.enterHandle,
             counterText: '',
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(16),
-              borderSide: const BorderSide(color: PindColors.purple, width: 1.5),
+              borderSide: const BorderSide(
+                color: PindColors.purple,
+                width: 1.5,
+              ),
             ),
             enabledBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(16),
-              borderSide: const BorderSide(color: PindColors.purple, width: 1.5),
+              borderSide: const BorderSide(
+                color: PindColors.purple,
+                width: 1.5,
+              ),
             ),
             contentPadding: const EdgeInsets.symmetric(
               horizontal: 16,
@@ -646,19 +676,20 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
                 ? const Icon(Icons.check, color: PindColors.success, size: 16)
                 : null,
           ),
-          style: const TextStyle(fontSize: PindType.bodyLarge, fontWeight: FontWeight.w700),
+          style: const TextStyle(
+            fontSize: PindType.bodyLarge,
+            fontWeight: FontWeight.w700,
+          ),
         ),
       ),
       const SizedBox(height: 8),
       Semantics(
         liveRegion: true,
         child: Text(
-          draft.handleValid ? '✓ 사용할 수 있는 형식이에요' : '영문, 숫자, 밑줄로 3~20자를 입력해주세요.',
+          draft.handleValid ? l10n.handleValid : l10n.handleRule,
           style: TextStyle(
             fontSize: PindType.label,
-            color: draft.handleValid
-                ? PindColors.success
-                : PindColors.muted,
+            color: draft.handleValid ? PindColors.success : PindColors.muted,
           ),
         ),
       ),
@@ -674,7 +705,7 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Text('나를 표현하는 이모지를 골라주세요'),
+            Text(l10n.chooseEmoji),
             const SizedBox(height: 16),
             FilledButton.tonalIcon(
               onPressed: () {
@@ -682,7 +713,7 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
                 controller.pickAvatar();
               },
               icon: const Icon(Icons.photo_library_outlined),
-              label: const Text('앨범에서 사진 선택'),
+              label: Text(l10n.pickFromAlbum),
             ),
             const SizedBox(height: 16),
             Wrap(
@@ -693,7 +724,10 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
                     (emoji) => IconButton(
                       tooltip: emoji,
                       onPressed: () => Navigator.pop(ctx, emoji),
-                      icon: Text(emoji, style: const TextStyle(fontSize: PindType.hero)),
+                      icon: Text(
+                        emoji,
+                        style: const TextStyle(fontSize: PindType.hero),
+                      ),
                     ),
                   )
                   .toList(),

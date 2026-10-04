@@ -8,7 +8,9 @@ import '../explore/post_photo_viewer.dart';
 import '../profile/profile_screen.dart';
 import '../design_system.dart';
 import 'pind_glass.dart';
+import 'pind_pressable.dart';
 import 'pind_sheet.dart';
+import '../../l10n/l10n.dart';
 
 /// Figma 599:23885 post card shared by the profile posts tab and the
 /// Discover feed. [action] is the trailing 44×44 button (share, like...).
@@ -56,34 +58,56 @@ class PostCard extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       spacing: 10,
       children: [
+        // Figma 797:23328: the body sits under the nickname, both clear of the
+        // avatar; avatar, nickname and [action] share one center line.
         Row(
-          spacing: 8,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          spacing: 7,
           children: [
-            ProfileAvatar(author.avatarUrl, 32),
+            Padding(
+              padding: const EdgeInsets.only(top: 6),
+              child: ProfileAvatar(author.avatarUrl, 32),
+            ),
             Expanded(
-              child: Text(
-                author.handle == null
-                    ? author.displayName
-                    : '@${author.handle}',
-                style: const TextStyle(
-                  fontSize: PindType.body,
-                  fontWeight: FontWeight.w500,
-                  color: PindColors.ink,
+              child: Padding(
+                padding: const EdgeInsets.only(top: 6),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    SizedBox(
+                      height: 32,
+                      child: Align(
+                        alignment: Alignment.centerLeft,
+                        child: Text(
+                          author.handle == null
+                              ? author.displayName
+                              : '@${author.handle}',
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(
+                            fontSize: PindType.body,
+                            fontWeight: FontWeight.w700,
+                            color: PindColors.ink,
+                          ),
+                        ),
+                      ),
+                    ),
+                    if (post.body.isNotEmpty)
+                      Text(
+                        post.body,
+                        style: const TextStyle(
+                          fontSize: PindType.label,
+                          height: 16.9 / 12,
+                          color: Colors.black,
+                        ),
+                      ),
+                  ],
                 ),
               ),
             ),
             action,
           ],
         ),
-        if (post.body.isNotEmpty)
-          Text(
-            post.body,
-            style: const TextStyle(
-              fontSize: PindType.label,
-              height: 16.9 / 12,
-              color: Colors.black,
-            ),
-          ),
         // Figma 599:23885: the place pill straddles the photos' top edge and
         // the rating chips their bottom edge.
         Stack(
@@ -95,14 +119,17 @@ class PostCard extends StatelessWidget {
               child: photos(post.photos.length),
             ),
             Positioned(
-              // A lone upright photo would only graze the pill; sink it about
-              // halfway in, as the tilted cards do.
-              top: post.photos.length == 1 ? 10 : 0,
+              // One photo or a fanned pair would only graze the pill; sink it
+              // about halfway into the top edge, as the trio's cards do.
+              top: post.photos.length == 1 || post.photos.length == 2 ? 10 : 0,
               child: onPlace == null
                   ? pill
                   : Semantics(
                       button: true,
-                      child: GestureDetector(onTap: onPlace, child: pill),
+                      child: GestureDetector(
+                        onTap: onPlace,
+                        child: PindPressable(child: pill),
+                      ),
                     ),
             ),
             Positioned(
@@ -233,34 +260,22 @@ class PostCard extends StatelessWidget {
     required Color border,
     required double width,
     Widget? overlay,
-  }) => Builder(
-    builder: (context) => Semantics(
-      button: true,
-      label: '게시물 사진 ${index + 1} 크게 보기',
-      child: GestureDetector(
-        key: ValueKey('post-photo-${post.id}-$index'),
-        onTap: () => Navigator.of(context).push(
-          MaterialPageRoute<void>(
-            builder: (_) =>
-                PostPhotoViewer(photos: post.photos, initial: index),
-          ),
-        ),
-        child: Container(
-          width: w,
-          height: h,
-          clipBehavior: Clip.antiAlias,
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(radius),
-          ),
-          foregroundDecoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(radius),
-            border: Border.all(color: border, width: width),
-          ),
-          child: Stack(
-            fit: StackFit.expand,
-            children: [placeImage(post.photos[index]), ?overlay],
-          ),
-        ),
+  }) => PostPhotoOpener(
+    key: ValueKey('post-photo-${post.id}-$index'),
+    photos: post.photos,
+    index: index,
+    child: Container(
+      width: w,
+      height: h,
+      clipBehavior: Clip.antiAlias,
+      decoration: BoxDecoration(borderRadius: BorderRadius.circular(radius)),
+      foregroundDecoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(radius),
+        border: Border.all(color: border, width: width),
+      ),
+      child: Stack(
+        fit: StackFit.expand,
+        children: [placeImage(post.photos[index]), ?overlay],
       ),
     ),
   );
@@ -268,7 +283,7 @@ class PostCard extends StatelessWidget {
   Widget chip(PreferenceCriterion c, int value) {
     final color = criterionColor(c);
     return Semantics(
-      label: '${c.label} $value점',
+      label: l10n.ratingScore(c.label, value),
       excludeSemantics: true,
       child: Container(
         padding: const EdgeInsets.fromLTRB(9, 8, 10, 8),
@@ -333,22 +348,25 @@ class PostCardButton extends StatelessWidget {
       builder: (button) => GestureDetector(
         behavior: HitTestBehavior.opaque,
         onTap: onTap == null ? null : () => onTap!(button),
-        child: SizedBox(
-          height: 44,
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              ?leading,
-              SizedBox(
-                width: 44,
-                child: Center(
-                  child: PindGlass(
-                    radius: 11.5,
-                    child: SizedBox(width: 21, height: 21, child: icon),
+        child: PindPressable(
+          scale: .85,
+          child: SizedBox(
+            height: 44,
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                ?leading,
+                SizedBox(
+                  width: 44,
+                  child: Center(
+                    child: PindGlass(
+                      radius: 11.5,
+                      child: SizedBox(width: 21, height: 21, child: icon),
+                    ),
                   ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
       ),
@@ -384,7 +402,7 @@ class PostDeleteButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => PostCardButton(
-    label: '게시물 삭제',
+    label: l10n.postDelete,
     icon: const Icon(Icons.delete_outline, size: 12),
     onTap: (button) async {
       if (await confirmDelete(button)) await onConfirmed();
@@ -401,23 +419,26 @@ Future<bool> confirmDelete(BuildContext context) async =>
         crossAxisAlignment: CrossAxisAlignment.stretch,
         spacing: 10,
         children: [
-          const Text(
-            '게시물을 삭제할까요?',
+          Text(
+            l10n.postDeleteTitle,
             textAlign: TextAlign.center,
             style: PindText.title,
           ),
-          const Text(
-            '사진과 별점도 함께 지워지고, 되돌릴 수 없어요.',
+          Text(
+            l10n.postDeleteBody,
             textAlign: TextAlign.center,
             style: PindText.caption,
           ),
           const SizedBox(height: 8),
           PindSheetButton(
-            '삭제',
+            l10n.delete,
             tone: PindSheetButtonTone.danger,
             onTap: () => Navigator.pop(context, true),
           ),
-          PindSheetButton('닫기', onTap: () => Navigator.pop(context, false)),
+          PindSheetButton(
+            l10n.close,
+            onTap: () => Navigator.pop(context, false),
+          ),
         ],
       ),
     ) ??

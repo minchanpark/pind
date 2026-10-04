@@ -2,6 +2,7 @@ import 'package:image_picker/image_picker.dart';
 
 import '../model/post_model.dart';
 import '../model/place_search_result.dart';
+import '../l10n/l10n.dart';
 
 abstract class PostPhotoService {
   Future<List<PostPhoto>> pick(int remaining);
@@ -26,7 +27,7 @@ class DevicePostPhotoService implements PostPhotoService {
     for (final file in files.take(remaining)) {
       final bytes = await file.readAsBytes();
       if (bytes.isEmpty || bytes.length > 10 * 1024 * 1024) {
-        throw const PlaceFailure('사진은 한 장당 10MB 이하로 선택해 주세요.');
+        throw PlaceFailure(l10n.errPhotoTooLarge);
       }
       final extension = file.name.split('.').last.toLowerCase();
       final mime =
@@ -45,7 +46,7 @@ class DevicePostPhotoService implements PostPhotoService {
         'image/heic',
         'image/heif',
       ].contains(mime)) {
-        throw const PlaceFailure('지원되는 사진 형식을 선택해 주세요.');
+        throw PlaceFailure(l10n.errPhotoFormat);
       }
       photos.add(PostPhoto(bytes: bytes, mimeType: mime));
     }

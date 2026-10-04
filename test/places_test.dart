@@ -5,6 +5,8 @@ import 'dart:async';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:pind_flutter/services/place_service.dart';
 import 'package:pind_flutter/model/places.dart';
+import 'package:flutter/widgets.dart' show Locale;
+import 'package:pind_flutter/l10n/l10n.dart';
 import 'package:pind_flutter/controllers/explore_controller.dart';
 
 Map<String, dynamic> payload(String name, {int? id}) => {
@@ -19,6 +21,32 @@ Map<String, dynamic> payload(String name, {int? id}) => {
 };
 
 void main() {
+  test('English address outside Korean, Korean kept beside', () {
+    final json = {
+      'provider': 'sbiz',
+      'internalId': 1,
+      'externalPlaceId': 'a',
+      'name': '란칼국수',
+      'category': '한식',
+      'address': '서울특별시 성동구 성수일로8길 42',
+      'addressEn': '42 Seongsuil-ro 8-gil, Seongdong-gu, Seoul',
+      'latitude': 37.5,
+      'longitude': 127.0,
+      'sourceUri': 'https://example.com',
+    };
+    final ko = Place.fromJson(json);
+    expect((ko.address, ko.nativeAddress), ('서울특별시 성동구 성수일로8길 42', null));
+    setL10nLocale(const Locale('en'));
+    addTearDown(() => setL10nLocale(const Locale('ko')));
+    final en = Place.fromJson(json);
+    expect(en.name, '란칼국수');
+    expect(en.address, '42 Seongsuil-ro 8-gil, Seongdong-gu, Seoul');
+    expect(en.nativeAddress, '서울특별시 성동구 성수일로8길 42');
+    // No juso match: Korean only, nothing repeated underneath.
+    final plain = Place.fromJson({...json, 'addressEn': null});
+    expect((plain.address, plain.nativeAddress), ('서울특별시 성동구 성수일로8길 42', null));
+  });
+
   test('Korea bounds', () {
     expect(MapViewport.seoul.inKorea, true);
     expect(const MapViewport(33.3, 126.5).inKorea, true);

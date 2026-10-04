@@ -10,6 +10,7 @@ import 'place_detail_controller.dart';
 
 import '../services/place_service.dart';
 import '../model/places.dart';
+import '../l10n/l10n.dart';
 
 class ExploreController {
   ExploreController(
@@ -114,8 +115,11 @@ class ExploreController {
 
   /// The agent page's sentence, ranked for me around [near]. Answers on the
   /// page itself; the map is left as it was.
-  Future<AgentAnswer> agentSearch(String query, MapViewport near) =>
-      repository.agentSearch(query, near: near);
+  Future<AgentAnswer> agentSearch(
+    String query,
+    MapViewport near, {
+    TastePreferences? taste,
+  }) => repository.agentSearch(query, near: near, taste: taste);
 
   Future<void> showPublishedPlace(int placeId) async {
     _searchQuery = null;
@@ -176,7 +180,7 @@ class ExploreController {
       if (_disposed || request != _request) return;
       model.error = caught is PlaceFailure
           ? caught.message
-          : '연결을 확인하고 다시 시도해 주세요.';
+          : l10n.errConnectionRetry;
     } finally {
       if (!_disposed && request == _request) {
         model.update(() => model.loading = false);

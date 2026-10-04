@@ -10,6 +10,7 @@ import '../services/place_action_service.dart';
 import '../services/place_context_service.dart';
 import '../services/place_service.dart';
 import '../services/profile_service.dart';
+import '../l10n/l10n.dart';
 
 class PlaceDetailController {
   PlaceDetailController({
@@ -107,10 +108,10 @@ class PlaceDetailController {
           model.distance = LocationService.distance(position, model.place);
         });
       } else if (request) {
-        return '거리 표시는 위치 권한과 기기 위치 서비스가 필요해요.';
+        return l10n.errDistanceNeedsLocation;
       }
     } catch (_) {
-      if (!_disposed && request) return '현재 위치를 확인하지 못했어요.';
+      if (!_disposed && request) return l10n.errLocationUnknown;
     } finally {
       if (!_disposed) model.update(() => model.locating = false);
     }
@@ -121,10 +122,10 @@ class PlaceDetailController {
     if (model.saving) return null;
     final place = model.place;
     if (place.id == null || !place.hasRichContent) {
-      return '이 출처의 장소 저장은 아직 지원하지 않아요. 원본 지도에서 확인해 주세요.';
+      return l10n.errSaveUnsupported;
     }
     if (model.social == null || context == null) {
-      return '저장 기능을 연결하지 못했어요. 상세 정보를 다시 불러와 주세요.';
+      return l10n.errSaveUnavailable;
     }
     final before = model.saved;
     model.update(() {
@@ -136,7 +137,7 @@ class PlaceDetailController {
     } catch (_) {
       if (!_disposed) {
         model.update(() => model.saved = before);
-        return '저장하지 못했어요. 다시 시도해 주세요.';
+        return l10n.errSaveRetry;
       }
     } finally {
       if (!_disposed) model.update(() => model.saving = false);
@@ -156,7 +157,7 @@ class PlaceDetailController {
     } catch (_) {
       if (_disposed) return null;
       model.update(() => model.likes[id] = before);
-      return '좋아요를 반영하지 못했어요. 다시 시도해 주세요.';
+      return l10n.errLikeRetry;
     } finally {
       _liking.remove(id);
     }
@@ -169,7 +170,7 @@ class PlaceDetailController {
     try {
       await deletePost!(id);
     } catch (caught) {
-      return caught is PlaceFailure ? caught.message : '게시물을 삭제하지 못했어요.';
+      return caught is PlaceFailure ? caught.message : l10n.errPostDelete;
     }
     if (!_disposed) model.update(() => model.deleted.add(id));
     return null;
@@ -180,10 +181,10 @@ class PlaceDetailController {
       if (linkAction != null) {
         await linkAction!(raw);
       } else if (!await PlaceActionService.openLink(raw)) {
-        return '링크를 열지 못했어요. 다시 시도해 주세요.';
+        return l10n.errLinkOpen;
       }
     } catch (_) {
-      return '링크를 열지 못했어요. 다시 시도해 주세요.';
+      return l10n.errLinkOpen;
     }
     return null;
   }
@@ -198,7 +199,7 @@ class PlaceDetailController {
         await PlaceActionService.share(text, place.name, origin);
       }
     } catch (_) {
-      return '공유 창을 열지 못했어요.';
+      return l10n.errShareOpen;
     }
     return null;
   }

@@ -8,10 +8,15 @@ import 'package:pind_flutter/view/components/pind_glass.dart';
 import 'package:pind_flutter/view/components/pind_image.dart';
 import 'package:pind_flutter/view/components/post_card.dart';
 import 'package:pind_flutter/view/explore/post_photo_viewer.dart';
+import 'package:pind_flutter/view/profile/profile_screen.dart';
 import 'package:pind_flutter/view/design_system.dart';
 
 void main() {
-  Future<List<Rect>> frames(WidgetTester tester, int count) async {
+  Future<List<Rect>> frames(
+    WidgetTester tester,
+    int count, {
+    String body = '',
+  }) async {
     await tester.pumpWidget(
       MaterialApp(
         home: Scaffold(
@@ -32,6 +37,7 @@ void main() {
                     mapsUri: 'https://example.com',
                   ),
                   photos: [for (var i = 0; i < count; i++) 'https://x/$i.jpg'],
+                  body: body,
                   createdAt: DateTime(2026, 10, 1),
                 ),
                 author: const UserProfile(id: 'u', displayName: '나'),
@@ -70,6 +76,29 @@ void main() {
     expect(pill.bottom - one.single.top, 15);
 
     await frames(tester, 2);
+    // The pair too: the pill sits about halfway into the front card's top
+    // edge where it crosses the pill's middle (the card is tilted).
+    final frontCard = tester.renderObject<RenderBox>(
+      find
+          .ancestor(
+            of: find.byWidgetPredicate(
+              (w) =>
+                  w is Image && (w.image as PindImage).url == 'https://x/0.jpg',
+            ),
+            matching: find.byType(Container),
+          )
+          .first,
+    );
+    final pairPill = tester.getRect(
+      find
+          .ancestor(of: find.text('📍가게'), matching: find.byType(PindGlass))
+          .first,
+    );
+    final topLeft = frontCard.localToGlobal(Offset.zero);
+    final topRight = frontCard.localToGlobal(Offset(frontCard.size.width, 0));
+    final t = (pairPill.center.dx - topLeft.dx) / (topRight.dx - topLeft.dx);
+    final edge = topLeft.dy + (topRight.dy - topLeft.dy) * t;
+    expect(pairPill.bottom - edge, closeTo(15, 3));
     // A fanned pair: tilted opposite ways, the first photo in front and purple.
     double angle(int i) {
       final image = find.byWidgetPredicate(
@@ -148,5 +177,21 @@ void main() {
     final viewer = tester.widget<PostPhotoViewer>(find.byType(PostPhotoViewer));
     expect(viewer.initial, 2);
     expect(viewer.photos, hasLength(4));
+  });
+
+  testWidgets('the body sits under the bold nickname, centered on the avatar', (
+    tester,
+  ) async {
+    await frames(tester, 1, body: '맛있어요');
+    final avatar = tester.getRect(find.byType(ProfileAvatar));
+    final name = tester.getRect(find.text('나'));
+    final body = tester.getRect(find.text('맛있어요'));
+    expect(name.center.dy, closeTo(avatar.center.dy, .5));
+    expect(body.left, name.left);
+    expect(body.top, closeTo(avatar.bottom, .5));
+    expect(
+      tester.widget<Text>(find.text('나')).style!.fontWeight,
+      FontWeight.w700,
+    );
   });
 }

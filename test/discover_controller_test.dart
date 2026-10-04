@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter_test/flutter_test.dart';
+import 'package:pind_flutter/model/notification_model.dart';
 import 'package:pind_flutter/controllers/discover_controller.dart';
 import 'package:pind_flutter/model/discover_model.dart';
 import 'package:pind_flutter/model/place_search_result.dart';
@@ -50,6 +51,18 @@ class FakeDiscoverService implements DiscoverService {
     likeCalls.add((postId, liked));
     if (likeError case final e?) throw e;
     return liked;
+  }
+
+  /// 알림 rows to return; null throws.
+  NotificationInbox? inbox = const NotificationInbox([]);
+  int readCalls = 0;
+  @override
+  Future<NotificationInbox> notifications() async =>
+      inbox ?? (throw const PlaceFailure('알림을 불러오지 못했어요.'));
+  @override
+  Future<DateTime> markNotificationsRead() async {
+    readCalls++;
+    return DateTime.now();
   }
 }
 

@@ -1,10 +1,12 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../model/discover_model.dart';
+import '../model/notification_model.dart';
 import '../model/place_search_result.dart';
 import '../model/profile_model.dart';
 import 'post_media_urls.dart';
 import 'data_revision.dart';
+import '../l10n/l10n.dart';
 
 /// Public posts from every user, newest first (`get_discover_feed`), and
 /// per-user likes (`toggle_post_like`).
@@ -15,15 +17,27 @@ abstract interface class DiscoverService {
 
   /// Returns the server's liked state after toggling.
   Future<bool> setLiked(int postId, bool liked);
+
+  /// 알림: likes on my posts, visits by people I follow, new followers.
+  Future<NotificationInbox> notifications();
+
+  /// 모두 읽음; returns the server's read time.
+  Future<DateTime> markNotificationsRead();
 }
 
 class UnavailableDiscoverService implements DiscoverService {
   @override
   Future<FeedPage> feed({FeedPost? after, String query = '', int limit = 20}) =>
-      throw const PlaceFailure('피드 서버에 연결하지 못했어요.');
+      throw PlaceFailure(l10n.errFeedServer);
   @override
   Future<bool> setLiked(int postId, bool liked) =>
-      throw const PlaceFailure('피드 서버에 연결하지 못했어요.');
+      throw PlaceFailure(l10n.errFeedServer);
+  @override
+  Future<NotificationInbox> notifications() =>
+      throw PlaceFailure(l10n.errNotificationsLoad);
+  @override
+  Future<DateTime> markNotificationsRead() =>
+      throw PlaceFailure(l10n.errNotificationsRead);
 }
 
 class SupabaseDiscoverService implements DiscoverService {
@@ -79,7 +93,7 @@ class SupabaseDiscoverService implements DiscoverService {
 
       return FeedPage([for (final r in page) ?parse(r)], hasMore: hasMore);
     } on PostgrestException {
-      throw const PlaceFailure('피드를 불러오지 못했어요.');
+      throw PlaceFailure(l10n.errFeedLoad);
     }
   }
 
@@ -93,7 +107,60 @@ class SupabaseDiscoverService implements DiscoverService {
       markDataChanged();
       return result == true;
     } on PostgrestException {
-      throw const PlaceFailure('로그인 후 좋아요를 누를 수 있어요.');
+      throw PlaceFailure(l10n.errLikeSignIn);
+    }
+  }
+
+  @override
+  Future<NotificationInbox> notifications() async {
+    try {
+      final result = Map<String, dynamic>.from(
+        await client.rpc('get_notifications') as Map,
+      );
+      final rows = [
+        for (final r in result['items'] as List? ?? [])
+          Map<String, dynamic>.from(r as Map),
+      ];
+      final signed = await signPostPhotoPaths(client, [
+        for (final r in rows)
+          if (r['photoBucket'] == postMediaV2Bucket && r['photoPath'] is String)
+            r['photoPath'] as String,
+      ]);
+      final items = <PindNotification>[];
+      for (final r in rows) {
+        try {
+          items.add(
+            PindNotification.fromJson(
+              r,
+              photoUrl: resolvePostPhotoUrl(
+                client,
+                signed,
+                r['photoBucket'] as String?,
+                r['photoPath'] as String?,
+              ),
+            ),
+          );
+        } catch (_) {
+          // One malformed row must not blank the page.
+        }
+      }
+      return NotificationInbox(
+        items,
+        seenAt: DateTime.tryParse(result['seenAt'] as String? ?? ''),
+      );
+    } on PostgrestException {
+      throw PlaceFailure(l10n.errNotificationsLoad);
+    }
+  }
+
+  @override
+  Future<DateTime> markNotificationsRead() async {
+    try {
+      return DateTime.parse(
+        await client.rpc('mark_notifications_read') as String,
+      );
+    } on PostgrestException {
+      throw PlaceFailure(l10n.errNotificationsRead);
     }
   }
 }

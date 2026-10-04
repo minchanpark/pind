@@ -5,6 +5,7 @@ import 'package:mobile_scanner/mobile_scanner.dart';
 
 import '../../model/profile_link.dart';
 import '../design_system.dart';
+import '../../l10n/l10n.dart';
 
 /// The first scanned value that is a Pind profile link.
 ProfileLink? firstProfileLink(Iterable<String?> raws) {
@@ -58,13 +59,16 @@ class _QrScanScreenState extends State<QrScanScreen> {
         children: [
           MobileScanner(
             onDetect: detected,
-            errorBuilder: (_, _) => const Center(
+            errorBuilder: (_, _) => Center(
               child: Padding(
                 padding: EdgeInsets.all(40),
                 child: Text(
-                  '카메라를 사용할 수 없어요. 설정에서 카메라 권한을 허용해 주세요.',
+                  l10n.qrCameraDenied,
                   textAlign: TextAlign.center,
-                  style: TextStyle(color: Colors.white, fontSize: PindType.body),
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: PindType.body,
+                  ),
                 ),
               ),
             ),
@@ -75,7 +79,7 @@ class _QrScanScreenState extends State<QrScanScreen> {
             child: Padding(
               padding: const EdgeInsets.only(top: _Frame.side + 64),
               child: Text(
-                wrong ? 'Pind 친구 코드가 아니에요' : '친구의 Pind QR 코드를 네모 안에 맞춰 주세요',
+                wrong ? l10n.qrNotPind : l10n.qrHint,
                 style: TextStyle(
                   color: Colors.white,
                   fontSize: PindType.bodySmall,
@@ -90,13 +94,13 @@ class _QrScanScreenState extends State<QrScanScreen> {
               child: Row(
                 children: [
                   IconButton(
-                    tooltip: '닫기',
+                    tooltip: l10n.close,
                     onPressed: () => Navigator.maybePop(context),
                     icon: const Icon(Icons.close, color: Colors.white),
                   ),
-                  const Expanded(
+                  Expanded(
                     child: Text(
-                      '친구 코드 스캔',
+                      l10n.qrTitle,
                       textAlign: TextAlign.center,
                       style: TextStyle(
                         color: Colors.white,

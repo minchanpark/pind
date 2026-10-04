@@ -62,10 +62,17 @@ test('parses the complete API key after the first equals sign without printing i
 });
 
 test('limits each run to explicit place IDs and defaults to dry-run', () => {
-  assert.deepEqual(parseArgs(['--ids', '145731,148127']), { help: false, ids: [145731, 148127], apply: false });
+  assert.deepEqual(parseArgs(['--ids', '145731,148127']), { help: false, ids: [145731, 148127], apply: false, batch: 0 });
   assert.equal(parseArgs(['--ids', '145731', '--apply']).apply, true);
-  assert.throws(() => parseArgs([]), /--ids is required/u);
+  assert.throws(() => parseArgs([]), /--ids or --batch is required/u);
   assert.throws(() => parseArgs(['--ids', Array.from({ length: 21 }, (_, i) => i + 1).join(',')]), /At most 20/u);
+});
+
+test('batch mode takes a bounded address count and excludes --ids', () => {
+  assert.deepEqual(parseArgs(['--batch', '200', '--apply']), { help: false, ids: [], apply: true, batch: 200 });
+  assert.throws(() => parseArgs(['--batch', '0']), /--batch must be/u);
+  assert.throws(() => parseArgs(['--batch', '501']), /--batch must be/u);
+  assert.throws(() => parseArgs(['--batch', '5', '--ids', '1']), /either --ids or --batch/u);
 });
 
 test('calls the Juso English endpoint with encoded parameters and exact-matches Korean response', async () => {

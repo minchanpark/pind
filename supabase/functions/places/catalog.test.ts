@@ -103,6 +103,11 @@ test('agent search runs its own RPC with the plan and explains it',async()=>{
   assert.deepEqual(calls,[['agent_search_places',{p_terms:['사진'],p_lat:null,p_lng:null,p_kinds:['치킨','통닭']}]]);
   // Kinds alone are enough.
   await catalogRequest({action:'agent_search',kinds:['카페'],terms:[],label:'카페'},async()=>({places:[]}),async ps=>ps,true);
+  // "Pick for me" asks to rank by taste, even with no words at all.
+  calls.length=0;
+  await catalogRequest({action:'agent_search',kinds:[],terms:[],byTaste:true,label:'내 취향'},
+    async(args,fn)=>{calls.push([fn,args]);return {places:[]};},async ps=>ps,true);
+  assert.deepEqual(calls,[['agent_search_places',{p_terms:[],p_lat:null,p_lng:null,p_by_taste:true}]]);
   assert.deepEqual((result.places as Record<string,unknown>[]).map(p=>p.internalId),[1,2]); // unposted kept
   assert.equal(result.notice,'혼술 · 포차 기준으로 찾았어요.');
   await assert.rejects(()=>catalogRequest({action:'agent_search',terms:[]},async()=>({}),async ps=>ps,true),/이해하지/);
@@ -110,3 +115,23 @@ test('agent search runs its own RPC with the plan and explains it',async()=>{
     async(args)=>{assert.deepEqual([args.p_lat,args.p_lng],[null,null]);return {places:[]};},async ps=>ps,true);
   assert.deepEqual(far.places,[]);
 });
+
+test('a detail in another language gets the translated insight; Korean or a failure keeps the original',async()=>{
+  const row={provider:'sbiz',internalId:7,externalPlaceId:'p7',name:'가게',category:'한식',address:'서울',latitude:37.5,longitude:127,
+    pindPostCount:2,insight:{summary:'국물이 진해요',criteria:{taste:'맛있어요'},postCount:2}};
+  const asked:unknown[][]=[];
+  const translate=async(id:number,count:number,insight:Record<string,unknown>,lang:string)=>{
+    asked.push([id,count,insight,lang]);
+    return {summary:'Rich broth',criteria:{taste:'Tasty'}};
+  };
+  const en=await catalogRequest({action:'catalog_detail',internalPlaceId:7,lang:'en'},async()=>({places:[structuredClone(row)]}),async ps=>ps,true,()=>{},translate);
+  assert.deepEqual((en.place as Record<string,unknown>).insight,{summary:'Rich broth',criteria:{taste:'Tasty'}});
+  assert.deepEqual(asked,[[7,2,{summary:'국물이 진해요',criteria:{taste:'맛있어요'}},'en']]);
+  const ko=await catalogRequest({action:'catalog_detail',internalPlaceId:7,lang:'ko'},async()=>({places:[structuredClone(row)]}),async ps=>ps,true,()=>{},translate);
+  assert.deepEqual((ko.place as Record<string,unknown>).insight,{summary:'국물이 진해요',criteria:{taste:'맛있어요'}});
+  assert.equal(asked.length,1,'Korean is never translated');
+  const failed=await catalogRequest({action:'catalog_detail',internalPlaceId:7,lang:'ja'},async()=>({places:[structuredClone(row)]}),async ps=>ps,true,()=>{},
+    async()=>{throw new Error('groq down');});
+  assert.equal(((failed.place as Record<string,unknown>).insight as Record<string,unknown>).summary,'국물이 진해요');
+});
+

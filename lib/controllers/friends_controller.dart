@@ -4,6 +4,7 @@ import '../model/profile_link.dart';
 import '../model/profile_model.dart';
 import '../services/friends_service.dart';
 import '../services/profile_service.dart';
+import '../l10n/l10n.dart';
 
 class FriendsController {
   FriendsController({required FriendsService? service, this.profile})
@@ -33,7 +34,7 @@ class FriendsController {
       if (_disposed) return;
       model.update(() {
         model.loading = false;
-        model.error = _message(caught, '추천 목록을 불러오지 못했어요.');
+        model.error = _message(caught, l10n.errSuggestionsLoad);
       });
     }
   }
@@ -63,7 +64,7 @@ class FriendsController {
       if (_disposed) return;
       model.update(() {
         model.loadingMore = false;
-        model.error = _message(caught, '추천 목록을 불러오지 못했어요.');
+        model.error = _message(caught, l10n.errSuggestionsLoad);
       });
     }
   }
@@ -95,7 +96,7 @@ class FriendsController {
       model.update(() {
         model.results = const [];
         model.searching = false;
-        model.error = _message(caught, '검색하지 못했어요.');
+        model.error = _message(caught, l10n.errSearchFailed);
       });
     }
   }
@@ -114,7 +115,7 @@ class FriendsController {
         model.update(
           () => model.error = _message(
             caught,
-            target ? '팔로우하지 못했어요.' : '팔로우를 취소하지 못했어요.',
+            target ? l10n.errFollow : l10n.errUnfollow,
           ),
         );
       }
@@ -137,9 +138,9 @@ class FriendsController {
   Future<String> inviteText() async => inviteFor(await me());
 
   static String inviteFor(UserProfile? me) {
-    if (me == null) return 'Pind에서 서로의 음식 취향을 팔로우해요!';
+    if (me == null) return l10n.inviteGeneric;
     final who = me.handle == null ? me.displayName : '@${me.handle}';
-    return 'Pind에서 $who 님을 팔로우하고 음식 취향을 나눠요!\n${ProfileLink.of(me).uri}';
+    return l10n.inviteFollow(who, ProfileLink.of(me).uri.toString());
   }
 
   /// My profile; null when signed out or it failed to load.

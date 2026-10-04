@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:pind_flutter/view/discover/notifications_page.dart';
+import 'package:pind_flutter/model/notification_model.dart';
 import 'package:pind_flutter/view/components/pind_sheet.dart';
 import 'package:pind_flutter/controllers/discover_controller.dart';
 import 'package:pind_flutter/model/discover_model.dart';
@@ -63,6 +65,18 @@ class FakeDiscoverService implements DiscoverService {
     likes.add((postId, liked));
     return liked;
   }
+
+  /// 알림 rows to return; null throws.
+  NotificationInbox? inbox = const NotificationInbox([]);
+  int readCalls = 0;
+  @override
+  Future<NotificationInbox> notifications() async =>
+      inbox ?? (throw const PlaceFailure('알림을 불러오지 못했어요.'));
+  @override
+  Future<DateTime> markNotificationsRead() async {
+    readCalls++;
+    return DateTime.now();
+  }
 }
 
 /// Tall by default so every lazily built card is on screen.
@@ -73,6 +87,7 @@ Future<DiscoverController> pump(
   VoidCallback? onFindFriends,
   String? myId,
   Future<void> Function(int)? deletePost,
+  void Function(String userId)? onOpenProfile,
 }) async {
   tester.view.devicePixelRatio = 1;
   tester.view.physicalSize = Size(402, height);
@@ -89,6 +104,7 @@ Future<DiscoverController> pump(
         controller: controller,
         onFindFriends: onFindFriends,
         myId: myId,
+        onOpenProfile: onOpenProfile,
       ),
     ),
   );
@@ -122,7 +138,16 @@ void main() {
     expect(opened, 1);
     expect(find.bySemanticsLabel('알림'), findsOneWidget);
 
-    controller.model.update(() => controller.model.hasNewAlerts = true);
+    // A notification newer than the last 모두 읽음 lights the badge.
+    controller.model.update(
+      () => controller.model.inbox = NotificationInbox([
+        PindNotification(
+          kind: NotificationKind.follow,
+          at: DateTime.now(),
+          actor: const UserProfile(id: 'h', displayName: '하람'),
+        ),
+      ]),
+    );
     await tester.pump();
     expect(find.bySemanticsLabel('새 알림'), findsOneWidget);
     semantics.dispose();
@@ -278,5 +303,94 @@ void main() {
   testWidgets('no posts shows the empty note', (tester) async {
     await pump(tester, FakeDiscoverService());
     expect(find.text('아직 게시물이 없어요.'), findsOneWidget);
+  });
+
+  testWidgets('the bell opens 알림: likes, visits and follows, then 모두 읽음', (
+    tester,
+  ) async {
+    final now = DateTime.now();
+    const haram = UserProfile(id: 'h', handle: 'haram', displayName: '유하람');
+    const minchan = UserProfile(id: 'm', handle: 'minchan', displayName: '박민찬');
+    final service = FakeDiscoverService(first: [post(1, 'a')])
+      ..inbox = NotificationInbox(
+        [
+          PindNotification(
+            kind: NotificationKind.like,
+            at: now.subtract(const Duration(hours: 1)),
+            actor: minchan,
+            place: post(1, 'a').post.place,
+          ),
+          PindNotification(
+            kind: NotificationKind.visit,
+            at: now.subtract(const Duration(hours: 3)),
+            actor: haram,
+            place: post(1, 'a').post.place,
+          ),
+          PindNotification(
+            kind: NotificationKind.follow,
+            at: now.subtract(const Duration(days: 1, hours: 2)),
+            actor: haram,
+          ),
+        ],
+        // Read up to 12 hours ago: the follow is already read.
+        seenAt: now.subtract(const Duration(hours: 12)),
+      );
+    final opened = <String>[];
+    final controller = await pump(tester, service, onOpenProfile: opened.add);
+    // Two unread: the bell shows its badge.
+    expect(controller.model.inbox!.unread, 2);
+    expect(find.bySemanticsLabel('새 알림'), findsOneWidget);
+
+    await tester.tap(find.bySemanticsLabel('새 알림'));
+    await tester.pumpAndSettle();
+    expect(find.text('알림'), findsOneWidget);
+    expect(find.text('안 읽음 2'), findsOneWidget);
+    String line(int i) =>
+        (tester
+                .widgetList<RichText>(find.byType(RichText))
+                .where((r) => r.text.toPlainText().contains('님이'))
+                .elementAt(i))
+            .text
+            .toPlainText();
+    expect(line(0), '박민찬님이 회원님의 게시물을 좋아해요');
+    expect(line(1), '유하람님이 ${post(1, 'a').post.place.name}에 다녀갔어요');
+    expect(line(2), '유하람님이 회원님을 친구로 추가했어요');
+    expect(find.text('1시간 전'), findsOneWidget);
+    expect(find.text('3시간 전'), findsOneWidget);
+    expect(find.text('어제'), findsOneWidget);
+
+    // A follow opens that person's page.
+    await tester.tap(find.text('어제'));
+    expect(opened, ['h']);
+
+    await tester.tap(find.byKey(const ValueKey('notifications-read-all')));
+    await tester.pumpAndSettle();
+    expect(service.readCalls, 1);
+    expect(find.textContaining('안 읽음'), findsNothing);
+    expect(controller.model.hasNewAlerts, isFalse);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('알림 that fail to load say so and retry', (tester) async {
+    final service = FakeDiscoverService(first: [post(1, 'a')])..inbox = null;
+    await pump(tester, service);
+    await tester.tap(find.bySemanticsLabel('알림'));
+    await tester.pumpAndSettle();
+    expect(find.text('알림을 불러오지 못했어요.'), findsOneWidget);
+    service.inbox = const NotificationInbox([]);
+    await tester.tap(find.text('다시 시도'));
+    await tester.pumpAndSettle();
+    expect(find.text('아직 알림이 없어요.'), findsOneWidget);
+  });
+
+  test('notificationAgo reads like the design', () {
+    final now = DateTime(2026, 10, 3, 12);
+    String ago(Duration d) => notificationAgo(now.subtract(d), now);
+    expect(ago(const Duration(seconds: 20)), '방금');
+    expect(ago(const Duration(minutes: 5)), '5분 전');
+    expect(ago(const Duration(hours: 1)), '1시간 전');
+    expect(ago(const Duration(hours: 30)), '어제');
+    expect(ago(const Duration(days: 3)), '3일 전');
+    expect(ago(const Duration(days: 15)), '2주 전');
   });
 }

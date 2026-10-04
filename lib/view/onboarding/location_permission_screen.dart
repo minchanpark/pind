@@ -4,6 +4,7 @@ import '../../controllers/registration_controller.dart';
 import '../components/pind_glass.dart';
 import '../design_system.dart';
 import 'registration_components.dart';
+import '../../l10n/l10n.dart';
 
 class LocationPermissionScreen extends StatelessWidget {
   const LocationPermissionScreen({super.key, required this.controller});
@@ -20,10 +21,10 @@ class LocationPermissionScreen extends StatelessWidget {
             onPressed: controller.model.busy
                 ? null
                 : controller.showLocationSettings,
-            child: const Text('설정에서 위치 권한 확인'),
+            child: Text(l10n.checkLocationInSettings),
           ),
         SetupButton(
-          '위치 허용하고 시작하기',
+          l10n.allowLocationStart,
           busy: controller.model.busy,
           onPressed: controller.allowLocation,
         ),
@@ -31,9 +32,12 @@ class LocationPermissionScreen extends StatelessWidget {
         TextButton(
           key: const ValueKey('skip-location'),
           onPressed: controller.model.busy ? null : controller.skipLocation,
-          child: const Text(
-            '나중에 할게요',
-            style: TextStyle(fontSize: PindType.bodySmall, color: PindColors.muted),
+          child: Text(
+            l10n.later,
+            style: TextStyle(
+              fontSize: PindType.bodySmall,
+              color: PindColors.muted,
+            ),
           ),
         ),
       ],
@@ -41,15 +45,11 @@ class LocationPermissionScreen extends StatelessWidget {
     children: [
       const _LocationIllustration(),
       const SizedBox(height: 30),
-      const SetupTitle(
-        '지금 있는 곳 주변부터\n보여드릴게요',
-        '위치를 허용하면 내 주변 맛집과 취향을 탐색할 수 있어요.',
-        large: true,
-      ),
+      SetupTitle(l10n.locationTitle, l10n.locationBody, large: true),
       const SizedBox(height: 24),
-      _benefit('🍜', '내 주변 맛집', '반경 안에서만 추천해요'),
-      _benefit('👫', '친구들 맛집', '친구들이 간 맛집을 볼 수 있어요'),
-      _benefit('🏡', '동네 랭킹', '#1 in 성수동 같은 지역 순위'),
+      _benefit('🍜', l10n.nearbyFood, l10n.nearbyFoodHint),
+      _benefit('👫', l10n.friendsFood, l10n.friendsFoodHint),
+      _benefit('🏡', l10n.localRanking, l10n.localRankingHint),
     ],
   );
 
@@ -67,7 +67,10 @@ class LocationPermissionScreen extends StatelessWidget {
               Center(
                 child: Text(
                   emoji,
-                  style: const TextStyle(fontSize: PindType.headline, height: 1),
+                  style: const TextStyle(
+                    fontSize: PindType.headline,
+                    height: 1,
+                  ),
                 ),
               ),
             ],
@@ -87,7 +90,10 @@ class LocationPermissionScreen extends StatelessWidget {
               ),
               Text(
                 subtitle,
-                style: const TextStyle(fontSize: PindType.label, color: PindColors.muted),
+                style: const TextStyle(
+                  fontSize: PindType.label,
+                  color: PindColors.muted,
+                ),
               ),
             ],
           ),
@@ -206,7 +212,10 @@ class _LocationIllustration extends StatelessWidget {
                         '🍜',
                         textAlign: TextAlign.center,
                         textScaler: TextScaler.noScaling,
-                        style: TextStyle(fontSize: PindType.titleLarge, height: 1),
+                        style: TextStyle(
+                          fontSize: PindType.titleLarge,
+                          height: 1,
+                        ),
                       ),
                     ),
                     const Positioned(
@@ -222,7 +231,10 @@ class _LocationIllustration extends StatelessWidget {
                         '🥩',
                         textAlign: TextAlign.center,
                         textScaler: TextScaler.noScaling,
-                        style: TextStyle(fontSize: PindType.titleLarge, height: 1),
+                        style: TextStyle(
+                          fontSize: PindType.titleLarge,
+                          height: 1,
+                        ),
                       ),
                     ),
                     const Positioned(
@@ -238,7 +250,10 @@ class _LocationIllustration extends StatelessWidget {
                         '🍰',
                         textAlign: TextAlign.center,
                         textScaler: TextScaler.noScaling,
-                        style: TextStyle(fontSize: PindType.subtitle, height: 1),
+                        style: TextStyle(
+                          fontSize: PindType.subtitle,
+                          height: 1,
+                        ),
                       ),
                     ),
                   ],
@@ -257,6 +272,9 @@ class _Park extends StatelessWidget {
   const _Park();
   @override
   Widget build(BuildContext context) => const DecoratedBox(
-    decoration: ShapeDecoration(shape: OvalBorder(), color: PindColors.pastelGreen),
+    decoration: ShapeDecoration(
+      shape: OvalBorder(),
+      color: PindColors.pastelGreen,
+    ),
   );
 }

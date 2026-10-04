@@ -2,7 +2,18 @@ import 'dart:io';
 import 'dart:ui' as ui;
 
 import 'package:flutter/foundation.dart';
-import 'package:flutter/painting.dart';
+import 'package:flutter/widgets.dart';
+
+/// [Image.frameBuilder] that fades a photo in as it arrives; one already in
+/// memory shows at once.
+Widget fadeInFrame(BuildContext _, Widget child, int? frame, bool sync) => sync
+    ? child
+    : AnimatedOpacity(
+        opacity: frame == null ? 0 : 1,
+        duration: const Duration(milliseconds: 250),
+        curve: Curves.easeOut,
+        child: child,
+      );
 
 /// A network image cached by its storage path rather than its URL.
 ///

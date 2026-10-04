@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 
-import { readFileSync } from 'node:fs';
+import { mkdirSync, readFileSync, writeFileSync, existsSync } from 'node:fs';
 import { spawnSync } from 'node:child_process';
 import { setTimeout as sleep } from 'node:timers/promises';
 import { fileURLToPath } from 'node:url';
@@ -12,6 +12,11 @@ const EXPECTED_PROJECT_REF = 'mkfgqobwededpzdekvxg';
 const JUSO_ENDPOINT = 'https://business.juso.go.kr/addrlink/addrEngApi.do';
 const JUSO_DOC = 'https://www.data.go.kr/data/15057017/openapi.do';
 const MAX_IDS_PER_RUN = 20;
+const MAX_BATCH = 500;
+const BATCH_PARALLEL = 4;
+const BATCH_GAP_MS = 400;
+// Batch mode walks distinct Korean addresses in order and resumes from here.
+const CURSOR_FILE = path.join(ROOT, 'build/address_en_cursor.txt');
 const REQUEST_GAP_MS = 1_000;
 
 export function normalizeAddress(value) {
@@ -61,8 +66,15 @@ export function loadJusoApiKey(filePath = KEY_FILE) {
 export function parseArgs(argv) {
   const ids = [];
   let apply = false;
+  let batch = 0;
   for (let i = 0; i < argv.length; i += 1) {
     if (argv[i] === '--apply') apply = true;
+    else if (argv[i] === '--batch') {
+      batch = Number(argv[++i]);
+      if (!Number.isSafeInteger(batch) || batch < 1 || batch > MAX_BATCH) {
+        throw new Error(`--batch must be 1 to ${MAX_BATCH} addresses`);
+      }
+    }
     else if (argv[i] === '--ids') {
       const list = argv[++i];
       if (!list) throw new Error('--ids requires comma-separated place IDs');
@@ -71,16 +83,20 @@ export function parseArgs(argv) {
         ids.push(Number(value));
       }
     } else if (argv[i] === '--help' || argv[i] === '-h') {
-      return { help: true, ids: [], apply: false };
+      return { help: true, ids: [], apply: false, batch: 0 };
     } else {
       throw new Error(`Unknown argument: ${argv[i]}`);
     }
   }
-  if (!ids.length) throw new Error('--ids is required; this tool never scans the full table');
+  if (batch) {
+    if (ids.length) throw new Error('Use either --ids or --batch');
+    return { help: false, ids, apply, batch };
+  }
+  if (!ids.length) throw new Error('--ids or --batch is required');
   if (ids.some((id) => !Number.isSafeInteger(id) || id < 1)) throw new Error('Place IDs must be positive safe integers');
   if (new Set(ids).size !== ids.length) throw new Error('--ids contains duplicates');
   if (ids.length > MAX_IDS_PER_RUN) throw new Error(`At most ${MAX_IDS_PER_RUN} IDs are allowed per run`);
-  return { help: false, ids, apply };
+  return { help: false, ids, apply, batch: 0 };
 }
 
 function runSupabaseSql(sql) {
@@ -156,7 +172,73 @@ where p.id = v.id
 returning p.id, p.address_ko, p.address_en;`);
 }
 
+const sqlText = (value) => `'${String(value).replaceAll("'", "''")}'`;
+
+/// The next distinct Korean addresses still lacking English, after [cursor].
+function fetchPendingAddresses(cursor, limit) {
+  return runSupabaseSql(`select address_ko from public.places
+where external_provider = 'sbiz' and address_en = address_ko
+  and address_ko > ${sqlText(cursor)}
+group by address_ko order by address_ko limit ${limit};`).map((row) => row.address_ko);
+}
+
+/// Every SBIZ place at each address, still on its Korean fallback.
+function updateAddresses(rows) {
+  const json = JSON.stringify(rows).replaceAll("'", "''");
+  return runSupabaseSql(`update public.places as p set address_en = v.address_en
+from jsonb_to_recordset('${json}'::jsonb) as v(address_ko text, address_en text)
+where p.external_provider = 'sbiz' and p.address_ko = v.address_ko and p.address_en = p.address_ko
+returning p.id;`);
+}
+
+async function mainBatch({ batch, apply }, lookup = lookupEnglishAddress) {
+  assertPindProject();
+  const apiKey = loadJusoApiKey();
+  const cursor = existsSync(CURSOR_FILE) ? readFileSync(CURSOR_FILE, 'utf8') : '';
+  const addresses = fetchPendingAddresses(cursor, batch);
+  const matched = [];
+  const counts = {};
+  // A few lookups at a time with a pause between rounds (~10/s), so a full
+  // pass over ~80k addresses takes hours, not days.
+  for (let i = 0; i < addresses.length; i += BATCH_PARALLEL) {
+    if (i > 0) await sleep(BATCH_GAP_MS);
+    await Promise.all(addresses.slice(i, i + BATCH_PARALLEL).map(async (address) => {
+      let status = 'invalid_korean_road_address';
+      if (isFullKoreanRoadAddress(address)) {
+        let match;
+        for (let attempt = 1; ; attempt += 1) {
+          try {
+            match = await lookup(address, apiKey);
+            break;
+          } catch (error) {
+            // Transient network errors; the cursor only moves after a full batch.
+            if (attempt === 3) throw error;
+            await sleep(attempt * 2_000);
+          }
+        }
+        status = match.status;
+        if (match.status === 'matched') matched.push({ address_ko: address, address_en: match.addressEn });
+      }
+      counts[status] = (counts[status] ?? 0) + 1;
+    }));
+  }
+  const updated = apply && matched.length ? updateAddresses(matched).length : 0;
+  // Unmatched addresses stay Korean; the cursor moves past them either way.
+  if (apply && addresses.length) {
+    mkdirSync(path.dirname(CURSOR_FILE), { recursive: true });
+    writeFileSync(CURSOR_FILE, addresses.at(-1));
+  }
+  console.log(JSON.stringify({
+    mode: apply ? 'apply' : 'dry-run', addresses: addresses.length, counts,
+    places_updated: updated, done: addresses.length < batch,
+    sample: matched.slice(0, 3),
+  }));
+}
+
 const usage = `Usage: node scripts/backfill_sbiz_address_en.mjs --ids 123,456 [--apply]
+       node scripts/backfill_sbiz_address_en.mjs --batch 200 [--apply]
+--batch looks up the next distinct addresses still in Korean and resumes from
+build/address_en_cursor.txt; run it repeatedly until "done": true.
 Default mode is dry-run. --ids is mandatory and limited to ${MAX_IDS_PER_RUN} rows.
 Only exact, unique Juso Korean-address matches with an English address are eligible.
 config/juso.local.env must contain a Juso English address search API key (not a popup API key).`;
@@ -175,6 +257,8 @@ async function main(argv = process.argv.slice(2)) {
     console.log(usage);
     return;
   }
+
+  if (options.batch) return mainBatch(options);
 
   assertPindProject();
   const apiKey = loadJusoApiKey();

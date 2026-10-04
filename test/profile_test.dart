@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:pind_flutter/view/components/pind_glass.dart';
 import 'package:pind_flutter/view/components/pind_sheet.dart';
 import 'package:pind_flutter/controllers/profile_controller.dart';
 import 'package:pind_flutter/model/place_search_result.dart';
@@ -16,6 +17,7 @@ import 'package:pind_flutter/view/profile/profile_saved_tab.dart';
 import 'package:pind_flutter/view/profile/profile_screen.dart';
 import 'package:pind_flutter/view/profile/saved_places_page.dart';
 import 'package:pind_flutter/view/design_system.dart';
+import 'package:pind_flutter/l10n/l10n.dart';
 
 Place place(int id, String name, String address) => Place(
   id: id,
@@ -201,7 +203,7 @@ void main() {
   ) async {
     UserProfile person(String id, String handle) =>
         UserProfile(id: id, handle: handle, displayName: handle);
-    final follows = _Follows()
+    final follows = FakeFollows()
       ..lists[(null, true)] = [
         FriendCandidate(profile: person('a', 'haram'), following: true),
         FriendCandidate(profile: person('b', 'jiwoo')),
@@ -255,7 +257,7 @@ void main() {
   });
 
   testWidgets('a failed follow list says so and retries', (tester) async {
-    final follows = _Follows();
+    final follows = FakeFollows();
     var attempts = 0;
     await tester.pumpWidget(
       MaterialApp(
@@ -312,13 +314,44 @@ void main() {
     await pump(tester);
     double opacity(String label) => tester
         .widget<Opacity>(
-          find.ancestor(of: find.text(label), matching: find.byType(Opacity)),
+          find
+              .ancestor(of: find.text(label), matching: find.byType(Opacity))
+              .first,
         )
         .opacity;
     expect(opacity('맛잘알'), 1);
     expect(opacity('게시물왕'), .5);
     expect(opacity('맛집 판별가'), .5);
     expect(opacity('???'), .5);
+  });
+
+  testWidgets('a wrapped badge label stays centered; cards share a height', (
+    tester,
+  ) async {
+    setL10nLocale(const Locale('en'));
+    addTearDown(() => setL10nLocale(const Locale('ko')));
+    await pump(tester);
+    final judge = tester.widget<Text>(find.text('Restaurant judge'));
+    expect(judge.textAlign, TextAlign.center);
+    final heights = {
+      for (final e in find.byType(PindGlass).evaluate())
+        if (find
+                .descendant(
+                  of: find.byWidget(e.widget),
+                  matching: find.text('???'),
+                )
+                .evaluate()
+                .isNotEmpty ||
+            find
+                .descendant(
+                  of: find.byWidget(e.widget),
+                  matching: find.text('Restaurant judge'),
+                )
+                .evaluate()
+                .isNotEmpty)
+          tester.getSize(find.byWidget(e.widget)).height,
+    };
+    expect(heights, hasLength(1));
   });
 
   for (final (width, expected) in [
@@ -521,8 +554,35 @@ void main() {
       of: find.widgetWithText(PindTextField, label),
       matching: find.byType(TextField),
     );
-    await tester.enterText(field('닉네임'), '새 이름');
+    // Compact one-line fields: 48pt boxes, text centered, the count beside
+    // the label, 16pt between fields and 24pt before the buttons.
+    Rect box(String label) => tester.getRect(
+      find
+          .descendant(
+            of: find.widgetWithText(PindTextField, label),
+            matching: find.byType(PindGlass),
+          )
+          .first,
+    );
+    final nick = box('이름'), status = box('상태 메시지');
+    expect(nick.height, closeTo(48, .5));
+    expect(status.height, closeTo(48, .5));
+    expect(
+      tester.getCenter(field('이름')).dy,
+      closeTo(nick.center.dy, 1),
+      reason: 'text centered in its box',
+    );
+    final statusLabel = tester.getRect(find.text('상태 메시지'));
+    expect(statusLabel.top - nick.bottom, closeTo(16, .5));
+    expect(box('상태 메시지').top - statusLabel.bottom, closeTo(8, .5));
+    final save = tester.getRect(find.widgetWithText(PindSheetButton, '저장'));
+    expect(save.top - status.bottom, closeTo(24, .5));
+    expect(find.text('2/40'), findsOneWidget, reason: '민찬 is 2 letters');
+    await tester.enterText(field('이름'), '새 이름');
     await tester.enterText(field('상태 메시지'), '부산 여행 중');
+    await tester.pump();
+    expect(find.text('4/40'), findsOneWidget);
+    expect(find.text('7/80'), findsOneWidget); // spaces count
     await tester.tap(find.widgetWithText(PindSheetButton, '저장'));
     await tester.pumpAndSettle();
     expect(service.saves, [
@@ -565,13 +625,13 @@ void main() {
       matching: find.text(label),
     );
 
-    Future<(ProfileController, _Follows)> visit(
+    Future<(ProfileController, FakeFollows)> visit(
       WidgetTester tester,
       ProfileOverview other, {
       bool fail = false,
     }) async {
       final service = FakeProfileService(other: other);
-      final follows = _Follows()..fail = fail;
+      final follows = FakeFollows()..fail = fail;
       final controller = ProfileController(
         profile: service,
         friends: follows,
@@ -665,7 +725,7 @@ extension on ProfileOverview {
       ProfileOverview(profile: profile, counts: counts, taste: taste);
 }
 
-class _Follows implements FriendsService {
+class FakeFollows implements FriendsService {
   bool fail = false;
   final calls = <(String, bool)>[];
 

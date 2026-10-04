@@ -15,7 +15,7 @@ select u::uuid,(select id from public.places where external_place_id='feed-qa-'|
  (3,'61000000-0000-0000-0000-000000000002','a','u2/a.png','friend',true,'published',interval '3 hours',null,null,null,null),
  (4,'61000000-0000-0000-0000-000000000002','b','u2/b.png','100 sale',true,'published',interval '3 hours',null,null,null,null),
  (5,'61000000-0000-0000-0000-000000000001','c','hidden.png','hidden',true,'hidden',interval '1 hour',null,null,null,null),
- (6,'61000000-0000-0000-0000-000000000001','c','private.png','private',false,'published',interval '1 hour',null,null,null,null),
+ (6,'61000000-0000-0000-0000-000000000002','c','private.png','private',false,'published',interval '6 hours',null,null,null,null),
  (7,'61000000-0000-0000-0000-000000000002','c','u2/c.png','x',true,'published',interval '2 hours',null,null,null,null)
 ) v(n,u,k,photo,body,pub,st,age,req,t,po,am) order by n;
 insert into public.post_media(post_id,position,path,mime,bytes)
@@ -37,7 +37,7 @@ do $$ declare q qa; d jsonb; e jsonb; begin
  assert not has_function_privilege('anon','public.toggle_post_like(bigint,boolean)','execute');
  assert q.p3<q.p4,'tiebreak fixture';
  d:=public.get_discover_feed();
- assert pg_temp.ids(d)=array[q.p7,q.p4,q.p3,q.p2,q.p1],'newest first, id tiebreak, own hidden/private excluded';
+ assert pg_temp.ids(d)=array[q.p7,q.p4,q.p3,q.p2,q.p1],'newest first, id tiebreak, own hidden and unfollowed friends-only excluded';
  -- keyset pages
  d:=public.get_discover_feed(p_limit=>2);
  assert pg_temp.ids(d)=array[q.p7,q.p4],'page 1';
@@ -62,9 +62,9 @@ do $$ declare q qa; d jsonb; e jsonb; begin
   and (select count(*) from jsonb_object_keys(e))=10,'post keys';
  assert e->'author'=jsonb_build_object('id','61000000-0000-0000-0000-000000000002','handle','feed_two',
   'displayName','둘','avatarUrl','https://x/a.png'),'author json';
- assert e->'place' ?& array['provider','internalId','externalPlaceId','name','category','address','latitude',
+ assert e->'place' ?& array['provider','internalId','externalPlaceId','name','category','address','addressEn','latitude',
   'longitude','sourceUri','heroImageUrl','pindPhotoPath','pindPhotoBucket']
-  and (select count(*) from jsonb_object_keys(e->'place'))=12,'place summary keys';
+  and (select count(*) from jsonb_object_keys(e->'place'))=13,'place summary keys';
  assert e->'place'->>'name'='피드A' and e->'place'->>'pindPhotoPath'='u2/a.png' and e->'place'->>'pindPhotoBucket'='post-media','place card';
  assert e->'likeCount'='0'::jsonb and e->'liked'='false'::jsonb,'no likes yet';
  assert d->3->>'bucket'='post-media-v2' and d->3->'ratings'='{"taste":5,"portion":4,"ambience":3}'::jsonb;

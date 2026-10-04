@@ -2,12 +2,14 @@ import 'dart:async';
 
 import '../model/place_search_result.dart';
 import '../model/preferences.dart';
+import '../model/profile_model.dart';
 import '../model/registration_model.dart';
 import '../services/auth_service.dart';
 import '../services/registration_service.dart';
 import '../services/location_service.dart';
 import '../services/post_photo_service.dart';
 import '../services/profile_service.dart';
+import '../l10n/l10n.dart';
 
 class RegistrationController {
   RegistrationController({
@@ -42,7 +44,7 @@ class RegistrationController {
       } else if (!identity.development || _previewRequested) {
         if (identity.id != model.identity?.id ||
             model.step == RegistrationStep.login) {
-          _accept(identity);
+          _signedIn(identity);
         }
       }
     });
@@ -55,9 +57,46 @@ class RegistrationController {
   final Future<bool> Function() openSettings;
   final ProfileService? profile;
   final PostPhotoService? photos;
+
   final model = RegistrationModel();
   late final StreamSubscription<AuthIdentity?> _subscription;
   bool _disposed = false, _previewRequested = false;
+
+  /// A fresh login. An account that already has a handle was set up before
+  /// (another device or install): straight to the map, as a restored session
+  /// does. Otherwise sign-up as usual.
+  Future<void> _signedIn(AuthIdentity identity) async {
+    final local = storage.load(identity.id);
+    if (identity.development || profile == null || local?.completed == true) {
+      return _accept(identity);
+    }
+    model.update(() => model.busy = true);
+    UserProfile? existing;
+    try {
+      existing = await profile!.load();
+    } catch (_) {
+      // Can't tell: sign-up as usual; saving a different handle will say so.
+    }
+    if (_disposed) return;
+    model.update(() => model.busy = false);
+    // Signed out (or someone else signed in) while we were asking.
+    if (auth.identity?.id != identity.id) return;
+    final handle = existing?.handle;
+    if (handle == null || handle.isEmpty) return _accept(identity);
+    final draft = (local ?? const RegistrationDraft()).copyWith(
+      handle: handle,
+      name: existing!.displayName,
+      avatarUrl: existing.avatarUrl,
+      completed: true,
+    );
+    model.update(() {
+      model.identity = identity;
+      model.tasteDraft = null;
+      model.draft = draft;
+      model.error = null;
+    });
+    await storage.save(identity.id, draft);
+  }
 
   void _accept(AuthIdentity identity) => model.update(() {
     model.identity = identity;
@@ -80,7 +119,7 @@ class RegistrationController {
       await auth.signIn(provider);
     } catch (_) {
       if (!_disposed) {
-        model.update(() => model.error = '로그인을 완료하지 못했어요. 다시 시도해 주세요.');
+        model.update(() => model.error = l10n.errLoginIncomplete);
       }
     } finally {
       if (!_disposed) {
@@ -104,7 +143,7 @@ class RegistrationController {
       if (!_disposed) _accept(identity);
     } catch (_) {
       if (!_disposed) {
-        model.update(() => model.error = '체험을 시작하지 못했어요. 다시 시도해 주세요.');
+        model.update(() => model.error = l10n.errPreviewRetry);
       }
     } finally {
       if (!_disposed) model.update(() => model.busy = false);
@@ -115,7 +154,7 @@ class RegistrationController {
     if (model.busy || _disposed) return;
     final profile = this.profile, photos = this.photos;
     if (profile == null || photos == null) {
-      model.update(() => model.error = '프로필 서버에 연결하지 못했어요.');
+      model.update(() => model.error = l10n.errProfileServer);
       return;
     }
     model.update(() {
@@ -131,7 +170,7 @@ class RegistrationController {
       if (!_disposed) {
         model.error = error is PlaceFailure
             ? error.message
-            : '사진을 올리지 못했어요. 다시 시도해 주세요.';
+            : l10n.errPhotoUpload;
       }
     } finally {
       if (!_disposed) model.update(() => model.busy = false);
@@ -204,7 +243,7 @@ class RegistrationController {
       if (!_disposed) model.update(() => model.error = e.message);
     } catch (_) {
       if (!_disposed) {
-        model.update(() => model.error = '입력 내용을 저장하지 못했어요. 다시 시도해 주세요.');
+        model.update(() => model.error = l10n.errDraftSave);
       }
     } finally {
       if (!_disposed) model.update(() => model.busy = false);
@@ -225,12 +264,12 @@ class RegistrationController {
       allowed = permission == RegistrationPermission.allowed;
       model.update(() {
         model.permissionBlocked = permission == RegistrationPermission.blocked;
-        if (!allowed) model.error = '위치를 허용하지 않아도 검색으로 시작할 수 있어요.';
+        if (!allowed) model.error = l10n.locationSkipHint;
         model.draft = model.draft.copyWith(locationAllowed: allowed);
       });
     } catch (_) {
       if (!_disposed) {
-        model.update(() => model.error = '위치 권한을 확인하지 못했어요. 나중에 설정할 수 있어요.');
+        model.update(() => model.error = l10n.errLocationPermission);
       }
     } finally {
       if (!_disposed) model.update(() => model.busy = false);
@@ -244,11 +283,11 @@ class RegistrationController {
     try {
       final opened = await openSettings();
       if (!_disposed && !opened) {
-        model.update(() => model.error = '설정을 열지 못했어요. 기기 설정에서 위치를 허용해 주세요.');
+        model.update(() => model.error = l10n.errSettingsOpen);
       }
     } catch (_) {
       if (!_disposed) {
-        model.update(() => model.error = '설정을 열지 못했어요. 기기 설정에서 위치를 허용해 주세요.');
+        model.update(() => model.error = l10n.errSettingsOpen);
       }
     }
   }
@@ -266,7 +305,7 @@ class RegistrationController {
         !model.draft.basicValid(DateTime.now()) ||
         !model.draft.handleValid ||
         !preferences.isComplete) {
-      throw StateError('입력 내용을 확인해 주세요.');
+      throw StateError(l10n.errCheckInput);
     }
     final draft = model.draft.copyWith(completed: true);
     model.update(() => model.busy = true);

@@ -1,9 +1,11 @@
+import 'dart:convert';
 import 'dart:io';
 import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:lottie/lottie.dart';
 import 'package:pind_flutter/controllers/registration_controller.dart';
 import 'package:pind_flutter/model/registration_model.dart';
 import 'package:pind_flutter/services/registration_service.dart';
@@ -31,9 +33,10 @@ void main() {
       onComplete: (_) async {},
     );
     addTearDown(controller.dispose);
-    // Only the login PIN is still an SVG; circles are native SetupCircles.
+    // The login artwork is a Lottie animation; circles are native
+    // SetupCircles. No screen draws an SVG asset any more.
     const rootsByScreen = {
-      RegistrationStep.login: {'login/pin.svg': Size(58, 78.1015)},
+      RegistrationStep.login: <String, Size>{},
       RegistrationStep.country: <String, Size>{},
       RegistrationStep.handle: <String, Size>{},
       RegistrationStep.location: <String, Size>{},
@@ -53,19 +56,23 @@ void main() {
       controller.model.update(() => controller.model.step = screen.key);
       await tester.pumpAndSettle();
       if (screen.key == RegistrationStep.login) {
-        const path = 'assets/login/route_path.png';
-        final bytes = File(path).readAsBytesSync();
-        final header = ByteData.sublistView(bytes);
-        expect(header.getUint32(16), 393);
-        expect(header.getUint32(20), 281);
-        final finder = find.byWidgetPredicate(
-          (widget) =>
-              widget is Image &&
-              widget.image is AssetImage &&
-              (widget.image as AssetImage).assetName == path,
+        const path = 'assets/app/PIND_intro.lottie.json';
+        final intro = jsonDecode(File(path).readAsStringSync()) as Map;
+        // 402×508, 3.6s at 60fps, all shapes (no images or fonts to ship).
+        expect([intro['w'], intro['h']], [402, 508]);
+        expect((intro['op'] - intro['ip']) / intro['fr'], closeTo(3.6, .01));
+        expect(intro['assets'], isEmpty);
+        final lottie = find.byWidgetPredicate(
+          (w) =>
+              w is LottieBuilder &&
+              w.lottie is AssetLottie &&
+              (w.lottie as AssetLottie).assetName == path,
         );
-        expect(finder, findsOneWidget);
-        expect(tester.getSize(finder), const Size(393, 281));
+        expect(lottie, findsOneWidget);
+        // It played to the end and holds the finished frame.
+        final player = tester.widget<LottieBuilder>(lottie);
+        expect(player.controller!.value, 1);
+        expect(tester.getSize(lottie).aspectRatio, closeTo(402 / 508, .001));
       }
       if (circles[screen.key] case final count?) {
         expect(find.byType(SetupCircle), findsNWidgets(count));

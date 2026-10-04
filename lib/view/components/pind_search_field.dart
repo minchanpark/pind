@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../design_system.dart';
 import 'pind_glass.dart';
+import '../../l10n/l10n.dart';
 
 /// Figma 653:25649 / 671:35766: glass search bar; typed text turns bold and
 /// the rim purple.
@@ -40,11 +41,12 @@ class PindSearchField extends StatelessWidget {
             // Apple Color Emoji draws 🔍 ~1.2pt above the hint's center;
             // nudge the paint only, layout stays put.
             Padding(
-                padding: EdgeInsets.only(bottom: 3),
-                child: const Text('🔍', style: TextStyle(fontSize: PindType.body,
-                  ),
-                ),
-            ),  
+              padding: EdgeInsets.only(bottom: 3),
+              child: const Text(
+                '🔍',
+                style: TextStyle(fontSize: PindType.body),
+              ),
+            ),
             const SizedBox(width: 10),
             Expanded(
               child: TextField(
@@ -75,7 +77,7 @@ class PindSearchField extends StatelessWidget {
             ),
             if (!empty)
               IconButton(
-                tooltip: '지우기',
+                tooltip: l10n.clear,
                 padding: const EdgeInsets.symmetric(horizontal: 13),
                 constraints: const BoxConstraints(minHeight: 40),
                 style: const ButtonStyle(

@@ -5,6 +5,7 @@ import '../../model/profile_model.dart';
 import '../components/post_card.dart';
 import '../design_system.dart';
 import 'profile_screen.dart';
+import '../../l10n/l10n.dart';
 
 class ProfilePostsTab extends StatelessWidget {
   const ProfilePostsTab({
@@ -23,7 +24,7 @@ class ProfilePostsTab extends StatelessWidget {
     if (posts.isEmpty) {
       return Padding(
         padding: profileInset,
-        child: mutedNote('아직 작성한 게시물이 없어요.'),
+        child: mutedNote(l10n.noPostsYetMine),
       );
     }
     return Column(
@@ -39,7 +40,7 @@ class ProfilePostsTab extends StatelessWidget {
               author: overview.profile,
               preferences: preferences,
               action: PostCardButton(
-                label: '공유',
+                label: l10n.share,
                 icon: const Icon(Icons.ios_share, size: 12),
                 onTap: (button) {
                   final box = button.findRenderObject() as RenderBox;

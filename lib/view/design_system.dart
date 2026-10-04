@@ -112,6 +112,9 @@ abstract final class PindTheme {
       surface: Colors.white,
     ),
     scaffoldBackgroundColor: Colors.white,
+    // iOS feel: no Material ripple; a faint dim while pressed instead.
+    splashFactory: NoSplash.splashFactory,
+    highlightColor: const Color(0x0F000000),
     textTheme: const TextTheme(
       headlineSmall: TextStyle(
         fontSize: 26,

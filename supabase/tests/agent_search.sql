@@ -86,6 +86,21 @@ do $$ declare q qa; r jsonb; ids bigint[]; begin select * into q from qa;
  assert not public.agent_text_hit(null,'바') and not public.agent_text_hit('바','');
  r:=public.agent_search_places(array['바'],null,null,null,null,null)->'places';
  assert jsonb_array_length(r)=0,'바삭 no longer finds c';
+ -- "Pick for me": no words at all, every posted place by my taste match
+ -- (b 95 > a 50; c has no ratings and goes last).
+ r:=public.agent_search_places(array[]::text[],null,null,null,null,null,true)->'places';
+ assert (select array_agg((e->>'internalId')::bigint) from jsonb_array_elements(r) e)=array[q.b,q.a,q.c],'by taste, no words';
+ -- My foods filter, and match beats the occasion word: a mentions 안주
+ -- (hits 1) but b's match is higher.
+ r:=public.agent_search_places(array['안주'],null,null,null,null,array['주점','한식'],true)->'places';
+ assert (select array_agg((e->>'internalId')::bigint) from jsonb_array_elements(r) e)=array[q.b,q.a,q.c],'match before hits';
+ -- Without p_by_taste the same words rank by hits first.
+ r:=public.agent_search_places(array['안주'],null,null,null,null,array['주점','한식'])->'places';
+ assert (select array_agg((e->>'internalId')::bigint) from jsonb_array_elements(r) e)[1]=q.a,'hits first otherwise';
+ -- Many food words are kept, not just the first four.
+ r:=public.agent_search_places(array[]::text[],null,null,null,null,
+   array['카페','디저트','커피','빵','고기','구이','이자카야'],true)->'places';
+ assert (select array_agg((e->>'internalId')::bigint) from jsonb_array_elements(r) e)=array[q.c],'7th kind still counts';
  -- Bad input.
  begin perform public.agent_search_places(array[]::text[]); raise exception 'empty accepted';
  exception when raise_exception then null; end;

@@ -9,6 +9,7 @@ import '../components/pind_glass.dart';
 import '../design_system.dart';
 import 'profile_screen.dart';
 import 'saved_places_page.dart';
+import '../../l10n/l10n.dart';
 
 class ProfileSavedTab extends StatelessWidget {
   const ProfileSavedTab({
@@ -39,9 +40,9 @@ class ProfileSavedTab extends StatelessWidget {
         children: [
           if (mine)
             profileSection(
-              '최근에 본 장소',
+              l10n.recentlyViewed,
               recent.isEmpty
-                  ? mutedNote('최근 24시간 안에 본 장소가 여기에 표시돼요.')
+                  ? mutedNote(l10n.recentlyViewedEmpty)
                   : Row(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       spacing: 10,
@@ -54,11 +55,11 @@ class ProfileSavedTab extends StatelessWidget {
                           ),
                       ],
                     ),
-              trailing: '더보기 ›',
+              trailing: l10n.seeMore,
               onTrailing: () => Navigator.of(context).push(
                 MaterialPageRoute<void>(
                   builder: (_) => ProfilePlacesPage(
-                    title: '최근에 본 장소',
+                    title: l10n.recentlyViewed,
                     cards: recent,
                     onOpen: onOpen,
                   ),
@@ -66,9 +67,9 @@ class ProfileSavedTab extends StatelessWidget {
               ),
             ),
           profileSection(
-            '저장한 장소',
+            l10n.savedPlaces,
             saved.isEmpty
-                ? mutedNote(mine ? '저장한 장소가 아직 없어요.' : '공유한 저장 장소가 없어요.')
+                ? mutedNote(mine ? l10n.noSavedPlaces : l10n.noSharedSaves)
                 : SizedBox(
                     height: 120 + MediaQuery.textScalerOf(context).scale(80),
                     child: ListView.separated(
@@ -82,7 +83,7 @@ class ProfileSavedTab extends StatelessWidget {
                       ),
                     ),
                   ),
-            trailing: '더보기 ›',
+            trailing: l10n.seeMore,
             onTrailing: () => Navigator.of(context).push(
               MaterialPageRoute<void>(
                 builder: (_) => SavedPlacesPage(
@@ -153,7 +154,10 @@ class RecentPlaceCard extends StatelessWidget {
           const SizedBox(height: 6),
           Text(
             '📍 ${placeArea(card.place.address)}',
-            style: const TextStyle(fontSize: PindType.micro, color: PindColors.muted),
+            style: const TextStyle(
+              fontSize: PindType.micro,
+              color: PindColors.muted,
+            ),
           ),
           Text(
             card.place.name,
@@ -298,7 +302,7 @@ class ProfilePlacesPage extends StatelessWidget {
   Widget build(BuildContext context) => Scaffold(
     appBar: AppBar(title: Text(title)),
     body: cards.isEmpty
-        ? Center(child: mutedNote('표시할 장소가 없어요.'))
+        ? Center(child: mutedNote(l10n.noPlacesToShow))
         : GridView.builder(
             padding: const EdgeInsets.all(16),
             gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(

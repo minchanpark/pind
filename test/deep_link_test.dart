@@ -100,7 +100,10 @@ void main() {
   });
 
   testWidgets('the cold-start link opens once', (tester) async {
-    await app(tester, initial: Uri.parse('https://pind-profile-links.vercel.app/@haram'));
+    await app(
+      tester,
+      initial: Uri.parse('https://pind-profile-links.vercel.app/@haram'),
+    );
     await send(tester, 'https://pind-profile-links.vercel.app/@haram');
     expect(opened(), ['u2']);
   });

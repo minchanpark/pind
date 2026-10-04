@@ -5,6 +5,7 @@ import '../model/place_search_result.dart';
 import '../model/preferences.dart';
 import '../model/profile_model.dart';
 import 'data_revision.dart';
+import '../l10n/l10n.dart';
 
 /// Follows (`public.follows`), taste recommendations (`get_taste_matches`),
 /// user search (`search_profiles`) and the server copy of the onboarding
@@ -30,7 +31,7 @@ abstract interface class FriendsService {
 }
 
 class UnavailableFriendsService implements FriendsService {
-  static const _failure = PlaceFailure('친구 서버에 연결하지 못했어요.');
+  static final _failure = PlaceFailure(l10n.errFriendsServer);
   @override
   Future<List<FriendCandidate>> matches({int offset = 0, int limit = 5}) =>
       throw _failure;
@@ -56,7 +57,7 @@ class SupabaseFriendsService implements FriendsService {
 
   String get _uid {
     final user = client.auth.currentUser;
-    if (user == null) throw const PlaceFailure('로그인이 필요해요.');
+    if (user == null) throw PlaceFailure(l10n.errSignInRequired);
     return user.id;
   }
 
@@ -75,7 +76,7 @@ class SupabaseFriendsService implements FriendsService {
         ),
       );
     } on PostgrestException {
-      throw const PlaceFailure('추천 목록을 불러오지 못했어요.');
+      throw PlaceFailure(l10n.errSuggestionsLoad);
     }
   }
 
@@ -86,7 +87,7 @@ class SupabaseFriendsService implements FriendsService {
         await client.rpc('search_profiles', params: {'p_query': query}),
       );
     } on PostgrestException {
-      throw const PlaceFailure('검색하지 못했어요.');
+      throw PlaceFailure(l10n.errSearchFailed);
     }
   }
 
@@ -138,7 +139,9 @@ class SupabaseFriendsService implements FriendsService {
           ),
       ];
     } on PostgrestException {
-      throw PlaceFailure(followers ? '팔로워를 불러오지 못했어요.' : '팔로잉을 불러오지 못했어요.');
+      throw PlaceFailure(
+        followers ? l10n.errFollowersLoad : l10n.errFollowingLoad,
+      );
     }
   }
 
@@ -160,7 +163,7 @@ class SupabaseFriendsService implements FriendsService {
       markDataChanged();
     } on PostgrestException catch (e) {
       if (e.code == '23505') return; // already following
-      throw PlaceFailure(following ? '팔로우하지 못했어요.' : '팔로우를 취소하지 못했어요.');
+      throw PlaceFailure(following ? l10n.errFollow : l10n.errUnfollow);
     }
   }
 

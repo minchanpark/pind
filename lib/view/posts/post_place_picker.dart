@@ -12,14 +12,19 @@ import '../components/pind_search_field.dart';
 import '../explore/explore_screen.dart' show PlacePin;
 import '../profile/profile_screen.dart' show mutedNote;
 import '../design_system.dart';
+import '../../l10n/l10n.dart';
+import '../../l10n/categories.dart';
 
 enum PlaceFilter {
-  nearby('📍 현재 위치 주변'),
-  recent('최근 방문'),
-  saved('저장한 곳');
+  nearby,
+  recent,
+  saved;
 
-  const PlaceFilter(this.label);
-  final String label;
+  String get label => switch (this) {
+    nearby => l10n.filterNearby,
+    recent => l10n.filterRecent,
+    saved => l10n.filterSaved,
+  };
 }
 
 /// Figma 671:35758. 주변 narrows the server search to [nearbyMeters];
@@ -89,7 +94,7 @@ class _PostPlacePickerState extends State<PostPlacePicker> {
         setState(
           () => error = caught is PlaceFailure
               ? caught.message
-              : '식당을 검색하지 못했어요.',
+              : l10n.errRestaurantSearch,
         );
       }
     } finally {
@@ -108,7 +113,7 @@ class _PostPlacePickerState extends State<PostPlacePicker> {
     if (!mounted || filter != PlaceFilter.nearby) return;
     setState(() {
       here = p;
-      if (p == null) error = '현재 위치를 확인할 수 없어요. 위치 권한을 확인해 주세요.';
+      if (p == null) error = l10n.errLocationCheckPermission;
     });
   }
 
@@ -149,14 +154,13 @@ class _PostPlacePickerState extends State<PostPlacePicker> {
   String get emptyText {
     final typed = query.text.trim().isNotEmpty;
     return switch (filter) {
-      PlaceFilter.recent =>
-        typed ? '최근 방문한 곳 중에 없어요.' : '최근 24시간 안에 본 장소가 없어요.',
-      PlaceFilter.saved => typed ? '저장한 곳 중에 없어요.' : '저장한 장소가 아직 없어요.',
-      _ when loading => '식당을 찾고 있어요.',
+      PlaceFilter.recent => typed ? l10n.notInRecent : l10n.noRecentViews,
+      PlaceFilter.saved => typed ? l10n.notInSaved : l10n.noSavedPlaces,
+      _ when loading => l10n.findingRestaurants,
       PlaceFilter.nearby when query.text.trim().length >= 2 =>
-        '주변 ${formatDistance(PostPlacePicker.nearbyMeters)} 안에 맞는 식당이 없어요.',
-      _ when query.text.trim().length >= 2 => '검색 결과가 없어요.',
-      _ => '식당 이름이나 주소로 검색해 주세요.',
+        l10n.noNearbyMatch(formatDistance(PostPlacePicker.nearbyMeters)),
+      _ when query.text.trim().length >= 2 => l10n.noSearchResults,
+      _ => l10n.searchByNameOrAddress,
     };
   }
 
@@ -186,9 +190,9 @@ class _PostPlacePickerState extends State<PostPlacePicker> {
               ),
               Row(
                 children: [
-                  const Expanded(
+                  Expanded(
                     child: Text(
-                      '어디에 다녀오셨어요?',
+                      l10n.whereDidYouGo,
                       style: TextStyle(
                         fontSize: PindType.subtitle,
                         fontWeight: FontWeight.w700,
@@ -197,7 +201,7 @@ class _PostPlacePickerState extends State<PostPlacePicker> {
                     ),
                   ),
                   IconButton(
-                    tooltip: '닫기',
+                    tooltip: l10n.close,
                     onPressed: () => Navigator.pop(context),
                     icon: const Text(
                       '✕',
@@ -213,7 +217,7 @@ class _PostPlacePickerState extends State<PostPlacePicker> {
               const SizedBox(height: 16),
               PindSearchField(
                 controller: query,
-                hint: '식당 이름 또는 주소',
+                hint: l10n.nameOrAddress,
                 autofocus: true,
                 fontSize: PindType.bodyLarge,
                 verticalPadding: 13,
@@ -233,7 +237,7 @@ class _PostPlacePickerState extends State<PostPlacePicker> {
               Text(
                 query.text.trim().isEmpty && filter != null
                     ? filter!.label.replaceFirst('📍 ', '')
-                    : '검색 결과',
+                    : l10n.searchResults,
                 style: const TextStyle(
                   fontSize: PindType.label,
                   fontWeight: FontWeight.w700,
@@ -247,7 +251,10 @@ class _PostPlacePickerState extends State<PostPlacePicker> {
                   padding: const EdgeInsets.symmetric(vertical: 8),
                   child: Text(
                     error!,
-                    style: const TextStyle(fontSize: PindType.label, color: Colors.red),
+                    style: const TextStyle(
+                      fontSize: PindType.label,
+                      color: Colors.red,
+                    ),
                   ),
                 ),
               Expanded(
@@ -324,13 +331,16 @@ class _PostPlacePickerState extends State<PostPlacePicker> {
                 ),
                 Text(
                   [
-                    p.category,
+                    categoryLabel(p.category),
                     shortAddress(p.address),
                     if (meters != null) formatDistance(meters),
                   ].where((t) => t.isNotEmpty).join(' · '),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(fontSize: PindType.caption, color: PindColors.muted),
+                  style: const TextStyle(
+                    fontSize: PindType.caption,
+                    color: PindColors.muted,
+                  ),
                 ),
               ],
             ),
@@ -338,16 +348,16 @@ class _PostPlacePickerState extends State<PostPlacePicker> {
           Semantics(
             container: true,
             button: true,
-            label: '${p.name} 선택',
+            label: l10n.selectPlace(p.name),
             child: PindGlass(
               radius: 14,
               child: InkWell(
                 onTap: () => Navigator.pop(context, p),
-                child: const ExcludeSemantics(
+                child: ExcludeSemantics(
                   child: Padding(
                     padding: EdgeInsets.symmetric(horizontal: 14, vertical: 8),
                     child: Text(
-                      '선택',
+                      l10n.select,
                       style: TextStyle(
                         fontSize: PindType.caption,
                         fontWeight: FontWeight.w700,
