@@ -3,6 +3,8 @@ import 'package:flutter/foundation.dart';
 import 'places.dart';
 import 'preferences.dart';
 
+const maxPostPhotoBytes = 20 * 1024 * 1024;
+
 class PostPhoto {
   const PostPhoto({required this.bytes, required this.mimeType});
   final Uint8List bytes;
@@ -55,6 +57,7 @@ class PostModel extends ChangeNotifier {
   bool isPublic = true;
   bool pickingPhotos = false, publishing = false;
   String? error;
+  double uploadProgress = 0;
 
   int get bodyLength => body.runes.length;
   bool get canPublish =>
@@ -64,6 +67,8 @@ class PostModel extends ChangeNotifier {
       place?.id != null &&
       photos.isNotEmpty &&
       photos.length <= 10 &&
+      photos.fold<int>(0, (sum, p) => sum + p.bytes.length) <=
+          maxPostPhotoBytes &&
       criteria.every(
         (axis) => (ratings[axis] ?? 0) >= 1 && (ratings[axis] ?? 0) <= 5,
       ) &&

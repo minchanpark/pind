@@ -6,6 +6,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 
 import '../design_system.dart';
+import '../../model/taste_profile.dart';
 import '../../model/places.dart';
 import '../../model/preferences.dart';
 import '../../model/place_context.dart';
@@ -97,6 +98,11 @@ class PlaceSheet extends StatefulWidget {
 }
 
 class _PlaceSheetState extends State<PlaceSheet> {
+  /// My taste % reads [myTaste], which loads after this screen may open.
+  void _tasteChanged() {
+    if (mounted) setState(() {});
+  }
+
   final sheet = DraggableScrollableController();
   PlaceDetailController get controller => widget.controller;
   Place get place => controller.model.place;
@@ -155,6 +161,7 @@ class _PlaceSheetState extends State<PlaceSheet> {
   @override
   void initState() {
     super.initState();
+    myTaste.addListener(_tasteChanged);
     controller.model.addListener(changed);
     load();
     locate(false);
@@ -178,6 +185,7 @@ class _PlaceSheetState extends State<PlaceSheet> {
 
   @override
   void dispose() {
+    myTaste.removeListener(_tasteChanged);
     controller.model.removeListener(changed);
     controller.dispose();
     sheet.dispose();
@@ -848,21 +856,32 @@ class _PlaceSheetState extends State<PlaceSheet> {
     if (post.photos.length < 2) {
       return post.photos.isEmpty
           ? const SizedBox(height: 30)
-          : openable(
-              post,
-              0,
-              Container(
-                height: 217.32,
-                foregroundDecoration: BoxDecoration(
-                  border: Border.all(color: yellow, width: 5.21),
-                  borderRadius: BorderRadius.circular(14.238),
-                ),
-                child: ClipRRect(
-                  borderRadius: BorderRadius.circular(14.238),
-                  child: SizedBox.expand(
-                    child: placePhoto(post.photos.first, BoxFit.cover),
-                  ),
-                ),
+          // The photo's own shape, full width up to 262 tall, uncropped.
+          : LayoutBuilder(
+              builder: (_, box) => PhotoRatio(
+                post.photos.first,
+                fallback: box.maxWidth / 217.32,
+                builder: (_, ratio) {
+                  final size = fitPhoto(Size(box.maxWidth, 262), ratio);
+                  return Center(
+                    child: openable(
+                      post,
+                      0,
+                      Container(
+                        width: size.width,
+                        height: size.height,
+                        foregroundDecoration: BoxDecoration(
+                          border: Border.all(color: yellow, width: 5.21),
+                          borderRadius: BorderRadius.circular(14.238),
+                        ),
+                        child: ClipRRect(
+                          borderRadius: BorderRadius.circular(14.238),
+                          child: placePhoto(post.photos.first, BoxFit.cover),
+                        ),
+                      ),
+                    ),
+                  );
+                },
               ),
             );
     }

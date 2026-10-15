@@ -29,6 +29,8 @@ class FixturePhotos implements PostPhotoService {
 
 class FixturePosts implements PostService {
   @override
+  Future<void> delete(int postId) async {}
+  @override
   String get userId => 'native-post-qa';
   final drafts = <PostDraft>[];
   @override
@@ -122,6 +124,17 @@ void main() {
       await binding.takeScreenshot('map-filter-chips');
       await tester.tap(find.text('작성 열기'));
       await tester.pumpAndSettle();
+      await tester.scrollUntilVisible(
+        find.byKey(const ValueKey('publish-post')),
+        200,
+        scrollable: find
+            .descendant(
+              of: find.byType(PostComposer),
+              matching: find.byType(Scrollable),
+            )
+            .first,
+      );
+      await tester.pumpAndSettle();
       expect(
         tester
             .widget<TextButton>(find.byKey(const ValueKey('publish-post')))
@@ -143,13 +156,30 @@ void main() {
       expect(controller.model.body, contains('생갈비'));
       expect(find.text('연탄 향이 제대로예요. 양념갈비보다 생갈비를 추천합니다.'), findsOneWidget);
       await binding.takeScreenshot('post-composer-filled-bottom');
-      await tester.drag(find.byType(ListView).first, const Offset(0, 600));
+      await tester.drag(
+        find
+            .descendant(
+              of: find.byType(PostComposer),
+              matching: find.byType(Scrollable),
+            )
+            .first,
+        const Offset(0, 600),
+      );
       await tester.pumpAndSettle();
       expect(find.text('최고예요'), findsOneWidget);
       expect(find.text('★ 4'), findsOneWidget);
       await binding.takeScreenshot('post-composer-filled');
       // The button ends the page rather than floating over it.
-      await tester.ensureVisible(find.byKey(const ValueKey('publish-post')));
+      await tester.scrollUntilVisible(
+        find.byKey(const ValueKey('publish-post')),
+        200,
+        scrollable: find
+            .descendant(
+              of: find.byType(PostComposer),
+              matching: find.byType(Scrollable),
+            )
+            .first,
+      );
       await tester.pumpAndSettle();
       await tester.tap(find.byKey(const ValueKey('publish-post')));
       await tester.pumpAndSettle();

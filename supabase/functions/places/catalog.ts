@@ -39,11 +39,27 @@ export async function catalogRequest(
     }
     Object.assign(args,{p_lat:lat,p_lng:lng,p_radius:radius});
   } else if (body.action === 'posted') {
-    // Every place with a published post; the map loads this once.
+    fn='get_posted_places_page';
+    if(body.afterId!==undefined) {
+      if(!Number.isSafeInteger(body.afterId)||Number(body.afterId)<1)throw new CatalogError(400,'INVALID_QUERY','잘못된 페이지입니다.');
+      args.p_after_id=body.afterId;
+    }
+    if(body.bounds!==undefined) {
+      const b=body.bounds as Record<string,unknown>;
+      if(!b||typeof b!=='object'||!['south','west','north','east'].every(k=>typeof b[k]==='number'&&Number.isFinite(b[k]))||Number(b.south)>Number(b.north)||Number(b.west)>Number(b.east))
+        throw new CatalogError(400,'INVALID_VIEWPORT','잘못된 지도 범위입니다.');
+      Object.assign(args,{p_south:b.south,p_west:b.west,p_north:b.north,p_east:b.east});
+    }
   } else if (body.action === 'search') {
     const q = typeof body.query === 'string' ? body.query.trim() : '';
     if (q.length < 2 || q.length > 120) throw new CatalogError(400,'INVALID_QUERY','검색어를 2~120자로 입력해 주세요.');
     args.p_query = q;
+    if(body.latitude!==undefined || body.longitude!==undefined) {
+      const lat=body.latitude,lng=body.longitude,radius=body.radiusMeters;
+      if(typeof lat!=='number'||typeof lng!=='number'||!Number.isFinite(lat)||!Number.isFinite(lng)||lat<33||lat>38.8||lng<124.5||lng>132||!Number.isInteger(radius)||Number(radius)<100||Number(radius)>50000)
+        throw new CatalogError(400,'INVALID_VIEWPORT','대한민국 안에서 검색해 주세요.');
+      Object.assign(args,{p_lat:lat,p_lng:lng,p_radius:radius});
+    }
   } else if (body.action === 'catalog_detail') {
     if (!Number.isSafeInteger(body.internalPlaceId) || Number(body.internalPlaceId) < 1) {
       throw new CatalogError(400,'INVALID_PLACE','장소 ID를 확인해 주세요.');
@@ -120,6 +136,6 @@ export async function catalogRequest(
     return {places,googleSearchEnabled:googleEnabled,label:body.label ?? null,
       personal:body.personal === true,notice:`${body.label} 기준으로 찾았어요.`};
   }
-  return {places,googleSearchEnabled:googleEnabled,
+  return {places,googleSearchEnabled:googleEnabled,...(body.action==='posted'?{hasMore:result.hasMore===true}:{}),
     notice:result.catalogReady === false ? '공공 장소 데이터를 준비 중이에요. 준비된 지역부터 표시됩니다.' : null};
 }

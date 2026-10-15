@@ -1,3 +1,7 @@
+import 'dart:async';
+
+import '../services/request_client.dart';
+
 import 'package:uuid/uuid.dart';
 
 import '../model/post_model.dart';
@@ -46,6 +50,16 @@ class PostController {
   ];
   final String requestId = const Uuid().v4();
   bool _disposed = false;
+  Completer<void>? _publishAbort;
+  bool get canCancelPublish =>
+      model.publishing &&
+      model.uploadProgress < 1 &&
+      posts is ProgressPostService;
+  void cancelPublish() {
+    if (canCancelPublish && _publishAbort?.isCompleted == false) {
+      _publishAbort!.complete();
+    }
+  }
 
   void selectPlace(Place value) {
     if (_disposed || model.publishing || !value.isCatalog || value.id == null) {
@@ -89,6 +103,26 @@ class PostController {
     model.update(() => model.photos.removeAt(index));
   }
 
+  /// A shot from the in-app camera.
+  void addPhoto(PostPhoto photo) {
+    if (_disposed ||
+        model.publishing ||
+        model.pickingPhotos ||
+        model.photos.length >= 10) {
+      return;
+    }
+    if (model.photos.fold<int>(0, (sum, p) => sum + p.bytes.length) +
+            photo.bytes.length >
+        maxPostPhotoBytes) {
+      model.update(() => model.error = l10n.errPhotosTotalSize);
+      return;
+    }
+    model.update(() {
+      model.photos.add(photo);
+      model.error = null;
+    });
+  }
+
   Future<void> addPhotos() async {
     if (_disposed ||
         model.publishing ||
@@ -103,7 +137,16 @@ class PostController {
     try {
       final selected = await photos.pick(10 - model.photos.length);
       if (_disposed) return;
-      model.photos.addAll(selected.take(10 - model.photos.length));
+      final next = selected.take(10 - model.photos.length).toList();
+      if ([
+            ...model.photos,
+            ...next,
+          ].fold<int>(0, (sum, p) => sum + p.bytes.length) >
+          maxPostPhotoBytes) {
+        model.error = l10n.errPhotosTotalSize;
+      } else {
+        model.photos.addAll(next);
+      }
     } catch (error) {
       if (!_disposed) {
         model.error = error is PlaceFailure ? error.message : l10n.errPhotoLoad;
@@ -113,11 +156,12 @@ class PostController {
     }
   }
 
-  Future<List<Place>> searchPlaces(String query) async {
+  Future<List<Place>> searchPlaces(String query, {MapViewport? near}) async {
     if (places == null) throw PlaceFailure(l10n.errPlaceSearchSignIn);
-    return (await places!.search(query))
-        .where((p) => p.isCatalog && p.id != null)
-        .toList();
+    return (await places!.search(
+      query,
+      near: near,
+    )).where((p) => p.isCatalog && p.id != null).toList();
   }
 
   /// Null when location is off, denied or times out.
@@ -134,10 +178,24 @@ class PostController {
     final draft = model.draft;
     model.update(() {
       model.publishing = true;
+      model.uploadProgress = 0;
       model.error = null;
     });
     try {
-      final saved = await posts.publish(draft, requestId, authorId);
+      _publishAbort = Completer<void>();
+      final service = posts;
+      final saved = await withRequestCancellation(
+        _publishAbort!.future,
+        () => service is ProgressPostService
+            ? service.publishWithProgress(draft, requestId, authorId, (
+                progress,
+              ) {
+                if (!_disposed) {
+                  model.update(() => model.uploadProgress = progress);
+                }
+              })
+            : service.publish(draft, requestId, authorId),
+      );
       return _disposed ? null : saved;
     } catch (error) {
       if (!_disposed) {
@@ -147,11 +205,13 @@ class PostController {
       }
       return null;
     } finally {
+      _publishAbort = null;
       if (!_disposed) model.update(() => model.publishing = false);
     }
   }
 
   void dispose() {
+    cancelPublish();
     _disposed = true;
     model.dispose();
   }

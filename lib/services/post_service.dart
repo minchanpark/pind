@@ -4,6 +4,7 @@ import 'package:uuid/uuid.dart';
 import '../model/post_model.dart';
 import '../model/place_search_result.dart';
 import 'data_revision.dart';
+import 'request_client.dart';
 import '../l10n/l10n.dart';
 
 abstract class PostService {
@@ -16,6 +17,15 @@ abstract class PostService {
 
   /// Deletes my post and, best effort, its private photo files.
   Future<void> delete(int postId);
+}
+
+abstract interface class ProgressPostService implements PostService {
+  Future<PublishedPost> publishWithProgress(
+    PostDraft draft,
+    String requestId,
+    String? authorId,
+    void Function(double) progress,
+  );
 }
 
 class UnavailablePostService implements PostService {
@@ -32,7 +42,7 @@ class UnavailablePostService implements PostService {
       throw PlaceFailure(l10n.errPostServer);
 }
 
-class SupabasePostService implements PostService {
+class SupabasePostService implements ProgressPostService {
   SupabasePostService(this.client);
   final SupabaseClient client;
   static const bucket = 'post-media-v2';
@@ -81,7 +91,19 @@ class SupabasePostService implements PostService {
     PostDraft draft,
     String requestId,
     String? authorId,
+  ) => publishWithProgress(draft, requestId, authorId, (_) {});
+
+  @override
+  Future<PublishedPost> publishWithProgress(
+    PostDraft draft,
+    String requestId,
+    String? authorId,
+    void Function(double) progress,
   ) async {
+    if (draft.photos.fold<int>(0, (sum, photo) => sum + photo.bytes.length) >
+        maxPostPhotoBytes) {
+      throw PlaceFailure(l10n.errPhotosTotalSize);
+    }
     if (authorId == null ||
         userId != authorId ||
         client.auth.currentUser?.isAnonymous == true) {
@@ -93,44 +115,72 @@ class SupabasePostService implements PostService {
       final previous = await _existing(requestId, authorId);
       if (previous != null) return previous;
       final attempt = const Uuid().v4();
-      final media = <Map<String, dynamic>>[];
-      for (var index = 0; index < draft.photos.length; index++) {
-        final photo = draft.photos[index];
-        final path = '$authorId/$requestId/$attempt/$index.${photo.extension}';
-        await client.storage
-            .from(bucket)
-            .uploadBinary(
-              path,
-              photo.bytes,
-              fileOptions: FileOptions(
-                contentType: photo.mimeType,
-                upsert: false,
-              ),
-            );
-        uploaded.add(path);
-        media.add({
-          'path': path,
-          'mime': photo.mimeType,
-          'bytes': photo.bytes.length,
-        });
+      final media = List<Map<String, dynamic>?>.filled(
+        draft.photos.length,
+        null,
+      );
+      final totalBytes = draft.photos.fold<int>(
+        0,
+        (sum, p) => sum + p.bytes.length,
+      );
+      var completedBytes = 0;
+      // Three uploads per batch; wait for all to settle before cleanup or commit.
+      for (var first = 0; first < draft.photos.length; first += 3) {
+        await Future.wait([
+          for (
+            var index = first;
+            index < draft.photos.length && index < first + 3;
+            index++
+          )
+            () async {
+              if (userId != authorId) {
+                throw PlaceFailure(l10n.errAccountChanged);
+              }
+              final photo = draft.photos[index];
+              final path =
+                  '$authorId/$requestId/$attempt/$index.${photo.extension}';
+              await client.storage
+                  .from(bucket)
+                  .uploadBinary(
+                    path,
+                    photo.bytes,
+                    retryAttempts: 0,
+                    fileOptions: FileOptions(
+                      contentType: photo.mimeType,
+                      upsert: false,
+                    ),
+                  );
+              uploaded.add(path);
+              media[index] = {
+                'path': path,
+                'mime': photo.mimeType,
+                'bytes': photo.bytes.length,
+              };
+              completedBytes += photo.bytes.length;
+              progress(totalBytes == 0 ? 1 : completedBytes / totalBytes);
+            }(),
+        ]);
       }
       if (userId != authorId) {
         throw PlaceFailure(l10n.errAccountChanged);
       }
       databaseAttempted = true;
-      final result = await client.rpc(
-        'publish_post_v3',
-        params: {
-          'p_client_request_id': requestId,
-          'p_place_id': draft.place.id,
-          'p_ratings': {
-            for (final rating in draft.ratings.entries)
-              rating.key.name: rating.value,
+      final result = await withRequestCancellation(
+        null,
+        () => client.rpc(
+          'publish_post_v3',
+          params: {
+            'p_client_request_id': requestId,
+            'p_place_id': draft.place.id,
+            'p_ratings': {
+              for (final rating in draft.ratings.entries)
+                rating.key.name: rating.value,
+            },
+            'p_body': draft.body.trim(),
+            'p_media': media.cast<Map<String, dynamic>>(),
+            'p_is_public': draft.isPublic,
           },
-          'p_body': draft.body.trim(),
-          'p_media': media,
-          'p_is_public': draft.isPublic,
-        },
+        ),
       );
       markDataChanged();
       return PublishedPost.fromJson(Map<String, dynamic>.from(result as Map));
@@ -140,7 +190,10 @@ class SupabasePostService implements PostService {
       var safeToClean = !databaseAttempted;
       if (databaseAttempted && userId == authorId) {
         try {
-          final saved = await _existing(requestId, authorId);
+          final saved = await withRequestCancellation(
+            null,
+            () => _existing(requestId, authorId),
+          );
           if (saved != null) return saved;
           safeToClean = true;
         } catch (_) {
@@ -149,7 +202,10 @@ class SupabasePostService implements PostService {
       }
       if (safeToClean && uploaded.isNotEmpty && userId == authorId) {
         try {
-          await client.storage.from(bucket).remove(uploaded);
+          await withRequestCancellation(
+            null,
+            () => client.storage.from(bucket).remove(uploaded),
+          );
         } catch (_) {
           /* RLS also prevents deletion of already attached media. */
         }

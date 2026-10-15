@@ -1,3 +1,4 @@
+import '../../model/explore_model.dart';
 import '../../model/detail_preview_model.dart';
 // Explicit local QA data. Never imported by main.dart or a production service.
 import '../place_context_service.dart';
@@ -86,4 +87,7 @@ class LocalDetailContext implements PlaceContextService {
     if (failSave) throw StateError('QA save failure');
     saved = value;
   }
+
+  @override
+  Future<Set<int>> scopePlaces(MapScope scope) async => {};
 }

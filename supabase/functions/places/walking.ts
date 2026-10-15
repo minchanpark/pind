@@ -40,6 +40,7 @@ export async function walkingRoute(
   if (!key) throw new CatalogError(503, 'ROUTE_UNAVAILABLE', '길찾기를 준비 중이에요.');
   const response = await fetcher(TMAP_URL, {
     method: 'POST',
+      signal: AbortSignal.timeout(8000),
     headers: {appKey: key, 'Content-Type': 'application/json', Accept: 'application/json'},
     // Names must be URL-encoded UTF-8, per the TMAP reference.
     body: JSON.stringify({

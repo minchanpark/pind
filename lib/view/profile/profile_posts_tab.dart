@@ -22,15 +22,18 @@ class ProfilePostsTab extends StatelessWidget {
   Widget build(BuildContext context) {
     final posts = overview.posts;
     if (posts.isEmpty) {
-      return Padding(
-        padding: profileInset,
-        child: mutedNote(l10n.noPostsYetMine),
+      return SliverToBoxAdapter(
+        child: Padding(
+          padding: profileInset,
+          child: mutedNote(l10n.noPostsYetMine),
+        ),
       );
     }
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        for (var i = 0; i < posts.length; i++) ...[
+    return SliverList.builder(
+      itemCount: posts.length,
+      itemBuilder: (_, i) => Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
           if (i > 0)
             const Divider(height: 1, thickness: 1, color: PindColors.border),
           Padding(
@@ -50,7 +53,7 @@ class ProfilePostsTab extends StatelessWidget {
             ),
           ),
         ],
-      ],
+      ),
     );
   }
 }

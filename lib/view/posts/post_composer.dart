@@ -5,9 +5,12 @@ import '../../controllers/post_controller.dart';
 import '../../model/post_model.dart';
 import '../../model/places.dart';
 import '../../model/preferences.dart';
+import '../../services/post_photo_service.dart';
 import '../components/pind_glass.dart';
+import '../components/pind_sheet.dart';
 import '../explore/explore_screen.dart';
 import '../design_system.dart';
+import 'post_camera_screen.dart';
 import 'post_place_picker.dart';
 import '../../l10n/l10n.dart';
 import '../../l10n/categories.dart';
@@ -56,6 +59,65 @@ class _PostComposerState extends State<PostComposer> {
     if (mounted && selected != null) controller.selectPlace(selected);
   }
 
+  /// 앨범 · 듀얼 · 2분할 as three emoji tiles in a row.
+  Future<void> addPhotos() => showPindSheet<void>(
+    context,
+    builder: (sheet) => Row(
+      spacing: 8,
+      children: [
+        for (final (emoji, label, layout) in [
+          ('🖼️', l10n.photoFromAlbum, null),
+          ('🤳', l10n.cameraDual, CameraLayout.pip),
+          ('🌓', l10n.cameraSplit, CameraLayout.split),
+        ])
+          Expanded(
+            child: Semantics(
+              button: true,
+              label: label,
+              excludeSemantics: true,
+              child: PindGlass(
+                radius: PindRadius.field,
+                child: InkWell(
+                  onTap: () {
+                    Navigator.pop(sheet);
+                    layout == null ? controller.addPhotos() : shoot(layout);
+                  },
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 6,
+                      vertical: 18,
+                    ),
+                    child: Column(
+                      spacing: 8,
+                      children: [
+                        Text(emoji, style: const TextStyle(fontSize: 32)),
+                        Text(
+                          label,
+                          textAlign: TextAlign.center,
+                          style: PindText.label.copyWith(color: PindColors.ink),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ),
+      ],
+    ),
+  );
+
+  Future<void> shoot(CameraLayout layout) async {
+    final photo = await Navigator.push<PostPhoto>(
+      context,
+      MaterialPageRoute(
+        fullscreenDialog: true,
+        builder: (_) => PostCameraScreen(layout: layout),
+      ),
+    );
+    if (photo != null) controller.addPhoto(photo);
+  }
+
   Future<void> publish() async {
     FocusScope.of(context).unfocus();
     final post = await controller.publish();
@@ -71,7 +133,11 @@ class _PostComposerState extends State<PostComposer> {
         toolbarHeight: 49.7,
         leading: IconButton(
           tooltip: l10n.close,
-          onPressed: model.publishing ? null : () => Navigator.pop(context),
+          onPressed: model.publishing
+              ? controller.canCancelPublish
+                    ? controller.cancelPublish
+                    : null
+              : () => Navigator.pop(context),
           icon: SvgPicture.asset(
             'assets/post_composer/close_icon.svg',
             width: 20.6096,
@@ -344,13 +410,26 @@ class _PostComposerState extends State<PostComposer> {
                           disabledForegroundColor: Colors.white,
                         ),
                         child: model.publishing
-                            ? const SizedBox(
-                                width: 20,
-                                height: 20,
-                                child: CircularProgressIndicator(
-                                  strokeWidth: 2,
-                                  color: Colors.white,
-                                ),
+                            ? Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  SizedBox(
+                                    width: 20,
+                                    height: 20,
+                                    child: CircularProgressIndicator(
+                                      value: model.uploadProgress < 1
+                                          ? model.uploadProgress
+                                          : null,
+                                      strokeWidth: 2,
+                                      color: Colors.white,
+                                    ),
+                                  ),
+                                  const SizedBox(width: 8),
+                                  Text(
+                                    '${l10n.uploadProgress} ${(model.uploadProgress * 100).round()}%',
+                                    style: const TextStyle(fontSize: 12),
+                                  ),
+                                ],
                               )
                             : Text(
                                 l10n.publish,
@@ -399,7 +478,7 @@ class _PostComposerState extends State<PostComposer> {
               child: InkWell(
                 onTap: model.publishing || model.pickingPhotos
                     ? null
-                    : controller.addPhotos,
+                    : addPhotos,
                 child: PindGlass(
                   radius: model.photos.isEmpty ? 18 : 12,
                   child: Center(
@@ -459,7 +538,17 @@ class _PostComposerState extends State<PostComposer> {
                   borderRadius: BorderRadius.circular(10),
                   child: Image.memory(
                     model.photos[index].bytes,
+                    cacheHeight: (159 * MediaQuery.devicePixelRatioOf(context))
+                        .ceil(),
                     fit: BoxFit.cover,
+                    // A new photo fades in once decoded instead of popping.
+                    frameBuilder: (_, child, frame, sync) => sync
+                        ? child
+                        : AnimatedOpacity(
+                            opacity: frame == null ? 0 : 1,
+                            duration: const Duration(milliseconds: 250),
+                            child: child,
+                          ),
                     errorBuilder: (_, error, stack) =>
                         const Center(child: Icon(Icons.broken_image_outlined)),
                   ),

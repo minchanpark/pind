@@ -3,6 +3,7 @@
 /config/juso.local.env
 /config/tourapi.local.env
 /artifacts/
+/scripts/name-eval/node_modules/
 *.class
 *.log
 *.pyc

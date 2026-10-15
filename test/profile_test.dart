@@ -7,6 +7,7 @@ import 'package:pind_flutter/model/place_search_result.dart';
 import 'package:pind_flutter/model/places.dart';
 import 'package:pind_flutter/model/post_model.dart';
 import 'package:pind_flutter/model/preferences.dart';
+import 'package:pind_flutter/model/taste_profile.dart';
 import 'package:pind_flutter/model/profile_model.dart';
 import 'package:pind_flutter/model/friends_model.dart';
 import 'package:pind_flutter/services/data_revision.dart';
@@ -18,6 +19,8 @@ import 'package:pind_flutter/view/profile/profile_screen.dart';
 import 'package:pind_flutter/view/profile/saved_places_page.dart';
 import 'package:pind_flutter/view/design_system.dart';
 import 'package:pind_flutter/l10n/l10n.dart';
+
+import 'support/taste.dart';
 
 Place place(int id, String name, String address) => Place(
   id: id,
@@ -166,6 +169,13 @@ Future<ProfileController> pump(
 }
 
 void main() {
+  setUp(
+    () => useStartTaste(const [
+      PreferenceCriterion.taste,
+      PreferenceCriterion.portion,
+      PreferenceCriterion.ambience,
+    ]),
+  );
   test('placeArea prefers 동, then 구, then the second token', () {
     expect(placeArea('서울특별시 성동구 성수동 123-4'), '성수동');
     expect(placeArea('서울 성동구 성수이로 12'), '성동구');
@@ -306,6 +316,7 @@ void main() {
     int? focused;
     await pump(tester, onShowMap: (id) => focused = id);
     await tester.ensureVisible(find.text('맵 보기 ›'));
+    await tester.pumpAndSettle();
     await tester.tap(find.text('맵 보기 ›'));
     expect(focused, canned.posts.first.place.id);
   });
@@ -393,7 +404,7 @@ void main() {
     expect(find.text('최근 카페'), findsOneWidget);
     expect(find.text('📍 연남동'), findsOneWidget);
     expect(find.text('저장 식당'), findsOneWidget);
-    expect(find.text('93%'), findsOneWidget);
+    expect(find.text('98%'), findsOneWidget);
     expect(find.text('나의 취향'), findsNothing);
     await tester.tap(find.text('더보기 ›').first);
     await tester.pumpAndSettle();
@@ -507,11 +518,22 @@ void main() {
     await tester.tap(find.text('게시물').last);
     await tester.pumpAndSettle();
     expect(find.text('한 장 게시물'), findsOneWidget);
+    await tester.scrollUntilVisible(
+      find.text('네 장 게시물'),
+      240,
+      scrollable: find.byType(Scrollable).first,
+    );
+    await tester.pumpAndSettle();
     expect(find.text('네 장 게시물'), findsOneWidget);
     expect(find.text('+ 1'), findsOneWidget);
     expect(find.text('📍네 장 가게'), findsOneWidget);
     expect(find.byType(Divider), findsOneWidget);
-    expect(find.bySemanticsLabel('맛 3점'), findsOneWidget);
+    expect(
+      find.byWidgetPredicate(
+        (w) => w is Semantics && w.properties.label == '맛 3점',
+      ),
+      findsOneWidget,
+    );
     expect(tester.takeException(), isNull);
   });
 
@@ -760,4 +782,6 @@ class FakeFollows implements FriendsService {
     TastePreferences preferences, {
     bool discoverable = false,
   }) async {}
+  @override
+  Future<TasteProfile?> myTaste() async => null;
 }

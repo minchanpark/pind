@@ -1,3 +1,5 @@
+import 'package:pind_flutter/model/explore_model.dart';
+
 import 'dart:async';
 
 import 'package:flutter_test/flutter_test.dart';
@@ -6,6 +8,9 @@ import 'package:pind_flutter/controllers/onboarding_controller.dart';
 import 'package:pind_flutter/controllers/place_detail_controller.dart';
 import 'package:pind_flutter/model/place_context.dart';
 import 'package:pind_flutter/model/preferences.dart';
+import 'package:pind_flutter/model/taste_profile.dart';
+import 'package:pind_flutter/services/data_revision.dart';
+import 'package:pind_flutter/services/friends_service.dart';
 import 'package:pind_flutter/services/place_context_service.dart';
 import 'package:pind_flutter/services/place_service.dart';
 import 'package:pind_flutter/services/preference_service.dart';
@@ -31,6 +36,9 @@ class _Context implements PlaceContextService {
     writes++;
     await write?.call(saved);
   }
+
+  @override
+  Future<Set<int>> scopePlaces(MapScope scope) async => {};
 }
 
 class _Preferences extends PreferenceService {
@@ -154,6 +162,20 @@ void main() {
     },
   );
 
+  test('my taste loads at start and reloads after any data change', () async {
+    SharedPreferences.setMockInitialValues({});
+    final controller = AppController(
+      PreferenceService(await SharedPreferences.getInstance()),
+      friends: _TasteFriends(),
+    );
+    addTearDown(controller.dispose);
+    await pumpEventQueue();
+    expect(myTaste.value?.evidence, 1);
+    markDataChanged();
+    await pumpEventQueue();
+    expect(myTaste.value?.evidence, 2);
+  });
+
   test('disposed app ignores a pending preference completion', () async {
     SharedPreferences.setMockInitialValues({});
     final pending = Completer<void>();
@@ -192,4 +214,19 @@ void main() {
       await save;
     },
   );
+}
+
+/// Each load reports how many times my taste was fetched as its evidence.
+class _TasteFriends implements FriendsService {
+  var loads = 0;
+  @override
+  Future<TasteProfile?> myTaste() async => TasteProfile(
+    priorities: const [],
+    stars: const {},
+    weights: const {},
+    averages: const {},
+    evidence: ++loads,
+  );
+  @override
+  dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
 }

@@ -9,6 +9,7 @@ import '../services/location_service.dart';
 import '../services/place_action_service.dart';
 import '../services/place_context_service.dart';
 import '../services/place_service.dart';
+import '../services/request_client.dart';
 import '../services/profile_service.dart';
 import '../l10n/l10n.dart';
 
@@ -50,8 +51,15 @@ class PlaceDetailController {
   MapViewport? _position;
   bool _disposed = false;
   int _request = 0;
+  Completer<void>? _abort;
 
-  Future<void> load() async {
+  Future<void> load() {
+    if (_abort != null && !_abort!.isCompleted) _abort!.complete();
+    final abort = _abort = Completer<void>();
+    return withRequestCancellation(abort.future, _load);
+  }
+
+  Future<void> _load() async {
     final request = ++_request;
     model.update(() {
       model.loading = true;
@@ -206,6 +214,7 @@ class PlaceDetailController {
 
   void dispose() {
     _disposed = true;
+    if (_abort != null && !_abort!.isCompleted) _abort!.complete();
     _request++;
     model.dispose();
   }

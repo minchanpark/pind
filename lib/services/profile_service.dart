@@ -61,9 +61,45 @@ class UnavailableProfileService implements ProfileService {
   Future<String?> findUserId(String handle) async => null;
 }
 
-class SupabaseProfileService implements ProfileService {
+abstract interface class ProfilePostPages {
+  Future<ProfilePostPage> postPage({String? userId, MyPost? after});
+}
+
+class SupabaseProfileService implements ProfileService, ProfilePostPages {
   SupabaseProfileService(this.client);
   final SupabaseClient client;
+
+  @override
+  Future<ProfilePostPage> postPage({String? userId, MyPost? after}) async {
+    final data = Map<String, dynamic>.from(
+      await client.rpc(
+        'get_profile_posts_page',
+        params: {
+          'p_user': userId,
+          'p_before_created': after?.createdAt.toUtc().toIso8601String(),
+          'p_before_id': after?.id,
+        },
+      ) as Map,
+    );
+    final rows = (data['posts'] as List? ?? []).cast<Map>();
+    final signed = await signPostPhotoPaths(
+      client,
+      collectPostPhotoPaths(rows),
+    );
+    return ProfilePostPage([
+      for (final row in rows)
+        parseMyPost(
+          row,
+          photoUrl: (path) => resolvePostPhotoUrl(
+            client,
+            signed,
+            row['bucket'] as String?,
+            path,
+          ),
+        ),
+    ], data['hasMore'] == true);
+  }
+
   static const avatarBucket = 'avatars';
 
   String get _uid {

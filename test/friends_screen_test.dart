@@ -5,6 +5,7 @@ import 'package:pind_flutter/model/friends_model.dart';
 import 'package:pind_flutter/model/place_search_result.dart';
 import 'package:pind_flutter/model/profile_link.dart';
 import 'package:pind_flutter/model/preferences.dart';
+import 'package:pind_flutter/model/taste_profile.dart';
 import 'package:pind_flutter/model/profile_model.dart';
 import 'package:pind_flutter/services/friends_service.dart';
 import 'package:pind_flutter/services/profile_service.dart';
@@ -59,6 +60,8 @@ class FakeFriendsService implements FriendsService {
     TastePreferences preferences, {
     bool discoverable = false,
   }) async {}
+  @override
+  Future<TasteProfile?> myTaste() async => null;
   @override
   Future<List<FriendCandidate>> follows({
     String? userId,

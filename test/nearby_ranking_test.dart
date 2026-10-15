@@ -11,6 +11,8 @@ import 'package:pind_flutter/view/components/pind_skeleton.dart';
 import 'package:pind_flutter/view/explore/nearby_ranking_sheet.dart';
 import 'package:pind_flutter/view/design_system.dart';
 
+import 'support/taste.dart';
+
 Map<String, dynamic> row(
   int id,
   String name,
@@ -77,6 +79,13 @@ final rows = [
 ];
 
 void main() {
+  setUp(
+    () => useStartTaste(const [
+      PreferenceCriterion.taste,
+      PreferenceCriterion.portion,
+      PreferenceCriterion.ambience,
+    ]),
+  );
   test('friend line prefers visits, then saves', () {
     String? line(Map<String, dynamic> json) =>
         RankedPlace.fromJson(json).friendLine;

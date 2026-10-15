@@ -1,9 +1,10 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 
-import '../../model/place_context.dart';
 import '../../model/places.dart';
 import '../../model/preferences.dart';
+import '../../model/taste_profile.dart';
 import '../../model/profile_model.dart';
 import '../components/pind_glass.dart';
 import '../explore/explore_screen.dart';
@@ -195,6 +196,7 @@ class _PostsMapState extends State<_PostsMap> {
           markerId: MarkerId('${p.id}'),
           position: LatLng(p.latitude, p.longitude),
           icon: await placeMarkerIcon(p),
+          zIndexInt: pinTier(p),
           onTap: widget.onOpen == null ? null : () => widget.onOpen!(p),
         ),
       ),
@@ -240,17 +242,30 @@ class _TasteCard extends StatelessWidget {
     PindColors.pink,
     PindColors.ratingBlue,
     PindColors.ratingOrange,
+    PindColors.success,
   ];
   static const values = [
     PindColors.taste,
     PindColors.ambience,
     PindColors.portion,
+    PindColors.success,
   ];
 
   @override
   Widget build(BuildContext context) {
     final p = preferences?.priorities;
     final ready = p != null && p.length == 3;
+    final taste = myTaste.value;
+    final live = mine && taste != null && listEquals(taste.priorities, p);
+    // Mine: my taste stars' weights once loaded; others: their chosen order.
+    final shares = !ready
+        ? const <MapEntry<PreferenceCriterion, double>>[]
+        : live
+        ? taste.ranked.take(4).toList()
+        : [
+            for (var i = 0; i < 3; i++)
+              MapEntry(p[i], const [50.0, 30.0, 20.0][i]),
+          ];
     return PindGlass(
       radius: 22,
       padding: const EdgeInsets.all(16),
@@ -268,9 +283,9 @@ class _TasteCard extends StatelessWidget {
                   fontWeight: FontWeight.w700,
                 ),
               ),
-              if (ready)
+              if (shares.isNotEmpty)
                 _pill(
-                  l10n.tasteType(p[0].label),
+                  l10n.tasteType(shares.first.key.label),
                   background: const Color.fromRGBO(99, 0, 219, .7),
                   border: const Color.fromRGBO(58, 0, 136, .6),
                   color: Colors.white,
@@ -292,7 +307,7 @@ class _TasteCard extends StatelessWidget {
                 ),
             ],
           ),
-          if (!ready)
+          if (shares.isEmpty)
             Text(
               mine ? l10n.tasteEmpty : l10n.noPublicTaste,
               style: const TextStyle(
@@ -305,9 +320,9 @@ class _TasteCard extends StatelessWidget {
             Row(
               spacing: 3,
               children: [
-                for (var i = 0; i < 3; i++)
+                for (var i = 0; i < shares.length; i++)
                   Expanded(
-                    flex: (tasteWeights[i] * 100).round(),
+                    flex: shares[i].value.round().clamp(1, 100),
                     child: Container(
                       height: 10,
                       decoration: BoxDecoration(
@@ -321,16 +336,32 @@ class _TasteCard extends StatelessWidget {
             Wrap(
               spacing: 6,
               runSpacing: 6,
-              children: [for (var i = 0; i < 3; i++) _chip(p[i], i)],
+              children: [
+                for (var i = 0; i < shares.length; i++)
+                  _chip(shares[i].key, shares[i].value, i),
+              ],
             ),
-            Text(
-              l10n.tasteOrder(p[0].label, p[1].label, p[2].label),
-              style: const TextStyle(
-                fontSize: PindType.label,
-                height: 17 / 12,
-                color: profileBody,
+            if (shares.length >= 3)
+              Text(
+                l10n.tasteOrder(
+                  shares[0].key.label,
+                  shares[1].key.label,
+                  shares[2].key.label,
+                ),
+                style: const TextStyle(
+                  fontSize: PindType.label,
+                  height: 17 / 12,
+                  color: profileBody,
+                ),
               ),
-            ),
+            if (live && taste.evidence > 0)
+              Text(
+                l10n.tasteEvidence(taste.evidence),
+                style: const TextStyle(
+                  fontSize: PindType.caption,
+                  color: profileBody,
+                ),
+              ),
           ],
         ],
       ),
@@ -361,7 +392,7 @@ class _TasteCard extends StatelessWidget {
     ),
   );
 
-  Widget _chip(PreferenceCriterion c, int i) => Container(
+  Widget _chip(PreferenceCriterion c, double share, int i) => Container(
     padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
     decoration: BoxDecoration(
       color: bars[i].withValues(alpha: .08),
@@ -373,7 +404,7 @@ class _TasteCard extends StatelessWidget {
         text: '${c.emoji} ${c.label} ',
         children: [
           TextSpan(
-            text: '${(tasteWeights[i] * 100).round()}%',
+            text: '${share.round()}%',
             style: TextStyle(fontWeight: FontWeight.w700, color: values[i]),
           ),
         ],

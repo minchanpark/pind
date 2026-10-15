@@ -17,6 +17,7 @@ import 'services/auth_service.dart';
 import 'services/registration_service.dart';
 import 'services/post_service.dart';
 import 'services/profile_service.dart';
+import 'services/request_client.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -34,6 +35,7 @@ Future<void> main() async {
     await Supabase.initialize(
       url: AppConfig.supabaseUrl,
       publishableKey: AppConfig.publishableKey,
+      httpClient: RequestClient(),
     );
     final gateway = SupabasePlacesGateway(
       Supabase.instance.client,

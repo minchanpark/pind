@@ -1759,6 +1759,12 @@ abstract class AppLocalizations {
   /// **'{first} 먼저, 그다음 {second}·{third}을 봐요.'**
   String tasteOrder(String first, String second, String third);
 
+  /// No description provided for @tasteEvidence.
+  ///
+  /// In ko, this message translates to:
+  /// **'기록 {count}곳을 반영한 취향이에요.'**
+  String tasteEvidence(int count);
+
   /// No description provided for @agoYears.
   ///
   /// In ko, this message translates to:
@@ -1902,6 +1908,12 @@ abstract class AppLocalizations {
   /// In ko, this message translates to:
   /// **'전체'**
   String get categoryAll;
+
+  /// Map chip: only places people I follow posted at
+  ///
+  /// In ko, this message translates to:
+  /// **'친구'**
+  String get mapScopeFriends;
 
   /// No description provided for @categoryCafe.
   ///
@@ -2332,7 +2344,7 @@ abstract class AppLocalizations {
   /// No description provided for @tasteMatchHelp.
   ///
   /// In ko, this message translates to:
-  /// **'전체 공개 평균을 1·2·3순위 50·30·20%로 반영해요. 1점은 해당 기준의 0%, 5점은 100%를 받아요.'**
+  /// **'내가 바라는 기준별 별점에 식당이 못 미친 만큼만 빼요. 중요한 기준일수록 크게 반영하고, 별점은 Pind 평균과 비교해 읽어요.'**
   String get tasteMatchHelp;
 
   /// No description provided for @tasteMatchUnrated.
@@ -2556,6 +2568,48 @@ abstract class AppLocalizations {
   /// In ko, this message translates to:
   /// **'사진 추가'**
   String get addPhotos;
+
+  /// No description provided for @photoFromAlbum.
+  ///
+  /// In ko, this message translates to:
+  /// **'앨범'**
+  String get photoFromAlbum;
+
+  /// No description provided for @cameraDual.
+  ///
+  /// In ko, this message translates to:
+  /// **'듀얼'**
+  String get cameraDual;
+
+  /// No description provided for @cameraSplit.
+  ///
+  /// In ko, this message translates to:
+  /// **'2분할'**
+  String get cameraSplit;
+
+  /// No description provided for @cameraRetake.
+  ///
+  /// In ko, this message translates to:
+  /// **'다시 찍기'**
+  String get cameraRetake;
+
+  /// No description provided for @cameraUse.
+  ///
+  /// In ko, this message translates to:
+  /// **'사용하기'**
+  String get cameraUse;
+
+  /// No description provided for @cameraFlip.
+  ///
+  /// In ko, this message translates to:
+  /// **'카메라 전환'**
+  String get cameraFlip;
+
+  /// No description provided for @cameraShutter.
+  ///
+  /// In ko, this message translates to:
+  /// **'촬영'**
+  String get cameraShutter;
 
   /// No description provided for @visitedRestaurant.
   ///
@@ -3330,6 +3384,30 @@ abstract class AppLocalizations {
   /// In ko, this message translates to:
   /// **'내 취향 · {foods} 기준으로 찾았어요.'**
   String agentNoticeTasteFoods(String foods);
+
+  /// No description provided for @errPhotosTotalSize.
+  ///
+  /// In ko, this message translates to:
+  /// **'사진 전체 용량은 20MB 이하로 선택해 주세요.'**
+  String get errPhotosTotalSize;
+
+  /// No description provided for @errRequestLimited.
+  ///
+  /// In ko, this message translates to:
+  /// **'요청이 많아요. 잠시 후 다시 시도해 주세요.'**
+  String get errRequestLimited;
+
+  /// No description provided for @errAreaUnavailable.
+  ///
+  /// In ko, this message translates to:
+  /// **'요청한 지역을 찾지 못했어요. 다시 시도해 주세요.'**
+  String get errAreaUnavailable;
+
+  /// No description provided for @uploadProgress.
+  ///
+  /// In ko, this message translates to:
+  /// **'사진 업로드 중'**
+  String get uploadProgress;
 }
 
 class _AppLocalizationsDelegate

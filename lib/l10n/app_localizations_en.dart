@@ -973,6 +973,11 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
+  String tasteEvidence(int count) {
+    return 'Updated from $count places you rated or saved.';
+  }
+
+  @override
   String agoYears(int n) {
     String _temp0 = intl.Intl.pluralLogic(
       n,
@@ -1081,6 +1086,9 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get categoryAll => 'All';
+
+  @override
+  String get mapScopeFriends => 'Friends';
 
   @override
   String get categoryCafe => 'Cafés';
@@ -1340,7 +1348,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get tasteMatchHelp =>
-      'Public averages count 50·30·20% for your 1st·2nd·3rd priority. A 1 scores 0% on that criterion and a 5 scores 100%.';
+      'A place loses points only where it falls short of the stars you look for, more on the criteria that matter most to you. Ratings are read against the Pind average.';
 
   @override
   String get tasteMatchUnrated => 'My taste: not enough ratings';
@@ -1493,6 +1501,27 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get addPhotos => 'Add photos';
+
+  @override
+  String get photoFromAlbum => 'Album';
+
+  @override
+  String get cameraDual => 'Dual';
+
+  @override
+  String get cameraSplit => 'Split';
+
+  @override
+  String get cameraRetake => 'Retake';
+
+  @override
+  String get cameraUse => 'Use photo';
+
+  @override
+  String get cameraFlip => 'Switch camera';
+
+  @override
+  String get cameraShutter => 'Take photo';
 
   @override
   String get visitedRestaurant => 'Restaurant you visited';
@@ -1898,4 +1927,18 @@ class AppLocalizationsEn extends AppLocalizations {
   String agentNoticeTasteFoods(String foods) {
     return 'Picked for your taste: $foods.';
   }
+
+  @override
+  String get errPhotosTotalSize => 'Photos must total 20 MB or less.';
+
+  @override
+  String get errRequestLimited =>
+      'Too many requests. Please try again shortly.';
+
+  @override
+  String get errAreaUnavailable =>
+      'Could not locate that area. Please try again.';
+
+  @override
+  String get uploadProgress => 'Uploading photos';
 }

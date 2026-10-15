@@ -3,6 +3,7 @@ import 'package:flutter/semantics.dart' show SemanticsRole;
 
 import '../../controllers/explore_controller.dart';
 import '../../controllers/profile_controller.dart';
+import '../../model/taste_profile.dart';
 import '../../model/preferences.dart';
 import '../../model/profile_model.dart';
 import '../components/pind_glass.dart';
@@ -46,12 +47,30 @@ String placeArea(String address) {
 
 Widget placeImage(String? url) => url == null
     ? const ColoredBox(color: PindColors.imageFill)
-    : Image(
-        image: PindImage(url),
-        fit: BoxFit.cover,
-        frameBuilder: fadeInFrame,
-        errorBuilder: (_, _, _) =>
-            const ColoredBox(color: PindColors.imageFill),
+    : LayoutBuilder(
+        builder: (context, constraints) {
+          final ratio = MediaQuery.devicePixelRatioOf(context);
+          final width = constraints.maxWidth.isFinite
+              ? (constraints.maxWidth * ratio * 2).ceil()
+              : null;
+          final height = constraints.maxHeight.isFinite
+              ? (constraints.maxHeight * ratio * 2).ceil()
+              : null;
+          return Image(
+            image: width == null && height == null
+                ? PindImage(url)
+                : ResizeImage(
+                    PindImage(url),
+                    width: width,
+                    height: height,
+                    policy: ResizeImagePolicy.fit,
+                  ),
+            fit: BoxFit.cover,
+            frameBuilder: fadeInFrame,
+            errorBuilder: (_, _, _) =>
+                const ColoredBox(color: PindColors.imageFill),
+          );
+        },
       );
 
 Widget mutedNote(String text) => Text(
@@ -114,7 +133,7 @@ class ProfileAvatar extends StatelessWidget {
         child: url == null
             ? fallback
             : Image(
-                image: PindImage(url!),
+                image: pindThumbnail(url!, size, context),
                 fit: BoxFit.cover,
                 frameBuilder: fadeInFrame,
                 errorBuilder: (_, _, _) => fallback,
@@ -162,14 +181,30 @@ class ProfileScreen extends StatefulWidget {
 }
 
 class _ProfileScreenState extends State<ProfileScreen> {
+  /// My taste % reads [myTaste], which loads after this screen may open.
+  void _tasteChanged() {
+    if (mounted) setState(() {});
+  }
+
   ProfileController get controller => widget.controller;
   ProfileModel get model => controller.model;
   bool get isMe => controller.isMe;
+  final scroll = ScrollController();
+  void nearEnd() {
+    if (scroll.hasClients &&
+        scroll.position.extentAfter < 500 &&
+        model.tab == ProfileTab.posts &&
+        model.postsError == null) {
+      controller.loadMorePosts();
+    }
+  }
 
   @override
   void initState() {
     super.initState();
+    myTaste.addListener(_tasteChanged);
     model.addListener(changed);
+    scroll.addListener(nearEnd);
     if (model.overview == null && !model.loading) controller.load();
   }
 
@@ -179,7 +214,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   @override
   void dispose() {
+    myTaste.removeListener(_tasteChanged);
     model.removeListener(changed);
+    scroll.dispose();
     super.dispose();
   }
 
@@ -253,63 +290,44 @@ class _ProfileScreenState extends State<ProfileScreen> {
         bottom: false,
         child: RefreshIndicator(
           onRefresh: controller.load,
-          child: SingleChildScrollView(
+          child: CustomScrollView(
+            controller: scroll,
             physics: const AlwaysScrollableScrollPhysics(),
-            padding: EdgeInsets.only(
-              top: 8,
-              bottom: widget.bottomClearance + 24,
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              spacing: 22,
-              children: [
-                Padding(padding: profileInset, child: topBar()),
-                if (o == null && model.loading)
-                  PindSkeleton(
-                    child: Column(
-                      spacing: 10,
-                      children: [
-                        bone(105, 105, radius: 52.5),
-                        bone(120, 16),
-                        bone(180, 12),
-                        const SizedBox(height: 12),
-                        Padding(
-                          padding: profileInset,
-                          child: Row(
+            slivers: [
+              SliverPadding(
+                padding: const EdgeInsets.only(top: 8),
+                sliver: SliverToBoxAdapter(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    spacing: 22,
+                    children: [
+                      Padding(padding: profileInset, child: topBar()),
+                      if (o == null && model.loading)
+                        PindSkeleton(
+                          child: Column(
+                            spacing: 10,
                             children: [
-                              for (var i = 0; i < 4; i++)
-                                Expanded(child: Center(child: bone(40, 34))),
+                              bone(105, 105, radius: 52.5),
+                              bone(120, 16),
+                              bone(180, 12),
                             ],
                           ),
-                        ),
-                      ],
-                    ),
-                  )
-                else if (o == null)
-                  Column(
-                    children: [
-                      Text(
-                        model.error ?? l10n.profileLoadFailed,
-                        textAlign: TextAlign.center,
-                        style: const TextStyle(color: PindColors.muted),
-                      ),
-                      TextButton(
-                        onPressed: controller.load,
-                        child: Text(l10n.retry),
-                      ),
-                    ],
-                  )
-                else
-                  // The page fades in once, when it first arrives.
-                  TweenAnimationBuilder<double>(
-                    tween: Tween(begin: 0, end: 1),
-                    duration: const Duration(milliseconds: 250),
-                    builder: (_, opacity, page) =>
-                        Opacity(opacity: opacity, child: page),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
-                      spacing: 22,
-                      children: [
+                        )
+                      else if (o == null)
+                        Column(
+                          children: [
+                            Text(
+                              model.error ?? l10n.profileLoadFailed,
+                              textAlign: TextAlign.center,
+                              style: const TextStyle(color: PindColors.muted),
+                            ),
+                            TextButton(
+                              onPressed: controller.load,
+                              child: Text(l10n.retry),
+                            ),
+                          ],
+                        )
+                      else ...[
                         header(o.profile),
                         stats(o.counts),
                         if (!isMe)
@@ -321,40 +339,64 @@ class _ProfileScreenState extends State<ProfileScreen> {
                             ),
                           ),
                         Padding(padding: profileInset, child: tabs(model.tab)),
-                        switch (model.tab) {
-                          ProfileTab.map => ProfileMapTab(
-                            overview: o,
-                            mine: isMe,
-                            preferences: taste,
-                            mapsEnabled: widget.mapsEnabled,
-                            onEditPreferences: widget.onEditPreferences,
-                            onShowMap: widget.onShowMap,
-                            onOpenPlace: widget.explore == null
-                                ? null
-                                : (place) =>
-                                      openPlace(ProfilePlaceCard(place: place)),
-                          ),
-                          ProfileTab.saved => ProfileSavedTab(
-                            overview: o,
-                            mine: isMe,
-                            preferences: widget.preferences,
-                            onOpen: widget.explore == null ? null : openPlace,
-                            onSetSaved:
-                                isMe && widget.explore?.placeContext != null
-                                ? setSaved
-                                : null,
-                          ),
-                          ProfileTab.posts => ProfilePostsTab(
-                            overview: o,
-                            preferences: widget.preferences,
-                            onShare: controller.share,
-                          ),
-                        },
+                        const SizedBox.shrink(),
                       ],
+                    ],
+                  ),
+                ),
+              ),
+              if (o != null)
+                switch (model.tab) {
+                  ProfileTab.map => SliverToBoxAdapter(
+                    child: ProfileMapTab(
+                      overview: o,
+                      mine: isMe,
+                      preferences: taste,
+                      mapsEnabled: widget.mapsEnabled,
+                      onEditPreferences: widget.onEditPreferences,
+                      onShowMap: widget.onShowMap,
+                      onOpenPlace: widget.explore == null
+                          ? null
+                          : (place) =>
+                                openPlace(ProfilePlaceCard(place: place)),
                     ),
                   ),
-              ],
-            ),
+                  ProfileTab.saved => SliverToBoxAdapter(
+                    child: ProfileSavedTab(
+                      overview: o,
+                      mine: isMe,
+                      preferences: widget.preferences,
+                      onOpen: widget.explore == null ? null : openPlace,
+                      onSetSaved: isMe && widget.explore?.placeContext != null
+                          ? setSaved
+                          : null,
+                    ),
+                  ),
+                  ProfileTab.posts => ProfilePostsTab(
+                    overview: o,
+                    preferences: widget.preferences,
+                    onShare: controller.share,
+                  ),
+                },
+              if (model.tab == ProfileTab.posts &&
+                  (model.loadingPosts || model.hasMorePosts))
+                SliverToBoxAdapter(
+                  child: Center(
+                    child: model.loadingPosts
+                        ? const Padding(
+                            padding: EdgeInsets.all(16),
+                            child: CircularProgressIndicator(),
+                          )
+                        : TextButton(
+                            onPressed: controller.loadMorePosts,
+                            child: Text(model.postsError ?? l10n.seeMore),
+                          ),
+                  ),
+                ),
+              SliverToBoxAdapter(
+                child: SizedBox(height: widget.bottomClearance + 24),
+              ),
+            ],
           ),
         ),
       ),

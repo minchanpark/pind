@@ -898,6 +898,11 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
+  String tasteEvidence(int count) {
+    return '已根据你评价或收藏的 $count 家店更新。';
+  }
+
+  @override
   String agoYears(int n) {
     return '$n 年前';
   }
@@ -984,6 +989,9 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get categoryAll => '全部';
+
+  @override
+  String get mapScopeFriends => '好友';
 
   @override
   String get categoryCafe => '咖啡馆';
@@ -1220,8 +1228,7 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
-  String get tasteMatchHelp =>
-      '按你的第 1·2·3 优先项以 50·30·20% 计算公开平均分。1 分为该项 0%，5 分为 100%。';
+  String get tasteMatchHelp => '只在餐厅未达到你期望的各项星级时扣分，越重要的项目影响越大；评分会与 Pind 平均值比较。';
 
   @override
   String get tasteMatchUnrated => '我的口味：评价不足';
@@ -1365,6 +1372,27 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get addPhotos => '添加照片';
+
+  @override
+  String get photoFromAlbum => '相册';
+
+  @override
+  String get cameraDual => '双摄';
+
+  @override
+  String get cameraSplit => '二分屏';
+
+  @override
+  String get cameraRetake => '重拍';
+
+  @override
+  String get cameraUse => '使用照片';
+
+  @override
+  String get cameraFlip => '切换镜头';
+
+  @override
+  String get cameraShutter => '拍照';
 
   @override
   String get visitedRestaurant => '去过的餐厅';
@@ -1764,6 +1792,18 @@ class AppLocalizationsZh extends AppLocalizations {
   String agentNoticeTasteFoods(String foods) {
     return '按你的口味推荐：$foods。';
   }
+
+  @override
+  String get errPhotosTotalSize => '照片总大小不得超过20MB。';
+
+  @override
+  String get errRequestLimited => '请求过多，请稍后重试。';
+
+  @override
+  String get errAreaUnavailable => '无法找到指定区域，请重试。';
+
+  @override
+  String get uploadProgress => '正在上传照片';
 }
 
 /// The translations for Chinese, using the Han script (`zh_Hant`).
@@ -2659,6 +2699,11 @@ class AppLocalizationsZhHant extends AppLocalizationsZh {
   }
 
   @override
+  String tasteEvidence(int count) {
+    return '已根據你評價或收藏的 $count 家店更新。';
+  }
+
+  @override
   String agoYears(int n) {
     return '$n 年前';
   }
@@ -2745,6 +2790,9 @@ class AppLocalizationsZhHant extends AppLocalizationsZh {
 
   @override
   String get categoryAll => '全部';
+
+  @override
+  String get mapScopeFriends => '好友';
 
   @override
   String get categoryCafe => '咖啡廳';
@@ -2981,8 +3029,7 @@ class AppLocalizationsZhHant extends AppLocalizationsZh {
   }
 
   @override
-  String get tasteMatchHelp =>
-      '按你的第 1·2·3 優先項以 50·30·20% 計算公開平均分。1 分為該項 0%，5 分為 100%。';
+  String get tasteMatchHelp => '只在餐廳未達到你期望的各項星級時扣分，越重要的項目影響越大；評分會與 Pind 平均值比較。';
 
   @override
   String get tasteMatchUnrated => '我的口味：評價不足';
@@ -3126,6 +3173,27 @@ class AppLocalizationsZhHant extends AppLocalizationsZh {
 
   @override
   String get addPhotos => '新增照片';
+
+  @override
+  String get photoFromAlbum => '相簿';
+
+  @override
+  String get cameraDual => '雙鏡頭';
+
+  @override
+  String get cameraSplit => '二分割';
+
+  @override
+  String get cameraRetake => '重拍';
+
+  @override
+  String get cameraUse => '使用照片';
+
+  @override
+  String get cameraFlip => '切換鏡頭';
+
+  @override
+  String get cameraShutter => '拍照';
 
   @override
   String get visitedRestaurant => '去過的餐廳';
@@ -3525,4 +3593,16 @@ class AppLocalizationsZhHant extends AppLocalizationsZh {
   String agentNoticeTasteFoods(String foods) {
     return '按你的口味推薦：$foods。';
   }
+
+  @override
+  String get errPhotosTotalSize => '照片總大小不得超過20MB。';
+
+  @override
+  String get errRequestLimited => '請求過多，請稍後重試。';
+
+  @override
+  String get errAreaUnavailable => '無法找到指定區域，請重試。';
+
+  @override
+  String get uploadProgress => '正在上傳照片';
 }

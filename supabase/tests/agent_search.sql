@@ -41,13 +41,13 @@ do $$ declare q qa; r jsonb; ids bigint[]; begin select * into q from qa;
  select array_agg((e->>'internalId')::bigint) into ids from jsonb_array_elements(r) e;
  assert ids[1:3]=array[q.a,q.b,q.c] or ids[1:3]=array[q.b,q.a,q.c],'posted first: a (name), b (post text), c (name)';
  assert cardinality(ids)=3,'posted places only, even the nearby unposted 포차';
- assert (select (e->>'tasteMatch')::int from jsonb_array_elements(r) e where (e->>'internalId')::bigint=q.b)=95,'b match 95';
+ assert (select (e->>'tasteMatch')::int from jsonb_array_elements(r) e where (e->>'internalId')::bigint=q.b)=99,'b match 99: saved b also nudges my stars';
  -- Card fields: averages, review count, my save, distance from the center.
  assert (select e->'averages'->>'taste' from jsonb_array_elements(r) e where (e->>'internalId')::bigint=q.b)::numeric=5,'b taste average';
  assert (select (e->>'reviewCount')::int from jsonb_array_elements(r) e where (e->>'internalId')::bigint=q.b)=1,'b one review';
  assert (select (e->>'saved')::boolean from jsonb_array_elements(r) e where (e->>'internalId')::bigint=q.b),'b saved by me';
  assert (select (e->>'meters')::int from jsonb_array_elements(r) e where (e->>'internalId')::bigint=q.a)=0,'a at the center';
- -- Equal hits: taste breaks the tie (b 95 > a 50).
+ -- Equal hits: taste breaks the tie (b 99 > a 40).
  r:=public.agent_search_places(array['좋아요'],null,null,null)->'places';
  assert (select array_agg((e->>'internalId')::bigint) from jsonb_array_elements(r) e)=array[q.b,q.a],'taste order on a tie';
  -- An area is a circle around its geocoded point: 연남 (c) only, whatever
@@ -87,7 +87,7 @@ do $$ declare q qa; r jsonb; ids bigint[]; begin select * into q from qa;
  r:=public.agent_search_places(array['바'],null,null,null,null,null)->'places';
  assert jsonb_array_length(r)=0,'바삭 no longer finds c';
  -- "Pick for me": no words at all, every posted place by my taste match
- -- (b 95 > a 50; c has no ratings and goes last).
+ -- (b 99 > a 40; c has no ratings and goes last).
  r:=public.agent_search_places(array[]::text[],null,null,null,null,null,true)->'places';
  assert (select array_agg((e->>'internalId')::bigint) from jsonb_array_elements(r) e)=array[q.b,q.a,q.c],'by taste, no words';
  -- My foods filter, and match beats the occasion word: a mentions 안주

@@ -1,0 +1,1164 @@
+{
+  "about": "100 new real catalog names; deterministic stratified sample excluding all prior 20 Korean names. Policy-reference accepted spellings prepared before calls, not verified official names for all shops. Ambiguous source entries are flagged. Neither targets nor groups are sent to the model. Spacing, case, punctuation and Latin accents ignored; and/& equivalent. Branch suffix optional if branch location is retained.",
+  "prepared_at": "2026-10-05",
+  "cases": [
+    {
+      "id": 17981,
+      "ko": "라인에프앤씨",
+      "category": "카페",
+      "sample_group": "romanize",
+      "group": "restore",
+      "en": [
+        "Line F&C"
+      ],
+      "ambiguous_source": false
+    },
+    {
+      "id": 14239,
+      "ko": "면곡뼈다귀감자탕",
+      "category": "백반/한정식",
+      "sample_group": "romanize",
+      "group": "romanize",
+      "en": [
+        "Myeongok Ppyeodagwi Gamjatang"
+      ],
+      "ambiguous_source": false
+    },
+    {
+      "id": 80718,
+      "ko": "빈스앤와플",
+      "category": "카페",
+      "sample_group": "romanize",
+      "group": "restore",
+      "en": [
+        "Beans & Waffle",
+        "Beans & Waffles"
+      ],
+      "ambiguous_source": false
+    },
+    {
+      "id": 13824,
+      "ko": "서퍼스포케",
+      "category": "카페",
+      "sample_group": "romanize",
+      "group": "restore",
+      "en": [
+        "Surfers Poke",
+        "Surfer's Poke"
+      ],
+      "ambiguous_source": false
+    },
+    {
+      "id": 132111,
+      "ko": "화양뭉티기",
+      "category": "백반/한정식",
+      "sample_group": "romanize",
+      "group": "romanize",
+      "en": [
+        "Hwayang Mungtigi"
+      ],
+      "ambiguous_source": false
+    },
+    {
+      "id": 125119,
+      "ko": "메이게츠한양대",
+      "category": "일식 회/초밥",
+      "sample_group": "romanize",
+      "group": "restore",
+      "en": [
+        "Meigetsu Hanyangdae",
+        "Meigetsu Hanyang University"
+      ],
+      "ambiguous_source": true
+    },
+    {
+      "id": 17754,
+      "ko": "카펜터스",
+      "category": "요리 주점",
+      "sample_group": "romanize",
+      "group": "restore",
+      "en": [
+        "Carpenters"
+      ],
+      "ambiguous_source": false
+    },
+    {
+      "id": 5706,
+      "ko": "푸드몽",
+      "category": "백반/한정식",
+      "sample_group": "romanize",
+      "group": "restore",
+      "en": [
+        "Food Mong"
+      ],
+      "ambiguous_source": false
+    },
+    {
+      "id": 38816,
+      "ko": "여수해변",
+      "category": "횟집",
+      "sample_group": "romanize",
+      "group": "romanize",
+      "en": [
+        "Yeosu Haebyeon"
+      ],
+      "ambiguous_source": false
+    },
+    {
+      "id": 28268,
+      "ko": "공화식당",
+      "category": "백반/한정식",
+      "sample_group": "romanize",
+      "group": "romanize",
+      "en": [
+        "Gonghwa Sikdang"
+      ],
+      "ambiguous_source": false
+    },
+    {
+      "id": 46448,
+      "ko": "거제식당",
+      "category": "김밥/만두/분식",
+      "sample_group": "romanize",
+      "group": "romanize",
+      "en": [
+        "Geoje Sikdang"
+      ],
+      "ambiguous_source": false
+    },
+    {
+      "id": 53353,
+      "ko": "일미손칼국수",
+      "category": "국수/칼국수",
+      "sample_group": "romanize",
+      "group": "romanize",
+      "en": [
+        "Ilmi Son Kalguksu"
+      ],
+      "ambiguous_source": false
+    },
+    {
+      "id": 129039,
+      "ko": "삼전생고기",
+      "category": "돼지고기 구이/찜",
+      "sample_group": "romanize",
+      "group": "romanize",
+      "en": [
+        "Samjeon Saenggogi"
+      ],
+      "ambiguous_source": false
+    },
+    {
+      "id": 66516,
+      "ko": "고래당",
+      "category": "빵/도넛",
+      "sample_group": "romanize",
+      "group": "romanize",
+      "en": [
+        "Goraedang"
+      ],
+      "ambiguous_source": false
+    },
+    {
+      "id": 52310,
+      "ko": "구이랑탕이랑최우영복집",
+      "category": "복 요리 전문",
+      "sample_group": "romanize",
+      "group": "romanize",
+      "en": [
+        "Guirang Tangirang Choe Uyeong Bokjip",
+        "Guirang Tangirang Choi Uyeong Bokjip"
+      ],
+      "ambiguous_source": false
+    },
+    {
+      "id": 86381,
+      "ko": "아시바클럽",
+      "category": "일식 회/초밥",
+      "sample_group": "romanize",
+      "group": "restore",
+      "en": [
+        "Asiba Club"
+      ],
+      "ambiguous_source": true
+    },
+    {
+      "id": 30974,
+      "ko": "신흥식당",
+      "category": "돼지고기 구이/찜",
+      "sample_group": "romanize",
+      "group": "romanize",
+      "en": [
+        "Sinheung Sikdang"
+      ],
+      "ambiguous_source": false
+    },
+    {
+      "id": 147332,
+      "ko": "김해숯불뒷고기",
+      "category": "돼지고기 구이/찜",
+      "sample_group": "romanize",
+      "group": "romanize",
+      "en": [
+        "Gimhae Sutbul Dwitgogi"
+      ],
+      "ambiguous_source": false
+    },
+    {
+      "id": 77940,
+      "ko": "풍년곱창",
+      "category": "곱창 전골/구이",
+      "sample_group": "romanize",
+      "group": "romanize",
+      "en": [
+        "Pungnyeon Gopchang"
+      ],
+      "ambiguous_source": false
+    },
+    {
+      "id": 60051,
+      "ko": "릴렉세이션포인트",
+      "category": "카페",
+      "sample_group": "romanize",
+      "group": "restore",
+      "en": [
+        "Relaxation Point"
+      ],
+      "ambiguous_source": false
+    },
+    {
+      "id": 31550,
+      "ko": "고대로찌개집",
+      "category": "국수/칼국수",
+      "sample_group": "romanize",
+      "group": "romanize",
+      "en": [
+        "Godaero Jjigaejip"
+      ],
+      "ambiguous_source": false
+    },
+    {
+      "id": 8346,
+      "ko": "고래즉석떡볶이",
+      "category": "김밥/만두/분식",
+      "sample_group": "romanize",
+      "group": "romanize",
+      "en": [
+        "Gorae Jeukseok Tteokbokki"
+      ],
+      "ambiguous_source": false
+    },
+    {
+      "id": 18915,
+      "ko": "남매양꼬치",
+      "category": "중국집",
+      "sample_group": "romanize",
+      "group": "romanize",
+      "en": [
+        "Nammae Yangkkochi"
+      ],
+      "ambiguous_source": false
+    },
+    {
+      "id": 41265,
+      "ko": "대청플레이스",
+      "category": "카페",
+      "sample_group": "romanize",
+      "group": "restore",
+      "en": [
+        "Daecheong Place"
+      ],
+      "ambiguous_source": false
+    },
+    {
+      "id": 32104,
+      "ko": "반기다",
+      "category": "백반/한정식",
+      "sample_group": "romanize",
+      "group": "romanize",
+      "en": [
+        "Bangida"
+      ],
+      "ambiguous_source": false
+    },
+    {
+      "id": 69774,
+      "ko": "쇼콜라윰",
+      "category": "빵/도넛",
+      "sample_group": "romanize",
+      "group": "restore",
+      "en": [
+        "Chocolat Yum"
+      ],
+      "ambiguous_source": false
+    },
+    {
+      "id": 60369,
+      "ko": "에스따떼젤라또",
+      "category": "아이스크림/빙수",
+      "sample_group": "romanize",
+      "group": "restore",
+      "en": [
+        "Estate Gelato"
+      ],
+      "ambiguous_source": false
+    },
+    {
+      "id": 113875,
+      "ko": "로컬팟",
+      "category": "카페",
+      "sample_group": "romanize",
+      "group": "restore",
+      "en": [
+        "Local Pot",
+        "Local Pod"
+      ],
+      "ambiguous_source": true
+    },
+    {
+      "id": 14069,
+      "ko": "아빠애식탁",
+      "category": "요리 주점",
+      "sample_group": "romanize",
+      "group": "romanize",
+      "en": [
+        "Appaae Siktak"
+      ],
+      "ambiguous_source": false
+    },
+    {
+      "id": 117135,
+      "ko": "디저트다운",
+      "category": "카페",
+      "sample_group": "romanize",
+      "group": "restore",
+      "en": [
+        "Dessert Down",
+        "Dessert Daun"
+      ],
+      "ambiguous_source": true
+    },
+    {
+      "id": 68455,
+      "ko": "동심네토종꺼먹돼지",
+      "category": "돼지고기 구이/찜",
+      "sample_group": "romanize",
+      "group": "romanize",
+      "en": [
+        "Dongsimne Tojong Kkeomeok Dwaeji"
+      ],
+      "ambiguous_source": false
+    },
+    {
+      "id": 18722,
+      "ko": "을지골뱅이",
+      "category": "요리 주점",
+      "sample_group": "romanize",
+      "group": "romanize",
+      "en": [
+        "Eulji Golbaengi"
+      ],
+      "ambiguous_source": false
+    },
+    {
+      "id": 9343,
+      "ko": "영동원삼겹살",
+      "category": "돼지고기 구이/찜",
+      "sample_group": "romanize",
+      "group": "romanize",
+      "en": [
+        "Yeongdongwon Samgyeopsal"
+      ],
+      "ambiguous_source": false
+    },
+    {
+      "id": 94125,
+      "ko": "낙지야왜조개",
+      "category": "백반/한정식",
+      "sample_group": "romanize",
+      "group": "romanize",
+      "en": [
+        "Nakjiya Wae Jogae"
+      ],
+      "ambiguous_source": false
+    },
+    {
+      "id": 100982,
+      "ko": "황제보쌈냉면칼국수",
+      "category": "족발/보쌈",
+      "sample_group": "romanize",
+      "group": "romanize",
+      "en": [
+        "Hwangje Bossam Naengmyeon Kalguksu"
+      ],
+      "ambiguous_source": false
+    },
+    {
+      "id": 29544,
+      "ko": "다보분식",
+      "category": "김밥/만두/분식",
+      "sample_group": "romanize",
+      "group": "romanize",
+      "en": [
+        "Dabo Bunsik"
+      ],
+      "ambiguous_source": false
+    },
+    {
+      "id": 142645,
+      "ko": "플러터",
+      "category": "카페",
+      "sample_group": "romanize",
+      "group": "restore",
+      "en": [
+        "Flutter"
+      ],
+      "ambiguous_source": false
+    },
+    {
+      "id": 9690,
+      "ko": "동산식당",
+      "category": "백반/한정식",
+      "sample_group": "romanize",
+      "group": "romanize",
+      "en": [
+        "Dongsan Sikdang"
+      ],
+      "ambiguous_source": false
+    },
+    {
+      "id": 86053,
+      "ko": "메종드쌍문",
+      "category": "카페",
+      "sample_group": "romanize",
+      "group": "restore",
+      "en": [
+        "Maison de Ssangmun"
+      ],
+      "ambiguous_source": false
+    },
+    {
+      "id": 147054,
+      "ko": "청도한우갈비",
+      "category": "돼지고기 구이/찜",
+      "sample_group": "romanize",
+      "group": "romanize",
+      "en": [
+        "Cheongdo Hanu Galbi",
+        "Cheongdo Hanwoo Galbi"
+      ],
+      "ambiguous_source": false
+    },
+    {
+      "id": 49680,
+      "ko": "강동커피，호프",
+      "category": "카페",
+      "sample_group": "restore",
+      "group": "restore",
+      "en": [
+        "Gangdong Coffee Hof",
+        "Gangdong Coffee Pub",
+        "Gangdong Coffee & Pub"
+      ],
+      "ambiguous_source": false
+    },
+    {
+      "id": 115343,
+      "ko": "카페무드",
+      "category": "카페",
+      "sample_group": "restore",
+      "group": "restore",
+      "en": [
+        "Cafe Mood"
+      ],
+      "ambiguous_source": false
+    },
+    {
+      "id": 104372,
+      "ko": "커피볶는아침컴퍼니",
+      "category": "카페",
+      "sample_group": "restore",
+      "group": "restore",
+      "en": [
+        "Coffee Bongneun Achim Company"
+      ],
+      "ambiguous_source": false
+    },
+    {
+      "id": 44091,
+      "ko": "카페오로시",
+      "category": "카페",
+      "sample_group": "restore",
+      "group": "restore",
+      "en": [
+        "Cafe Orosi"
+      ],
+      "ambiguous_source": false
+    },
+    {
+      "id": 152465,
+      "ko": "양덕베이커리",
+      "category": "빵/도넛",
+      "sample_group": "restore",
+      "group": "restore",
+      "en": [
+        "Yangdeok Bakery"
+      ],
+      "ambiguous_source": false
+    },
+    {
+      "id": 112596,
+      "ko": "피프틴커피&아이스크림",
+      "category": "카페",
+      "sample_group": "restore",
+      "group": "restore",
+      "en": [
+        "Fifteen Coffee & Ice Cream"
+      ],
+      "ambiguous_source": false
+    },
+    {
+      "id": 36649,
+      "ko": "카페빌라드그릭",
+      "category": "카페",
+      "sample_group": "restore",
+      "group": "restore",
+      "en": [
+        "Cafe Villa de Greek",
+        "Cafe Ville de Greek"
+      ],
+      "ambiguous_source": true
+    },
+    {
+      "id": 56010,
+      "ko": "커피의향기",
+      "category": "카페",
+      "sample_group": "restore",
+      "group": "restore",
+      "en": [
+        "Coffeeui Hyanggi",
+        "Coffee's Hyanggi"
+      ],
+      "ambiguous_source": false
+    },
+    {
+      "id": 148993,
+      "ko": "프레그런스커피",
+      "category": "카페",
+      "sample_group": "restore",
+      "group": "restore",
+      "en": [
+        "Fragrance Coffee"
+      ],
+      "ambiguous_source": false
+    },
+    {
+      "id": 24528,
+      "ko": "커피셀러",
+      "category": "카페",
+      "sample_group": "restore",
+      "group": "restore",
+      "en": [
+        "Coffee Cellar",
+        "Coffee Seller"
+      ],
+      "ambiguous_source": true
+    },
+    {
+      "id": 36011,
+      "ko": "키즈카페폭스맘",
+      "category": "그 외 기타 간이 음식점",
+      "sample_group": "restore",
+      "group": "restore",
+      "en": [
+        "Kids Cafe Fox Mom"
+      ],
+      "ambiguous_source": false
+    },
+    {
+      "id": 46874,
+      "ko": "카페꾸오레",
+      "category": "카페",
+      "sample_group": "restore",
+      "group": "restore",
+      "en": [
+        "Cafe Cuore"
+      ],
+      "ambiguous_source": true
+    },
+    {
+      "id": 9334,
+      "ko": "커피거리",
+      "category": "카페",
+      "sample_group": "restore",
+      "group": "restore",
+      "en": [
+        "Coffee Geori"
+      ],
+      "ambiguous_source": false
+    },
+    {
+      "id": 13110,
+      "ko": "타임파스타",
+      "category": "파스타/스테이크",
+      "sample_group": "restore",
+      "group": "restore",
+      "en": [
+        "Time Pasta"
+      ],
+      "ambiguous_source": false
+    },
+    {
+      "id": 99865,
+      "ko": "춘홍커피호프",
+      "category": "생맥주 전문",
+      "sample_group": "restore",
+      "group": "restore",
+      "en": [
+        "Chunhong Coffee Hof",
+        "Chunhong Coffee Pub"
+      ],
+      "ambiguous_source": false
+    },
+    {
+      "id": 72694,
+      "ko": "지지보드게임카페",
+      "category": "카페",
+      "sample_group": "restore",
+      "group": "restore",
+      "en": [
+        "Jiji Board Game Cafe",
+        "Gigi Board Game Cafe"
+      ],
+      "ambiguous_source": false
+    },
+    {
+      "id": 132466,
+      "ko": "북카페담비",
+      "category": "카페",
+      "sample_group": "restore",
+      "group": "restore",
+      "en": [
+        "Book Cafe Dambi"
+      ],
+      "ambiguous_source": false
+    },
+    {
+      "id": 90774,
+      "ko": "스타벅스 건국클래식",
+      "category": "카페",
+      "sample_group": "restore",
+      "group": "restore",
+      "en": [
+        "Starbucks Konkuk Classic",
+        "Starbucks Geonguk Classic"
+      ],
+      "ambiguous_source": false
+    },
+    {
+      "id": 44478,
+      "ko": "스시다마스토어",
+      "category": "일식 회/초밥",
+      "sample_group": "restore",
+      "group": "restore",
+      "en": [
+        "Sushi Dama Store"
+      ],
+      "ambiguous_source": false
+    },
+    {
+      "id": 151154,
+      "ko": "종국이두마리치킨",
+      "category": "치킨",
+      "sample_group": "restore",
+      "group": "restore",
+      "en": [
+        "Jonggugi Dumari Chicken"
+      ],
+      "ambiguous_source": false
+    },
+    {
+      "id": 70402,
+      "ko": "엠커피",
+      "category": "카페",
+      "sample_group": "restore",
+      "group": "restore",
+      "en": [
+        "M Coffee"
+      ],
+      "ambiguous_source": false
+    },
+    {
+      "id": 89921,
+      "ko": "백궁커피호프",
+      "category": "요리 주점",
+      "sample_group": "restore",
+      "group": "restore",
+      "en": [
+        "Baekgung Coffee Hof",
+        "Baekgung Coffee Pub"
+      ],
+      "ambiguous_source": false
+    },
+    {
+      "id": 39118,
+      "ko": "브라질커피숍",
+      "category": "카페",
+      "sample_group": "restore",
+      "group": "restore",
+      "en": [
+        "Brazil Coffee Shop"
+      ],
+      "ambiguous_source": false
+    },
+    {
+      "id": 12293,
+      "ko": "테이퍼드커피스탠드",
+      "category": "카페",
+      "sample_group": "restore",
+      "group": "restore",
+      "en": [
+        "Tapered Coffee Stand"
+      ],
+      "ambiguous_source": false
+    },
+    {
+      "id": 20249,
+      "ko": "정군비어",
+      "category": "생맥주 전문",
+      "sample_group": "restore",
+      "group": "restore",
+      "en": [
+        "Jeonggun Beer"
+      ],
+      "ambiguous_source": false
+    },
+    {
+      "id": 87982,
+      "ko": "스타벅스 현대미아",
+      "category": "카페",
+      "sample_group": "restore",
+      "group": "restore",
+      "en": [
+        "Starbucks Hyundai Mia",
+        "Starbucks Hyeondae Mia"
+      ],
+      "ambiguous_source": false
+    },
+    {
+      "id": 97225,
+      "ko": "폴룩스커피",
+      "category": "카페",
+      "sample_group": "restore",
+      "group": "restore",
+      "en": [
+        "Pollux Coffee"
+      ],
+      "ambiguous_source": false
+    },
+    {
+      "id": 32225,
+      "ko": "비어시티",
+      "category": "생맥주 전문",
+      "sample_group": "restore",
+      "group": "restore",
+      "en": [
+        "Beer City"
+      ],
+      "ambiguous_source": false
+    },
+    {
+      "id": 139086,
+      "ko": "오리지널쿡앤커피",
+      "category": "카페",
+      "sample_group": "restore",
+      "group": "restore",
+      "en": [
+        "Original Cook & Coffee"
+      ],
+      "ambiguous_source": false
+    },
+    {
+      "id": 6677,
+      "ko": "더컴포트커피",
+      "category": "카페",
+      "sample_group": "restore",
+      "group": "restore",
+      "en": [
+        "The Comfort Coffee"
+      ],
+      "ambiguous_source": false
+    },
+    {
+      "id": 119889,
+      "ko": "원투쓰리PCCAFE",
+      "category": "카페",
+      "sample_group": "latin_number",
+      "group": "latin_number",
+      "en": [
+        "One Two Three PC CAFE"
+      ],
+      "ambiguous_source": false
+    },
+    {
+      "id": 90395,
+      "ko": "콘체르토CONCERTO",
+      "category": "경양식",
+      "sample_group": "latin_number",
+      "group": "latin_number",
+      "en": [
+        "Concerto CONCERTO",
+        "CONCERTO"
+      ],
+      "ambiguous_source": false
+    },
+    {
+      "id": 86407,
+      "ko": "스트릿넘버502",
+      "category": "카페",
+      "sample_group": "latin_number",
+      "group": "latin_number",
+      "en": [
+        "Street Number 502"
+      ],
+      "ambiguous_source": false
+    },
+    {
+      "id": 138586,
+      "ko": "마포래미안129스낵",
+      "category": "백반/한정식",
+      "sample_group": "latin_number",
+      "group": "latin_number",
+      "en": [
+        "Mapo Raemian 129 Snack"
+      ],
+      "ambiguous_source": false
+    },
+    {
+      "id": 74673,
+      "ko": "커피다스1리터",
+      "category": "카페",
+      "sample_group": "latin_number",
+      "group": "latin_number",
+      "en": [
+        "Coffee Das 1 Liter",
+        "Coffee Das 1 Litre"
+      ],
+      "ambiguous_source": false
+    },
+    {
+      "id": 115348,
+      "ko": "블라BLA",
+      "category": "경양식",
+      "sample_group": "latin_number",
+      "group": "latin_number",
+      "en": [
+        "Bla BLA",
+        "BLA"
+      ],
+      "ambiguous_source": false
+    },
+    {
+      "id": 63167,
+      "ko": "우밴드7080라이브",
+      "category": "요리 주점",
+      "sample_group": "latin_number",
+      "group": "latin_number",
+      "en": [
+        "U Band 7080 Live",
+        "Woo Band 7080 Live"
+      ],
+      "ambiguous_source": false
+    },
+    {
+      "id": 120743,
+      "ko": "스타벅스 도봉로DT",
+      "category": "카페",
+      "sample_group": "latin_number",
+      "group": "latin_number",
+      "en": [
+        "Starbucks Dobong-ro DT"
+      ],
+      "ambiguous_source": false
+    },
+    {
+      "id": 85789,
+      "ko": "영자's곱창",
+      "category": "곱창 전골/구이",
+      "sample_group": "latin_number",
+      "group": "latin_number",
+      "en": [
+        "Yeongja's Gopchang"
+      ],
+      "ambiguous_source": false
+    },
+    {
+      "id": 123063,
+      "ko": "자담치킨잠실1",
+      "category": "치킨",
+      "sample_group": "latin_number",
+      "group": "latin_number",
+      "en": [
+        "Jadam Chicken Jamsil 1"
+      ],
+      "ambiguous_source": false
+    },
+    {
+      "id": 130147,
+      "ko": "파파존스 은평점",
+      "category": "버거",
+      "sample_group": "branch",
+      "group": "branch",
+      "en": [
+        "Papa John's Eunpyeong Branch",
+        "Papa John's Eunpyeong"
+      ],
+      "ambiguous_source": false
+    },
+    {
+      "id": 37069,
+      "ko": "도미노피자 상암점",
+      "category": "피자",
+      "sample_group": "branch",
+      "group": "branch",
+      "en": [
+        "Domino's Pizza Sangam Branch",
+        "Domino's Pizza Sangam"
+      ],
+      "ambiguous_source": false
+    },
+    {
+      "id": 78890,
+      "ko": "수내닭꼬치구청점 동대문",
+      "category": "닭/오리고기 구이/찜",
+      "sample_group": "branch",
+      "group": "branch",
+      "en": [
+        "Sunae Dakkkochi Gucheong Branch Dongdaemun",
+        "Sunae Dakkochi Gucheong Branch Dongdaemun",
+        "Sunae Dakkkochi Gucheong Dongdaemun",
+        "Sunae Dakkochi Gucheong Dongdaemun"
+      ],
+      "ambiguous_source": false
+    },
+    {
+      "id": 101408,
+      "ko": "페트리코파트너스창경궁점",
+      "category": "카페",
+      "sample_group": "branch",
+      "group": "branch",
+      "en": [
+        "Petrichor Partners Changgyeonggung Branch",
+        "Petrichor Partners Changgyeonggung"
+      ],
+      "ambiguous_source": true
+    },
+    {
+      "id": 51653,
+      "ko": "본도시락 마포역점",
+      "category": "백반/한정식",
+      "sample_group": "branch",
+      "group": "branch",
+      "en": [
+        "Bon Dosirak Mapo Station Branch",
+        "Bon Dosirak Mapo Station"
+      ],
+      "ambiguous_source": false
+    },
+    {
+      "id": 143647,
+      "ko": "김씨치킨수유 시장점",
+      "category": "치킨",
+      "sample_group": "branch",
+      "group": "branch",
+      "en": [
+        "Gimssi Chicken Suyu Sijang Branch",
+        "Kimssi Chicken Suyu Sijang Branch",
+        "Gimssi Chicken Suyu Sijang",
+        "Kimssi Chicken Suyu Sijang"
+      ],
+      "ambiguous_source": false
+    },
+    {
+      "id": 94205,
+      "ko": "서울브루어리성 수지점",
+      "category": "요리 주점",
+      "sample_group": "branch",
+      "group": "branch",
+      "en": [
+        "Seoul Brewery Seongsu Branch",
+        "Seoul Brewery Seong Suji Branch",
+        "Seoul Brewery Seongsu",
+        "Seoul Brewery Seong Suji"
+      ],
+      "ambiguous_source": true
+    },
+    {
+      "id": 152960,
+      "ko": "화산포갈비 창포점",
+      "category": "돼지고기 구이/찜",
+      "sample_group": "branch",
+      "group": "branch",
+      "en": [
+        "Hwasanpo Galbi Changpo Branch",
+        "Hwasanpo Galbi Changpo"
+      ],
+      "ambiguous_source": false
+    },
+    {
+      "id": 107109,
+      "ko": "마츠노하나신세계명동점 백화점",
+      "category": "일식 회/초밥",
+      "sample_group": "branch",
+      "group": "branch",
+      "en": [
+        "Matsu no Hana Shinsegae Myeongdong Department Store Branch",
+        "Matsu no Hana Shinsegae Myeongdong Branch Department Store",
+        "Matsu no Hana Shinsegae Myeongdong Branch Baekhwajeom",
+        "Matsu no Hana Shinsegae Myeongdong Department Store",
+        "Matsu no Hana Shinsegae Myeongdong Baekhwajeom"
+      ],
+      "ambiguous_source": false
+    },
+    {
+      "id": 140096,
+      "ko": "손정보쌈 당산역점",
+      "category": "족발/보쌈",
+      "sample_group": "branch",
+      "group": "branch",
+      "en": [
+        "Sonjeong Bossam Dangsan Station Branch",
+        "Sonjeong Bossam Dangsan Station"
+      ],
+      "ambiguous_source": false
+    },
+    {
+      "id": 14547,
+      "ko": "투썸플레이스옥수리버젠점",
+      "category": "카페",
+      "sample_group": "branch",
+      "group": "branch",
+      "en": [
+        "A Twosome Place Oksu Riverzen Branch",
+        "Twosome Place Oksu Riverzen Branch",
+        "A Twosome Place Oksu Riverzen",
+        "Twosome Place Oksu Riverzen"
+      ],
+      "ambiguous_source": false
+    },
+    {
+      "id": 102507,
+      "ko": "에코사랑목 본점",
+      "category": "백반/한정식",
+      "sample_group": "branch",
+      "group": "branch",
+      "en": [
+        "Eco Sarangmok Main Branch",
+        "Eco Sarangmok Main"
+      ],
+      "ambiguous_source": false
+    },
+    {
+      "id": 107183,
+      "ko": "몽슈슈 강남점",
+      "category": "카페",
+      "sample_group": "branch",
+      "group": "branch",
+      "en": [
+        "Mon Chou Chou Gangnam Branch",
+        "Mon Chou Chou Gangnam"
+      ],
+      "ambiguous_source": false
+    },
+    {
+      "id": 123531,
+      "ko": "케니야커피동 여의도점",
+      "category": "카페",
+      "sample_group": "branch",
+      "group": "branch",
+      "en": [
+        "Kenya Coffee Dong Yeouido Branch",
+        "Keniya Coffee Dong Yeouido Branch",
+        "Kenia Coffee Dong Yeouido Branch",
+        "Kenya Coffee Dong Yeouido",
+        "Keniya Coffee Dong Yeouido",
+        "Kenia Coffee Dong Yeouido"
+      ],
+      "ambiguous_source": true
+    },
+    {
+      "id": 125162,
+      "ko": "핵밥 동국대점",
+      "category": "백반/한정식",
+      "sample_group": "branch",
+      "group": "branch",
+      "en": [
+        "Haekbap Dongguk University Branch",
+        "Haekbap Donggukdae Branch",
+        "Haekbap Dongguk University",
+        "Haekbap Donggukdae"
+      ],
+      "ambiguous_source": false
+    },
+    {
+      "id": 121539,
+      "ko": "하우스오브바이닐 성수점",
+      "category": "카페",
+      "sample_group": "branch",
+      "group": "branch",
+      "en": [
+        "House of Vinyl Seongsu Branch",
+        "House of Vinyl Seongsu"
+      ],
+      "ambiguous_source": false
+    },
+    {
+      "id": 110545,
+      "ko": "커스텀커피 개포점",
+      "category": "카페",
+      "sample_group": "branch",
+      "group": "branch",
+      "en": [
+        "Custom Coffee Gaepo Branch",
+        "Custom Coffee Gaepo"
+      ],
+      "ambiguous_source": false
+    },
+    {
+      "id": 102257,
+      "ko": "카페일분등촌역점",
+      "category": "카페",
+      "sample_group": "branch",
+      "group": "branch",
+      "en": [
+        "Cafe Ilbun Deungchon Station Branch",
+        "Cafe Ilbun Deungchon Station"
+      ],
+      "ambiguous_source": false
+    },
+    {
+      "id": 126504,
+      "ko": "도송에프엔비브이엔디종각 직영점",
+      "category": "베트남식 전문",
+      "sample_group": "branch",
+      "group": "branch",
+      "en": [
+        "Dosong F&B VND Jonggak Direct Branch",
+        "Dosong F&B VND Jonggak Direct"
+      ],
+      "ambiguous_source": false
+    },
+    {
+      "id": 88673,
+      "ko": "서울주막 홍대점",
+      "category": "백반/한정식",
+      "sample_group": "branch",
+      "group": "branch",
+      "en": [
+        "Seoul Jumak Hongdae Branch",
+        "Seoul Jumak Hongdae"
+      ],
+      "ambiguous_source": false
+    }
+  ]
+}

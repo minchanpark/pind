@@ -71,13 +71,13 @@ class _MainShellState extends State<MainShell> {
     deletePost: widget.posts?.delete,
   );
   PindTab get selected => navigation.model.selected;
+  final visited = <PindTab>{PindTab.map};
 
   @override
   void initState() {
     super.initState();
     navigation.model.addListener(changed);
     widget.controller?.model.addListener(walkStarted);
-    discover.load();
     widget.pendingLink?.addListener(takeLink);
     // A link that arrived during login/onboarding.
     WidgetsBinding.instance.addPostFrameCallback((_) => takeLink());
@@ -103,6 +103,7 @@ class _MainShellState extends State<MainShell> {
 
   void select(PindTab tab) {
     if (selected == tab) return;
+    if (visited.add(tab) && tab == PindTab.discover) discover.load();
     HapticFeedback.selectionClick();
     FocusManager.instance.primaryFocus?.unfocus();
     navigation.select(tab);
@@ -218,7 +219,7 @@ class _MainShellState extends State<MainShell> {
         HapticFeedback.mediumImpact();
         // The new post belongs on My Page and at the top of Discover.
         profile.load();
-        discover.load();
+        if (visited.contains(PindTab.discover)) discover.load();
         navigation.select(PindTab.map);
         await widget.controller?.showPublishedPlace(saved.placeId);
         if (mounted) {
@@ -248,18 +249,21 @@ class _MainShellState extends State<MainShell> {
             IndexedStack(
               index: selected.index,
               children: [
-                TickerMode(
-                  enabled: selected == PindTab.discover,
-                  child: DiscoverScreen(
-                    controller: discover,
-                    myId: widget.posts?.userId,
-                    explore: widget.controller,
-                    preferences: widget.preferences,
-                    bottomClearance: clearance,
-                    onFindFriends: openFriends,
-                    onOpenProfile: openProfile,
-                  ),
-                ),
+                if (visited.contains(PindTab.discover))
+                  TickerMode(
+                    enabled: selected == PindTab.discover,
+                    child: DiscoverScreen(
+                      controller: discover,
+                      myId: widget.posts?.userId,
+                      explore: widget.controller,
+                      preferences: widget.preferences,
+                      bottomClearance: clearance,
+                      onFindFriends: openFriends,
+                      onOpenProfile: openProfile,
+                    ),
+                  )
+                else
+                  const SizedBox.shrink(),
                 TickerMode(
                   enabled: selected == PindTab.map,
                   child: ExploreScreen(
@@ -271,27 +275,29 @@ class _MainShellState extends State<MainShell> {
                     bottomClearance: clearance,
                   ),
                 ),
-                TickerMode(
-                  enabled: selected == PindTab.profile,
-                  child: ProfileScreen(
-                    controller: profile,
-                    onSignOut: widget.onSignOut,
-                    myId: widget.posts?.userId,
-                    onOpenProfile: openProfile,
-                    explore: widget.controller,
-                    preferences: widget.preferences,
-                    mapsEnabled: widget.mapsEnabled,
-                    onEditPreferences: widget.onEditPreferences,
-                    onShowMap: (placeId) {
-                      select(PindTab.map);
-                      // Same focus path as a freshly published post.
-                      if (placeId != null) {
-                        widget.controller?.showPublishedPlace(placeId);
-                      }
-                    },
-                    bottomClearance: clearance,
-                  ),
-                ),
+                if (visited.contains(PindTab.profile))
+                  TickerMode(
+                    enabled: selected == PindTab.profile,
+                    child: ProfileScreen(
+                      controller: profile,
+                      onSignOut: widget.onSignOut,
+                      myId: widget.posts?.userId,
+                      onOpenProfile: openProfile,
+                      explore: widget.controller,
+                      preferences: widget.preferences,
+                      mapsEnabled: widget.mapsEnabled,
+                      onEditPreferences: widget.onEditPreferences,
+                      bottomClearance: clearance,
+                      onShowMap: (placeId) {
+                        select(PindTab.map);
+                        if (placeId != null) {
+                          widget.controller?.showPublishedPlace(placeId);
+                        }
+                      },
+                    ),
+                  )
+                else
+                  const SizedBox.shrink(),
               ],
             ),
             if (!keyboardOpen)

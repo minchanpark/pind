@@ -26,11 +26,7 @@ class RegistrationController {
     if (identity != null &&
         (!identity.development ||
             (allowPreview && storage.load(identity.id)?.completed == true))) {
-      _accept(identity);
-      // A restored social session is an existing account: skip profile setup.
-      if (!identity.development) {
-        model.draft = model.draft.copyWith(completed: true);
-      }
+      unawaited(_signedIn(identity));
     }
     _subscription = auth.changes.listen((identity) {
       if (_disposed) return;
@@ -67,7 +63,7 @@ class RegistrationController {
   /// does. Otherwise sign-up as usual.
   Future<void> _signedIn(AuthIdentity identity) async {
     final local = storage.load(identity.id);
-    if (identity.development || profile == null || local?.completed == true) {
+    if (identity.development || profile == null || local != null) {
       return _accept(identity);
     }
     model.update(() => model.busy = true);
@@ -95,7 +91,13 @@ class RegistrationController {
       model.draft = draft;
       model.error = null;
     });
-    await storage.save(identity.id, draft);
+    try {
+      await storage.save(identity.id, draft);
+    } catch (_) {
+      if (!_disposed && model.identity?.id == identity.id) {
+        model.update(() => model.error = l10n.errDraftSave);
+      }
+    }
   }
 
   void _accept(AuthIdentity identity) => model.update(() {

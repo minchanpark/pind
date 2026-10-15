@@ -5,6 +5,7 @@ import 'dart:io';
 import 'package:flutter/painting.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:pind_flutter/view/components/pind_image.dart';
+import 'package:pind_flutter/services/image_disk_cache.dart';
 
 /// 1×1 transparent PNG.
 final png = base64Decode(
@@ -63,6 +64,47 @@ void main() {
       expect((await load('$path?token=new')).image.width, 1);
       expect(hits, 1);
       await server.close(force: true);
+    });
+  });
+  testWidgets('a corrupted disk photo is discarded and downloaded again', (
+    tester,
+  ) async {
+    await tester.runAsync(() async {
+      HttpOverrides.global = null;
+      final server = await HttpServer.bind(InternetAddress.loopbackIPv4, 0);
+      var hits = 0;
+      server.listen((r) {
+        hits++;
+        r.response
+          ..add(png)
+          ..close();
+      });
+      final url =
+          'http://127.0.0.1:${server.port}/${DateTime.now().microsecondsSinceEpoch}.png';
+      final file = ImageDiskCache.shared.fileFor(url);
+      await file.parent.create(recursive: true);
+      await file.writeAsString('corrupted');
+      final done = Completer<ImageInfo>();
+      final stream = PindImage(url).resolve(ImageConfiguration.empty);
+      final listener = ImageStreamListener(
+        (info, _) {
+          if (!done.isCompleted) done.complete(info);
+        },
+        onError: (e, _) {
+          if (!done.isCompleted) done.completeError(e);
+        },
+      );
+      stream.addListener(listener);
+      try {
+        final info = await done.future;
+        expect(info.image.width, 1);
+        expect(hits, 1);
+        info.dispose();
+      } finally {
+        stream.removeListener(listener);
+        await ImageDiskCache.shared.remove(url);
+        await server.close(force: true);
+      }
     });
   });
 }

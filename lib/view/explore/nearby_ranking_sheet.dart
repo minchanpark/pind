@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
+import '../../model/taste_profile.dart';
 import '../../model/nearby_ranking.dart';
 import '../../model/place_context.dart';
 import '../../model/places.dart';
@@ -66,6 +67,17 @@ class NearbyRankingSheet extends StatefulWidget {
 }
 
 class _NearbyRankingSheetState extends State<NearbyRankingSheet> {
+  /// My taste % reads [myTaste], which loads after this screen may open.
+  void _tasteChanged() {
+    if (mounted) setState(() {});
+  }
+
+  @override
+  void dispose() {
+    myTaste.removeListener(_tasteChanged);
+    super.dispose();
+  }
+
   List<RankedPlace>? places;
   bool nearMe = true, failed = false;
 
@@ -84,6 +96,7 @@ class _NearbyRankingSheetState extends State<NearbyRankingSheet> {
   @override
   void initState() {
     super.initState();
+    myTaste.addListener(_tasteChanged);
     fetch();
   }
 

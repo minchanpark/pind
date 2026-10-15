@@ -28,9 +28,9 @@ abstract final class PindColors {
   // Neutrals, dark to light.
   static const ink = Color(0xFF111111);
   static const body = Color(0xFF4A4A52);
-  static const muted = Color(0xFF7A7A80);
-  static const subtle = Color(0xFF9B9B9B);
-  static const placeholder = Color(0xFFABABAB);
+  static const muted = Color(0xFF707076);
+  static const subtle = Color(0xFF737373);
+  static const placeholder = Color(0xFF737373);
   static const imageFill = Color(0xFFD9D9D9);
   static const fill = Color(0xFFE2E2E7);
   static const border = Color(0xFFE3E4EA);

@@ -16,16 +16,34 @@ class PlaceService {
   final PlacesInvoker invoke;
 
   /// Every restaurant with a published post; the map needs nothing else.
-  Future<List<Place>> posted() async =>
-      _list(await invoke({'action': 'posted'}));
+  Future<List<Place>> posted({MapBounds? bounds}) async {
+    final places = <Place>[];
+    int? after;
+    while (true) {
+      final data = await invoke({
+        'action': 'posted',
+        if (bounds != null) 'bounds': bounds.json,
+        'afterId': ?after,
+      });
+      final page = _list(data);
+      places.addAll(page);
+      if (data['hasMore'] != true) return places;
+      final next = page.isEmpty ? null : page.last.id;
+      if (next == null || (after != null && next <= after)) {
+        throw PlaceFailure(l10n.errPlaceLoad);
+      }
+      after = next;
+    }
+  }
 
-  Future<List<Place>> search(String query) async {
-    return (await searchResults(query)).places;
+  Future<List<Place>> search(String query, {MapViewport? near}) async {
+    return (await searchResults(query, near: near)).places;
   }
 
   Future<PlaceSearchResult> searchResults(
     String query, {
     bool supplemental = false,
+    MapViewport? near,
   }) async {
     final trimmed = query.trim();
     if (trimmed.isEmpty) return const PlaceSearchResult([]);
@@ -35,6 +53,11 @@ class PlaceService {
     final data = await invoke({
       'action': supplemental ? 'google_search' : 'search',
       'query': trimmed,
+      if (near != null) ...{
+        'latitude': near.latitude,
+        'longitude': near.longitude,
+        'radiusMeters': 10000,
+      },
       'languageCode': googleLanguage(l10nTag),
       if (supplemental) 'userInitiated': true,
     });
@@ -195,6 +218,8 @@ class SupabasePlacesGateway {
 /// The places functions answer errors with a code and a Korean message; the
 /// user sees the code's message in the app's language instead.
 String serverErrorMessage(Object? code, String fallback) => switch (code) {
+  'REQUEST_LIMITED' => l10n.errRequestLimited,
+  'AREA_UNAVAILABLE' => l10n.errAreaUnavailable,
   'UNAUTHORIZED' => l10n.errSignInRequired,
   'INVALID_QUERY' => l10n.errQueryLength,
   'QUERY_NOT_UNDERSTOOD' => l10n.errQueryNotUnderstood,

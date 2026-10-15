@@ -6,7 +6,9 @@ import { INSIGHT_SCHEMA, INSIGHT_SYSTEM, INSIGHT_MODELS, TRANSLATE_SYSTEM, insig
 import { AGENT_SCHEMA, AGENT_SYSTEM, type AgentPlan, fallbackPlan, parseAgentPlan, tastePlan } from './agent.ts';
 import { walkingRoute } from './walking.ts';
 import { groqJson } from './llm.ts';
-import { geocodeArea } from './area.ts';
+import { geocodeArea, type Area } from './area.ts';
+import { RequestCache } from './request-cache.ts';
+import { dailyLimit } from '../google-places/policy.ts';
 
 const headers = {
   'Access-Control-Allow-Origin':'*',
@@ -20,7 +22,7 @@ const SIGNED_URL_SECONDS = 24 * 60 * 60;
 const json = (body:unknown,status=200) => new Response(JSON.stringify(body),{status,headers});
 declare const EdgeRuntime: {waitUntil(promise: Promise<unknown>): void};
 const geminiKey = Deno.env.get('GEMINI_API_KEY');
-const gemini = geminiKey ? new GoogleGenAI({apiKey:geminiKey}) : null;
+const gemini = geminiKey ? new GoogleGenAI({apiKey:geminiKey,httpOptions:{timeout:5000,retryOptions:{attempts:1}}}) : null;
 const groqKey = Deno.env.get('GROQ_API_KEY');
 const hasLlm = Boolean(groqKey || gemini);
 
@@ -47,6 +49,38 @@ async function askJson(system:string,user:string,schema:object,geminiDelay?:numb
 const admin = createClient(Deno.env.get('SUPABASE_URL')!,Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!,{
   auth:{persistSession:false,autoRefreshToken:false},
 });
+
+const plans = new RequestCache<AgentPlan>(10 * 60_000);
+const areas = new RequestCache<Area>(24 * 60 * 60_000);
+async function takeBudget(userId:string, kind:'agent'|'walking') {
+  const prefix = kind.toUpperCase();
+  const {error} = await admin.rpc('take_external_request_budget', {
+    p_user_id:userId,p_kind:kind,
+    p_user_limit:dailyLimit(Deno.env.get(`${prefix}_USER_DAILY_REQUESTS`),60),
+    p_total_limit:dailyLimit(Deno.env.get(`${prefix}_TOTAL_DAILY_REQUESTS`),3000),
+    p_minute_limit:dailyLimit(Deno.env.get(`${prefix}_USER_MINUTE_REQUESTS`),10),
+  });
+  if(error) throw new CatalogError(/EXTERNAL_.*LIMIT/.test(error.message)?429:503,'REQUEST_LIMITED','잠시 후 다시 검색해 주세요.');
+}
+async function areaFor(area:string,userId:string) {
+  if(!Deno.env.get('GOOGLE_PLACES_API_KEY'))throw new CatalogError(503,'AREA_UNAVAILABLE','요청한 지역을 찾지 못했어요.');
+  try {
+    return await areas.get(area.trim().toLowerCase(),async()=>{
+      const {error}=await admin.rpc('take_place_google_budget',{
+        p_user_id:userId,
+        p_user_limit:dailyLimit(Deno.env.get('GOOGLE_USER_DAILY_REQUESTS'),20),
+        p_total_limit:dailyLimit(Deno.env.get('GOOGLE_TOTAL_DAILY_REQUESTS'),1000),
+      });
+      if(error)throw new CatalogError(429,'REQUEST_LIMITED','잠시 후 다시 검색해 주세요.');
+      const found=await geocodeArea(area,Deno.env.get('GOOGLE_PLACES_API_KEY'));
+      if(!found)throw new CatalogError(503,'AREA_UNAVAILABLE','요청한 지역을 찾지 못했어요. 잠시 후 다시 시도해 주세요.');
+      return found;
+    });
+  }catch(error){
+    if(error instanceof CatalogError)throw error;
+    throw new CatalogError(503,'AREA_UNAVAILABLE','요청한 지역을 찾지 못했어요.');
+  }
+}
 
 // Runs after the response. A failure frees the claim and records why;
 // claim_place_insight then waits a minute before the next try.
@@ -133,18 +167,24 @@ Deno.serve(async request => {
     }
     const {data:user,error:authError} = await client.auth.getUser();
     if (authError || !user.user) throw new CatalogError(401,'UNAUTHORIZED','로그인이 필요합니다.');
-    let body;
+    let body:Record<string,unknown>;
     try { body = JSON.parse(raw); } catch { throw new CatalogError(400,'INVALID_JSON','잘못된 요청입니다.'); }
     if (!body || typeof body !== 'object' || Array.isArray(body)) throw new CatalogError(400,'INVALID_JSON','잘못된 요청입니다.');
-    if (body.action === 'walking_route') return json(await walkingRoute(body,Deno.env.get('TMAP_APP_KEY')));
+    if (body.action === 'walking_route') {
+      await takeBudget(user.user.id,'walking');
+      return json(await walkingRoute(body,Deno.env.get('TMAP_APP_KEY')));
+    }
     if (body.action === 'agent_search') {
       const q = typeof body.query === 'string' ? body.query.trim() : '';
       if (q.length < 2 || q.length > 120) throw new CatalogError(400,'INVALID_QUERY','검색어를 2~120자로 입력해 주세요.');
-      let plan:AgentPlan = await agentPlan(q,langOf(body.lang));
+      let plan:AgentPlan = await plans.get(`${langOf(body.lang)}:${q}`,async()=>{
+        await takeBudget(user.user.id,'agent');
+        return await agentPlan(q,langOf(body.lang));
+      });
       // "Pick for me": the app's onboarding foods and occasions fill it in.
       if (plan.personal) plan = tastePlan(plan,body.cuisines,body.occasions);
       // A named area searches around it instead of the map center.
-      const area = plan.area ? await geocodeArea(plan.area,Deno.env.get('GOOGLE_PLACES_API_KEY')) : null;
+      const area = plan.area ? await areaFor(plan.area,user.user.id) : null;
       body = {...body,...plan,...(area ?? {})};
     }
     return json(await catalogRequest(body,async (args,fn) => {

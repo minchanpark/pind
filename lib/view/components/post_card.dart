@@ -46,6 +46,8 @@ class PostCard extends StatelessWidget {
         child: Center(
           child: Text(
             '📍${post.place.name}',
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
             style: const TextStyle(
               fontSize: PindType.label,
               fontWeight: FontWeight.w500,
@@ -122,15 +124,19 @@ class PostCard extends StatelessWidget {
               // One photo or a fanned pair would only graze the pill; sink it
               // about halfway into the top edge, as the trio's cards do.
               top: post.photos.length == 1 || post.photos.length == 2 ? 10 : 0,
-              child: onPlace == null
-                  ? pill
-                  : Semantics(
-                      button: true,
-                      child: GestureDetector(
-                        onTap: onPlace,
-                        child: PindPressable(child: pill),
+              left: 0,
+              right: 0,
+              child: Center(
+                child: onPlace == null
+                    ? pill
+                    : Semantics(
+                        button: true,
+                        child: GestureDetector(
+                          onTap: onPlace,
+                          child: PindPressable(child: pill),
+                        ),
                       ),
-                    ),
+              ),
             ),
             Positioned(
               left: 0,
@@ -178,7 +184,22 @@ class PostCard extends StatelessWidget {
       case 0:
         return const SizedBox(height: 24);
       case 1:
-        return frame(0, 214, 262, radius: 17, border: yellow, width: 5.21);
+        // The photo's own shape inside the design's 214×262, uncropped.
+        return PhotoRatio(
+          post.photos.first,
+          fallback: 214 / 262,
+          builder: (_, ratio) {
+            final size = fitPhoto(const Size(214, 262), ratio);
+            return frame(
+              0,
+              size.width,
+              size.height,
+              radius: 17,
+              border: yellow,
+              width: 5.21,
+            );
+          },
+        );
       case 2:
         // A fanned pair in the trio's style: the first photo in front.
         return SizedBox(

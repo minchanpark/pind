@@ -1,5 +1,8 @@
+import 'package:flutter/foundation.dart';
+
 import 'places.dart';
 import 'preferences.dart';
+import 'taste_profile.dart';
 
 /// Only Pind's criterion-level ratings are used, never Google's overall rating.
 class PlaceContext {
@@ -51,25 +54,16 @@ class FriendVisit {
   final String? avatar;
 }
 
-/// Priority weights shared by [tasteMatch] and the profile taste card.
-const tasteWeights = [.5, .3, .2];
-
-/// All three selected axes must have an aggregate. No partial-score inflation.
+/// My taste % for a place from its shared averages, or null until my taste
+/// profile for these [preferences] has loaded (see [TasteProfile.match]).
 int? tasteMatch(TastePreferences? preferences, PlaceContext data) {
-  if (preferences == null || preferences.priorities.length != 3) return null;
-  double result = 0;
-  for (var i = 0; i < 3; i++) {
-    final axis = preferences.priorities[i];
-    final average = data.averages[axis];
-    if (average == null) return null;
-    if (!average.isFinite || average < 1 || average > 5) {
-      throw const FormatException('Rating outside 1–5');
-    }
-    // Everyone's public rating, including mine, is already in the average.
-    // Each criterion can lose at most its own 50/30/20 share of the score.
-    result += (average - 1) / 4 * tasteWeights[i];
+  final taste = myTaste.value;
+  if (preferences == null ||
+      taste == null ||
+      !listEquals(taste.priorities, preferences.priorities)) {
+    return null;
   }
-  return (result * 100).round().clamp(0, 100);
+  return taste.match(data.averages);
 }
 
 extension CriterionPresentation on PreferenceCriterion {

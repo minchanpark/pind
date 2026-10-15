@@ -41,7 +41,7 @@ class DiscoverModel extends ChangeNotifier {
   NotificationInbox? inbox;
   bool get hasNewAlerts => (inbox?.unread ?? 0) > 0;
   bool loading = false, loadingMore = false, hasMore = true;
-  String? error;
+  String? error, moreError;
 
   void update(VoidCallback change) {
     change();

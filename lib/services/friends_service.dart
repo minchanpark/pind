@@ -4,6 +4,7 @@ import '../model/friends_model.dart';
 import '../model/place_search_result.dart';
 import '../model/preferences.dart';
 import '../model/profile_model.dart';
+import '../model/taste_profile.dart';
 import 'data_revision.dart';
 import '../l10n/l10n.dart';
 
@@ -28,6 +29,9 @@ abstract interface class FriendsService {
 
   /// [discoverable]: whether others may be recommended this user.
   Future<void> saveTaste(TastePreferences preferences, {bool discoverable});
+
+  /// My taste stars (`get_my_taste`); null until my priorities are saved.
+  Future<TasteProfile?> myTaste();
 }
 
 class UnavailableFriendsService implements FriendsService {
@@ -49,6 +53,8 @@ class UnavailableFriendsService implements FriendsService {
     TastePreferences preferences, {
     bool discoverable = false,
   }) async {}
+  @override
+  Future<TasteProfile?> myTaste() async => null;
 }
 
 class SupabaseFriendsService implements FriendsService {
@@ -180,5 +186,14 @@ class SupabaseFriendsService implements FriendsService {
       'discoverable': discoverable,
     });
     markDataChanged();
+  }
+
+  @override
+  Future<TasteProfile?> myTaste() async {
+    if (client.auth.currentUser == null) return null;
+    final data = await client.rpc('get_my_taste');
+    return data == null
+        ? null
+        : TasteProfile.fromJson(Map<String, dynamic>.from(data as Map));
   }
 }

@@ -1,0 +1,188 @@
+{
+  "about": "20 distinct real published SBIZ/PIND catalog names, queried 2026-10-05. Targets fixed before model call. User examples are calibration, other cases test policy generalization. Case, spaces, hyphens and Latin accents do not affect scoring. Not a claim of official brand spelling.",
+  "cases": [
+    {
+      "id": 59989,
+      "ko": "일품대패",
+      "category": "돼지고기 구이/찜",
+      "group": "romanize",
+      "en": [
+        "Ilpum Daepae"
+      ]
+    },
+    {
+      "id": 146764,
+      "ko": "그레그커피",
+      "category": "카페",
+      "group": "restore",
+      "en": [
+        "Greg Coffee"
+      ]
+    },
+    {
+      "id": 10547,
+      "ko": "엄마손칼국수",
+      "category": "국수/칼국수",
+      "group": "romanize",
+      "en": [
+        "Eommason Kalguksu"
+      ]
+    },
+    {
+      "id": 148809,
+      "ko": "원조할매국밥",
+      "category": "국/탕/찌개류",
+      "group": "romanize",
+      "en": [
+        "Wonjo Halmae Gukbap"
+      ]
+    },
+    {
+      "id": 101706,
+      "ko": "봉자막창",
+      "category": "곱창 전골/구이",
+      "group": "romanize",
+      "en": [
+        "Bongja Makchang"
+      ]
+    },
+    {
+      "id": 68441,
+      "ko": "가화반점",
+      "category": "중국집",
+      "group": "romanize",
+      "en": [
+        "Gahwa Banjeom"
+      ]
+    },
+    {
+      "id": 6921,
+      "ko": "고향식당",
+      "category": "백반/한정식",
+      "group": "romanize",
+      "en": [
+        "Gohyang Sikdang"
+      ]
+    },
+    {
+      "id": 7858,
+      "ko": "삼거리식당",
+      "category": "백반/한정식",
+      "group": "romanize",
+      "en": [
+        "Samgeori Sikdang"
+      ]
+    },
+    {
+      "id": 25672,
+      "ko": "수냉면",
+      "category": "냉면/밀면",
+      "group": "romanize",
+      "en": [
+        "Su Naengmyeon"
+      ]
+    },
+    {
+      "id": 62363,
+      "ko": "갈스시",
+      "category": "일식 회/초밥",
+      "group": "restore",
+      "en": [
+        "Gal Sushi"
+      ]
+    },
+    {
+      "id": 111976,
+      "ko": "뉴버거",
+      "category": "버거",
+      "group": "restore",
+      "en": [
+        "New Burger"
+      ]
+    },
+    {
+      "id": 22915,
+      "ko": "굿베이커리",
+      "category": "빵/도넛",
+      "group": "restore",
+      "en": [
+        "Good Bakery"
+      ]
+    },
+    {
+      "id": 13662,
+      "ko": "고피자",
+      "category": "피자",
+      "group": "restore",
+      "en": [
+        "GOPIZZA",
+        "Go Pizza"
+      ]
+    },
+    {
+      "id": 26057,
+      "ko": "꽉치킨",
+      "category": "치킨",
+      "group": "restore",
+      "en": [
+        "Kkwak Chicken"
+      ]
+    },
+    {
+      "id": 11487,
+      "ko": "블루문",
+      "category": "요리 주점",
+      "group": "restore",
+      "en": [
+        "Blue Moon"
+      ]
+    },
+    {
+      "id": 115050,
+      "ko": "몽브런치",
+      "category": "피자",
+      "group": "restore",
+      "en": [
+        "Mong Brunch"
+      ]
+    },
+    {
+      "id": 135023,
+      "ko": "스타벅스 강변",
+      "category": "카페",
+      "group": "restore",
+      "en": [
+        "Starbucks Gangbyeon"
+      ]
+    },
+    {
+      "id": 10185,
+      "ko": "투썸",
+      "category": "카페",
+      "group": "restore",
+      "en": [
+        "A Twosome Place",
+        "Twosome"
+      ]
+    },
+    {
+      "id": 7197,
+      "ko": "카페",
+      "category": "카페",
+      "group": "restore",
+      "en": [
+        "Cafe",
+        "Café"
+      ]
+    },
+    {
+      "id": 25024,
+      "ko": "커피",
+      "category": "카페",
+      "group": "restore",
+      "en": [
+        "Coffee"
+      ]
+    }
+  ]
+}

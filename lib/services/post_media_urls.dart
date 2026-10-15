@@ -24,6 +24,7 @@ const signedUrlLifetime = Duration(hours: 24);
 /// path → (url, reuse until). Kept an hour short of expiry so a URL handed to
 /// a screen never dies while it is shown.
 final _signed = <String, (String, DateTime)>{};
+void clearSignedPhotoUrls() => _signed.clear();
 
 /// Signs the [paths] in `post-media-v2` that this session hasn't signed
 /// recently, in one round-trip; the rest reuse their URL. A path the server

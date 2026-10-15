@@ -2,6 +2,7 @@ import '../../model/place_search_result.dart';
 
 import 'dart:async';
 import 'dart:math' as math;
+import 'dart:typed_data';
 import 'dart:ui' as ui;
 
 import 'package:flutter/material.dart';
@@ -9,8 +10,10 @@ import 'package:flutter_svg/flutter_svg.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 
 import '../components/pind_glass.dart';
+import '../components/pind_pressable.dart';
 import '../design_system.dart';
 import '../../model/preferences.dart';
+import '../../model/explore_model.dart';
 import '../../model/places.dart';
 import '../../model/place_context.dart';
 import '../../model/walking_route.dart';
@@ -20,6 +23,7 @@ import 'agent_search_page.dart';
 import 'map_filter_chip.dart';
 import 'nearby_ranking_sheet.dart';
 import '../../l10n/l10n.dart';
+import '../../services/data_revision.dart';
 
 class ExploreScreen extends StatefulWidget {
   const ExploreScreen({
@@ -44,6 +48,36 @@ class ExploreScreen extends StatefulWidget {
 class _ExploreScreenState extends State<ExploreScreen> {
   ExploreController? get controller => widget.controller;
   GoogleMapController? map;
+  Timer? cameraDebounce;
+  static const pinClusters = ClusterManagerId('posted-places');
+  Future<void> refreshVisiblePlaces({bool force = false}) async {
+    if (!mounted || !widget.isActive || map == null || walkTarget != null) {
+      return;
+    }
+    try {
+      final b = await map!.getVisibleRegion();
+      if (!mounted) return;
+      await controller?.load(
+        force: force,
+        bounds: MapBounds(
+          b.southwest.latitude,
+          b.southwest.longitude,
+          b.northeast.latitude,
+          b.northeast.longitude,
+        ),
+      );
+    } catch (_) {
+      /* Platform view may close while obtaining its bounds. */
+    }
+  }
+
+  void cameraIdle() {
+    cameraDebounce?.cancel();
+    cameraDebounce = Timer(
+      const Duration(milliseconds: 300),
+      refreshVisiblePlaces,
+    );
+  }
 
   /// On iOS, Flutter widgets above the map platform view are painted into a
   /// separate overlay, so the sheet's BackdropFilter blurs only the map
@@ -51,6 +85,12 @@ class _ExploreScreenState extends State<ExploreScreen> {
   bool placeOpen = false;
   bool get locating => controller?.model.locating ?? false;
   String category = '전체';
+
+  /// Top chips. [scopeIds] is null while the friends/saved ids load.
+  MapScope scope = MapScope.all;
+  Set<int>? scopeIds;
+  int scopeGeneration = 0;
+  StreamSubscription<void>? dataChangesSub;
   int markerGeneration = 0;
   int seenPublishedRevision = 0;
   Set<Marker> markers = {};
@@ -80,18 +120,54 @@ class _ExploreScreenState extends State<ExploreScreen> {
   void initState() {
     super.initState();
     controller?.model.addListener(changed);
-    controller?.load();
+    if (!widget.mapsEnabled) controller?.load();
+    // A save, unsave or follow elsewhere reshapes the friends/saved pins.
+    dataChangesSub = dataChanges.stream.listen((_) {
+      if (scope != MapScope.all) setScope(scope);
+    });
+  }
+
+  Future<void> setScope(MapScope next) async {
+    final generation = ++scopeGeneration;
+    setState(() {
+      if (next != scope) scopeIds = null;
+      scope = next;
+    });
+    updateMarkers();
+    if (next == MapScope.all) return;
+    try {
+      final ids = await controller!.scopePlaces(next);
+      if (!mounted || generation != scopeGeneration) return;
+      setState(() => scopeIds = ids);
+    } catch (_) {
+      if (!mounted || generation != scopeGeneration) return;
+      setState(() => scope = MapScope.all);
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text(l10n.errPlaceLoad)));
+    }
+    updateMarkers();
   }
 
   @override
   void didUpdateWidget(covariant ExploreScreen oldWidget) {
     super.didUpdateWidget(oldWidget);
+    if (!oldWidget.isActive && widget.isActive) {
+      if (widget.mapsEnabled) {
+        refreshVisiblePlaces();
+      } else {
+        controller?.load();
+      }
+    }
     if (oldWidget.controller != controller) {
       oldWidget.controller?.model.removeListener(changed);
       controller?.model.addListener(changed);
       markerPlaces = null;
       markers = {};
-      controller?.load(force: true);
+      if (widget.mapsEnabled) {
+        refreshVisiblePlaces(force: true);
+      } else {
+        controller?.load(force: true);
+      }
     }
   }
 
@@ -100,6 +176,9 @@ class _ExploreScreenState extends State<ExploreScreen> {
     if (controller!.publishedRevision != seenPublishedRevision) {
       seenPublishedRevision = controller!.publishedRevision;
       category = '전체';
+      // The new post must show, so drop any narrowing.
+      scope = MapScope.all;
+      scopeGeneration++;
       final viewport = controller!.viewport;
       map
           ?.animateCamera(
@@ -123,8 +202,13 @@ class _ExploreScreenState extends State<ExploreScreen> {
   List<Place> get visiblePlaces {
     final places = controller?.places ?? <Place>[];
     final pattern = categories[category]!;
-    if (pattern.isEmpty) return places;
-    return places.where((p) => _inCategory(pattern, p)).toList();
+    final ids = scope == MapScope.all ? null : scopeIds ?? const <int>{};
+    return [
+      for (final p in places)
+        if ((ids == null || ids.contains(p.id)) &&
+            (pattern.isEmpty || _inCategory(pattern, p)))
+          p,
+    ];
   }
 
   Future<void> updateMarkers() async {
@@ -136,8 +220,10 @@ class _ExploreScreenState extends State<ExploreScreen> {
           .map(
             (p) async => Marker(
               markerId: MarkerId(p.key),
+              clusterManagerId: pinClusters,
               position: LatLng(p.latitude, p.longitude),
               icon: await placeMarkerIcon(p),
+              zIndexInt: pinTier(p),
               onTap: () => showPlace(p),
             ),
           ),
@@ -258,9 +344,11 @@ class _ExploreScreenState extends State<ExploreScreen> {
   @override
   void dispose() {
     walking?.cancel();
+    dataChangesSub?.cancel();
     markerGeneration++;
     controller?.model.removeListener(changed);
     map?.dispose();
+    cameraDebounce?.cancel();
     super.dispose();
   }
 
@@ -297,7 +385,11 @@ class _ExploreScreenState extends State<ExploreScreen> {
           14,
         ),
       );
-      await controller?.load();
+      if (widget.mapsEnabled) {
+        await refreshVisiblePlaces();
+      } else {
+        await controller?.load();
+      }
     } catch (error) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -424,6 +516,52 @@ class _ExploreScreenState extends State<ExploreScreen> {
     );
   }
 
+  /// Figma 938:17909: 전체 / 친구 / 저장한 장소 under the search bar.
+  Widget scopeChips() => SingleChildScrollView(
+    scrollDirection: Axis.horizontal,
+    padding: const EdgeInsets.only(top: 8),
+    child: Row(
+      spacing: 8.6364,
+      children: [
+        for (final (s, label) in [
+          (MapScope.all, l10n.categoryAll),
+          (MapScope.friends, l10n.mapScopeFriends),
+          (MapScope.saved, l10n.savedPlaces),
+        ])
+          Semantics(
+            button: true,
+            selected: scope == s,
+            child: GestureDetector(
+              key: ValueKey('map-scope-${s.name}'),
+              behavior: HitTestBehavior.opaque,
+              onTap: () => setScope(s),
+              child: PindPressable(
+                scale: .9,
+                child: PindGlass(
+                  tone: scope == s ? PindGlassTone.purple : PindGlassTone.light,
+                  radius: 999,
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12.954,
+                    vertical: 6.477,
+                  ),
+                  child: Text(
+                    label,
+                    style: TextStyle(
+                      fontSize: 12.954,
+                      height: 1.5,
+                      letterSpacing: 0,
+                      fontWeight: FontWeight.w500,
+                      color: scope == s ? Colors.white : PindColors.ink,
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ),
+      ],
+    ),
+  );
+
   // Figma 524:28096. Keep the exported icons at their original dimensions.
   Widget searchBar() {
     const height = 45.4636;
@@ -540,7 +678,19 @@ class _ExploreScreenState extends State<ExploreScreen> {
               target: LatLng(37.5665, 126.978),
               zoom: 13,
             ),
-            onMapCreated: (value) => map = value,
+            onMapCreated: (value) {
+              map = value;
+              refreshVisiblePlaces();
+            },
+            onCameraIdle: cameraIdle,
+            clusterManagers: {
+              ClusterManager(
+                clusterManagerId: pinClusters,
+                onClusterTap: (cluster) => map?.animateCamera(
+                  CameraUpdate.newLatLngBounds(cluster.bounds, 48),
+                ),
+              ),
+            },
             // While walking: only the destination, the line left to walk and
             // my own dot.
             markers: walkTarget == null ? markers : {?walkMarker},
@@ -592,8 +742,10 @@ class _ExploreScreenState extends State<ExploreScreen> {
               children: [
                 if (walkTarget case final target?)
                   walkBanner(target)
-                else
+                else ...[
                   searchBar(),
+                  scopeChips(),
+                ],
                 if (controller?.notice != null)
                   Material(
                     color: Colors.white,
@@ -852,16 +1004,26 @@ class PlacePin extends StatelessWidget {
 const pindMapStyle =
     '[{"featureType":"poi.business","stylers":[{"visibility":"off"}]}]';
 
-/// The map screen's pin. Emoji markers are six fixed images, so each is drawn
-/// once and reused by every map.
-Future<BitmapDescriptor> placeMarkerIcon(Place place) {
+/// Pin size step by public post count: 1, 2–9, 10 or more. Busier places draw
+/// larger and on top. Retune the cut-offs once real post counts spread out.
+int pinTier(Place place) => switch (place.pindPostCount ?? 0) {
+  >= 10 => 2,
+  >= 2 => 1,
+  _ => 0,
+};
+
+/// The map screen's pin, 42 / 49 / 56 by [pinTier]. Emoji markers are six
+/// fixed images, so each is drawn once and reused at every size and map.
+Future<BitmapDescriptor> placeMarkerIcon(Place place) async {
   final emoji = markerEmoji(place);
-  return _markerIcons.putIfAbsent(emoji, () => _emojiMarker(emoji));
+  final png = await _markerImages.putIfAbsent(emoji, () => _emojiMarker(emoji));
+  final size = 56 * const [.75, .875, 1.0][pinTier(place)];
+  return BitmapDescriptor.bytes(png, width: size, height: size);
 }
 
-final _markerIcons = <String, Future<BitmapDescriptor>>{};
+final _markerImages = <String, Future<Uint8List>>{};
 
-Future<BitmapDescriptor> _emojiMarker(String emoji) async {
+Future<Uint8List> _emojiMarker(String emoji) async {
   final recorder = ui.PictureRecorder();
   final canvas = Canvas(recorder);
   canvas.drawCircle(
@@ -885,9 +1047,5 @@ Future<BitmapDescriptor> _emojiMarker(String emoji) async {
   picture.dispose();
   final data = await bitmap.toByteData(format: ui.ImageByteFormat.png);
   bitmap.dispose();
-  return BitmapDescriptor.bytes(
-    data!.buffer.asUint8List(),
-    width: 56,
-    height: 56,
-  );
+  return data!.buffer.asUint8List();
 }

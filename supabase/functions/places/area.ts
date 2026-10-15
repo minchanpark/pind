@@ -29,6 +29,7 @@ export async function geocodeArea(area: string, key: string | undefined, fetcher
   try {
     const response = await fetcher('https://places.googleapis.com/v1/places:searchText', {
       method: 'POST',
+      signal: AbortSignal.timeout(8000),
       headers: {'Content-Type': 'application/json', 'X-Goog-Api-Key': key,
         'X-Goog-FieldMask': 'places.location,places.viewport'},
       body: JSON.stringify({textQuery: area, languageCode: 'ko', regionCode: 'KR', pageSize: 1}),

@@ -7,7 +7,14 @@ import '../model/profile_model.dart';
 /// refetch only when this moved since their last load.
 int dataRevision = 0;
 
-void markDataChanged() => dataRevision++;
+/// Fires on every [markDataChanged], for state kept outside any screen
+/// (my taste stars).
+final dataChanges = StreamController<void>.broadcast();
+
+void markDataChanged() {
+  dataRevision++;
+  dataChanges.add(null);
+}
 
 /// My profile right after I edit it (photo, name, bio). Screens that show my
 /// name or photo inside other data (feed posts) patch it in place.

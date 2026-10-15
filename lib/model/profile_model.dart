@@ -120,6 +120,7 @@ class ProfileOverview {
   final List<PreferenceCriterion>? taste;
 
   ProfileOverview copyWith({
+    List<MyPost>? posts,
     UserProfile? profile,
     ProfileCounts? counts,
     bool? following,
@@ -128,7 +129,7 @@ class ProfileOverview {
     counts: counts ?? this.counts,
     recentViews: recentViews,
     savedPlaces: savedPlaces,
-    posts: posts,
+    posts: posts ?? this.posts,
     following: following ?? this.following,
     followsMe: followsMe,
     taste: taste,
@@ -160,9 +161,17 @@ class ProfileModel extends ChangeNotifier {
   ProfileTab tab = ProfileTab.map;
   bool loading = false, saving = false;
   String? error;
+  bool loadingPosts = false, hasMorePosts = false;
+  String? postsError;
 
   void update(VoidCallback change) {
     change();
     notifyListeners();
   }
+}
+
+class ProfilePostPage {
+  const ProfilePostPage(this.posts, this.hasMore);
+  final List<MyPost> posts;
+  final bool hasMore;
 }

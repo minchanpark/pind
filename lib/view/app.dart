@@ -99,8 +99,7 @@ class _PindAppState extends State<PindApp> {
             controller: widget.controller.registration!,
             preferences: preferences,
           )
-        : widget.controller.registration == null &&
-              preferences?.isComplete != true
+        : preferences?.isComplete != true
         ? OnboardingScreen(
             initial: preferences,
             onComplete: widget.controller.savePreferences,

@@ -36,6 +36,8 @@ class ProfileController {
     final revision = dataRevision;
     model.update(() {
       model.loading = true;
+      model.loadingPosts = false;
+      model.postsError = null;
       model.error = null;
     });
     try {
@@ -44,6 +46,9 @@ class ProfileController {
       _loadedRevision = revision;
       model.update(() {
         model.overview = overview;
+        model.hasMorePosts =
+            _service is ProfilePostPages &&
+            overview.counts.posts > overview.posts.length;
         model.loading = false;
       });
     } catch (caught) {
@@ -103,6 +108,48 @@ class ProfileController {
   }
 
   void selectTab(ProfileTab tab) => model.update(() => model.tab = tab);
+
+  Future<void> loadMorePosts() async {
+    final service = _service, overview = model.overview;
+    if (service is! ProfilePostPages ||
+        overview == null ||
+        overview.posts.isEmpty ||
+        model.loading ||
+        model.loadingPosts ||
+        !model.hasMorePosts) {
+      return;
+    }
+    final request = _request;
+    model.update(() {
+      model.loadingPosts = true;
+      model.postsError = null;
+    });
+    try {
+      final page = await (service as ProfilePostPages).postPage(
+        userId: userId,
+        after: overview.posts.last,
+      );
+      if (_disposed || request != _request) return;
+      final seen = {for (final p in model.overview!.posts) p.id};
+      model.update(() {
+        model.overview = model.overview!.copyWith(
+          posts: [
+            ...model.overview!.posts,
+            for (final p in page.posts)
+              if (seen.add(p.id)) p,
+          ],
+        );
+        model.hasMorePosts = page.hasMore;
+        model.loadingPosts = false;
+      });
+    } catch (error) {
+      if (_disposed || request != _request) return;
+      model.update(() {
+        model.loadingPosts = false;
+        model.postsError = _message(error, l10n.errProfileLoadRetry);
+      });
+    }
+  }
 
   Future<void> pickAndUploadAvatar(PostPhotoService photos) async {
     if (model.saving) return;

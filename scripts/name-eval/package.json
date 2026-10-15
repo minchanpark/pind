@@ -1,0 +1,6 @@
+{
+  "name": "pind-name-evaluation",
+  "private": true,
+  "type": "module",
+  "dependencies": {"koroman": "1.0.16"}
+}

@@ -10,6 +10,8 @@ import 'package:pind_flutter/model/search_suggestions.dart';
 import 'package:pind_flutter/view/explore/agent_search_page.dart';
 import 'package:pind_flutter/view/profile/saved_places_page.dart';
 
+import 'support/taste.dart';
+
 const step = Duration(milliseconds: 700);
 
 /// Chat lines may sit just below the fold until the page scrolls to them.
@@ -38,6 +40,13 @@ RankedPlace ranked(int id, String name, {bool saved = false}) => RankedPlace(
 );
 
 void main() {
+  setUp(
+    () => useStartTaste(const [
+      PreferenceCriterion.taste,
+      PreferenceCriterion.portion,
+      PreferenceCriterion.ambience,
+    ]),
+  );
   final asked = <String>[];
   final opened = <String>[];
   final saves = <(int, bool)>[];
@@ -111,24 +120,24 @@ void main() {
     expect(find.text('혼술 하기 좋은 식당'), findsNWidgets(2));
     expect(line(AgentSearchPage.steps[0]), findsOneWidget);
     expect(line(AgentSearchPage.steps[1]), findsNothing);
-    // An early answer still waits for every line.
+    // Ready answers are shown immediately rather than waiting for narration.
     answer.complete((
       notice: '혼술 · 포차 기준으로 찾았어요.',
       places: [ranked(1, '화담면옥'), ranked(2, '성수 포차', saved: true)],
     ));
-    await tester.pump(step);
-    expect(line(AgentSearchPage.steps[1]), findsOneWidget);
-    expect(find.text('추천 장소 2곳'), findsNothing);
-    await tester.pump(step);
-    expect(line('당신의 취향에 맞는 장소를 검색하고 있어요'), findsOneWidget);
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 350));
+    await tester.pump();
     await tester.pumpAndSettle();
+    expect(line(AgentSearchPage.steps[1]), findsNothing);
+    expect(find.text('추천 장소 2곳'), findsOneWidget);
     expect(find.text('혼술 · 포차 기준으로 찾았어요.'), findsOneWidget);
     expect(find.text('추천 장소 2곳'), findsOneWidget);
     // Cards as on 저장한 장소: area · distance · reviews, match, ratings.
     expect(find.byType(SavedPlaceRow), findsNWidgets(2));
     expect(find.text('화담면옥'), findsOneWidget);
     expect(find.text('양덕동 · 302m · 리뷰 1'), findsNWidgets(2));
-    expect(find.text('80%'), findsNWidgets(2));
+    expect(find.text('89%'), findsNWidgets(2));
     // No 방금 저장 line.
     expect(find.textContaining('저장', findRichText: true), findsNothing);
 

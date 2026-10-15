@@ -135,3 +135,21 @@ test('a detail in another language gets the translated insight; Korean or a fail
   assert.equal(((failed.place as Record<string,unknown>).insight as Record<string,unknown>).summary,'국물이 진해요');
 });
 
+
+
+test('posted pins forward bounds and cursor to paged RPC without signing images',async()=>{
+  let signed=0;
+  const result=await catalogRequest({action:'posted',afterId:250,bounds:{south:37.4,west:126.9,north:37.6,east:127.1}},async(args,fn)=>{
+    assert.equal(fn,'get_posted_places_page');
+    assert.deepEqual(args,{p_after_id:250,p_south:37.4,p_west:126.9,p_north:37.6,p_east:127.1});
+    return {places:[{internalId:251,pindPostCount:1}],hasMore:true};
+  },async()=>{signed++;return [];},true);
+  assert.equal(result.hasMore,true);assert.equal(signed,0);
+});
+
+test('nearby place picker search filters before server limits and rejects invalid bounds',async()=>{
+  await catalogRequest({action:'search',query:'카페',latitude:37.5,longitude:127,radiusMeters:10000},async(args)=>{
+    assert.deepEqual(args,{p_query:'카페',p_lat:37.5,p_lng:127,p_radius:10000});return {places:[]};
+  },async()=>[],true);
+  await assert.rejects(()=>catalogRequest({action:'posted',bounds:{south:38,west:127,north:37,east:128}},async()=>{throw Error('must not query');},async()=>[],true));
+});

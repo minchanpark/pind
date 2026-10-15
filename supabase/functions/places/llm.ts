@@ -19,6 +19,7 @@ export async function groqJson(
   return await withFallback(GROQ_MODELS, async model => {
     const response = await fetcher('https://api.groq.com/openai/v1/chat/completions', {
       method: 'POST',
+      signal: AbortSignal.timeout(5000),
       headers: {Authorization: `Bearer ${key}`, 'Content-Type': 'application/json'},
       body: JSON.stringify({
         model,

@@ -240,3 +240,24 @@ class Place {
     );
   }
 }
+
+/// Visible map rectangle, used for bounded, paginated pin queries.
+class MapBounds {
+  const MapBounds(this.south, this.west, this.north, this.east);
+  final double south, west, north, east;
+  Map<String, double> get json => {
+    'south': south,
+    'west': west,
+    'north': north,
+    'east': east,
+  };
+  @override
+  bool operator ==(Object other) =>
+      other is MapBounds &&
+      south == other.south &&
+      west == other.west &&
+      north == other.north &&
+      east == other.east;
+  @override
+  int get hashCode => Object.hash(south, west, north, east);
+}

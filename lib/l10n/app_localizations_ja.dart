@@ -898,6 +898,11 @@ class AppLocalizationsJa extends AppLocalizations {
   }
 
   @override
+  String tasteEvidence(int count) {
+    return '評価・保存した$countか所の記録を反映しています。';
+  }
+
+  @override
   String agoYears(int n) {
     return '$n年前';
   }
@@ -984,6 +989,9 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get categoryAll => 'すべて';
+
+  @override
+  String get mapScopeFriends => '友達';
 
   @override
   String get categoryCafe => 'カフェ';
@@ -1222,7 +1230,7 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get tasteMatchHelp =>
-      '公開平均を1・2・3位に50・30・20%で反映します。1点はその基準の0%、5点は100%になります。';
+      'あなたが求める基準ごとの星に届かない分だけ減点します。重視する基準ほど大きく反映し、評価はPind平均と比べて読みます。';
 
   @override
   String get tasteMatchUnrated => '好み：評価不足';
@@ -1366,6 +1374,27 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get addPhotos => '写真を追加';
+
+  @override
+  String get photoFromAlbum => 'アルバム';
+
+  @override
+  String get cameraDual => 'デュアル';
+
+  @override
+  String get cameraSplit => '2分割';
+
+  @override
+  String get cameraRetake => '撮り直す';
+
+  @override
+  String get cameraUse => 'この写真を使う';
+
+  @override
+  String get cameraFlip => 'カメラを切り替え';
+
+  @override
+  String get cameraShutter => '撮影';
 
   @override
   String get visitedRestaurant => '訪れたお店';
@@ -1765,4 +1794,16 @@ class AppLocalizationsJa extends AppLocalizations {
   String agentNoticeTasteFoods(String foods) {
     return 'あなたの好み（$foods）で探しました。';
   }
+
+  @override
+  String get errPhotosTotalSize => '写真の合計サイズは20MB以下にしてください。';
+
+  @override
+  String get errRequestLimited => 'リクエストが多すぎます。しばらくしてから再度お試しください。';
+
+  @override
+  String get errAreaUnavailable => '指定した地域が見つかりません。再度お試しください。';
+
+  @override
+  String get uploadProgress => '写真をアップロード中';
 }

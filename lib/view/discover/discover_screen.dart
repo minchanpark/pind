@@ -79,6 +79,7 @@ class _DiscoverScreenState extends State<DiscoverScreen>
   void nearEnd() {
     if (scroll.position.extentAfter < 600 &&
         model.hasMore &&
+        model.moreError == null &&
         !model.loading &&
         !model.loadingMore) {
       controller.loadMore();
@@ -173,6 +174,16 @@ class _DiscoverScreenState extends State<DiscoverScreen>
                               child: CircularProgressIndicator(strokeWidth: 2),
                             ),
                           ),
+                        )
+                      : model.moreError != null
+                      ? Column(
+                          children: [
+                            Text(model.moreError!, textAlign: TextAlign.center),
+                            TextButton(
+                              onPressed: controller.loadMore,
+                              child: Text(l10n.retry),
+                            ),
+                          ],
                         )
                       : null,
                 ),
@@ -388,9 +399,13 @@ class _DiscoverScreenState extends State<DiscoverScreen>
           size: 12,
           color: p.liked ? PindColors.purple : null,
         ),
-        onTap: (_) {
+        onTap: (_) async {
           HapticFeedback.lightImpact();
-          controller.toggleLike(p);
+          final error = await controller.toggleLike(p);
+          if (mounted && error != null) {
+            ScaffoldMessenger.of(context)
+                .showSnackBar(SnackBar(content: Text(error)));
+          }
         },
       ),
     ),

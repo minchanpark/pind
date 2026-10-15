@@ -19,6 +19,8 @@ import 'package:pind_flutter/view/explore/place_sheet.dart';
 import 'package:pind_flutter/view/explore/post_photo_viewer.dart';
 import 'package:pind_flutter/view/components/pind_glass.dart';
 
+import 'support/taste.dart';
+
 class SharedAverageContext extends LocalDetailContext {
   @override
   Future<PlaceContext> load(int placeId) async => const PlaceContext(
@@ -87,6 +89,13 @@ Future<void> mount(
 }
 
 void main() {
+  setUp(
+    () => useStartTaste(const [
+      PreferenceCriterion.taste,
+      PreferenceCriterion.portion,
+      PreferenceCriterion.ambience,
+    ]),
+  );
   test('friend relationship and visit visibility matrix', () async {
     final repo = LocalDetailContext();
     for (final r in TestFriendship.values) {
@@ -136,7 +145,7 @@ void main() {
     tester,
   ) async {
     await mount(tester, LocalDetailContext());
-    expect(find.text('내 취향 93%'), findsOneWidget);
+    expect(find.text('내 취향 98%'), findsOneWidget);
     expect(find.textContaining('11:30 – 21:00'), findsWidgets);
     expect(find.text('1.8km'), findsOneWidget);
     expect(find.text('리뷰 87개'), findsOneWidget);
@@ -165,7 +174,7 @@ void main() {
     expect(tester.takeException(), isNull);
   });
   testWidgets(
-    'shared averages omit counts and 4/3/2 yields 58 without remixing mine',
+    'shared averages omit counts and 4/3/2 yields 63 without remixing mine',
     (tester) async {
       await mount(
         tester,
@@ -173,7 +182,7 @@ void main() {
         size: const Size(320, 874),
         scale: 2,
       );
-      expect(find.text('내 취향 58%'), findsOneWidget);
+      expect(find.text('내 취향 63%'), findsOneWidget);
       expect(find.text('😋 ★ 4.0'), findsOneWidget);
       expect(find.text('🍚 ★ 3.0'), findsOneWidget);
       expect(find.text('🕯️ ★ 2.0'), findsOneWidget);
@@ -624,7 +633,7 @@ void main() {
     );
     expect(
       tester.widget<Text>(find.text('게시물')).style!.color,
-      const Color(0xFF9B9B9B),
+      PindColors.subtle,
     );
     expect(find.text(detailPlace.summary!), findsOneWidget);
 

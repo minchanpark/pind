@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../model/taste_profile.dart';
 import '../../model/place_context.dart';
 import '../../model/places.dart';
 import '../../model/preferences.dart';
@@ -73,6 +74,17 @@ class SavedPlacesPage extends StatefulWidget {
 }
 
 class _SavedPlacesPageState extends State<SavedPlacesPage> {
+  /// My taste % reads [myTaste], which loads after this screen may open.
+  void _tasteChanged() {
+    if (mounted) setState(() {});
+  }
+
+  @override
+  void dispose() {
+    myTaste.removeListener(_tasteChanged);
+    super.dispose();
+  }
+
   String sort = l10n.sortRecentSaved;
 
   /// null = 최근 저장순 (server order).
@@ -83,6 +95,7 @@ class _SavedPlacesPageState extends State<SavedPlacesPage> {
   @override
   void initState() {
     super.initState();
+    myTaste.addListener(_tasteChanged);
     widget.position(false).then((p) {
       if (mounted && p != null) setState(() => here = p);
     }, onError: (_) {});

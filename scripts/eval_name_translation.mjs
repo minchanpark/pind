@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 // Scores the place-name prompt against the golden set.
-// Usage: node scripts/eval_name_translation.mjs [--model gemini-3.8-flash] [--out results.json]
+// Usage: node scripts/eval_name_translation.mjs [--model gemini-3.8-flash] [--limit 10] [--out results.json]
 // GEMINI_API_KEY comes from the environment or the repo's .env.
 // A miss is an answer outside the accepted list, not necessarily wrong;
 // read them (or hand them to a judge) before changing the prompt.
@@ -66,7 +66,10 @@ async function main() {
   const key = geminiKey();
   if (!key) throw new Error('Set GEMINI_API_KEY.');
   const model = flag('--model', NAME_MODELS[0]);
-  const cases = JSON.parse(readFileSync(GOLDEN, 'utf8')).cases;
+  const all = JSON.parse(readFileSync(GOLDEN, 'utf8')).cases;
+  // --limit N: every k-th case, so a quick run still spans every kind.
+  const limit = Number(flag('--limit', all.length));
+  const cases = all.filter((_, i) => i % Math.ceil(all.length / limit) === 0).slice(0, limit);
 
   const results = [];
   for (let i = 0; i < cases.length; i += BATCH) {

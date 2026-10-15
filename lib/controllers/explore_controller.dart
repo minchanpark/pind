@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import '../model/place_search_result.dart';
 import '../model/explore_model.dart';
 import '../model/nearby_ranking.dart';
@@ -11,6 +13,8 @@ import 'place_detail_controller.dart';
 import '../services/place_service.dart';
 import '../model/places.dart';
 import '../l10n/l10n.dart';
+import '../services/data_revision.dart';
+import '../services/request_client.dart';
 
 class ExploreController {
   ExploreController(
@@ -22,7 +26,15 @@ class ExploreController {
     this.track = LocationService.track,
     this.setLiked,
     this.deletePost,
-  });
+  }) {
+    _deletions = postDeletions.stream.listen((_) {
+      _posted = null;
+      if (!_disposed && _searchQuery == null) {
+        unawaited(load(force: true, bounds: _postedBounds));
+      }
+    });
+  }
+  late final StreamSubscription<int> _deletions;
   final PlaceService repository;
   final PlaceContextService? placeContext;
   final ProfileService? profile;
@@ -56,6 +68,10 @@ class ExploreController {
         directions: walkTo,
       );
 
+  /// Place ids behind a map chip; empty without a backend.
+  Future<Set<int>> scopePlaces(MapScope scope) async =>
+      await placeContext?.scopePlaces(scope) ?? {};
+
   /// 길찾기: the map draws the walk to [place] (the shell shows the map).
   void walkTo(Place place) => model.update(() => model.walkingTo = place);
   void endWalk() => model.update(() => model.walkingTo = null);
@@ -83,17 +99,41 @@ class ExploreController {
 
   String? _searchQuery;
   int _request = 0;
+  Completer<void>? _abort;
+
+  void _cancelRequest() {
+    if (_abort != null && !_abort!.isCompleted) _abort!.complete();
+  }
+
   MapViewport _viewport = MapViewport.seoul;
   MapViewport get viewport => _viewport;
   int publishedRevision = 0;
   bool _disposed = false;
   List<Place>? _posted;
+  int _postedRevision = -1;
+  MapBounds? _postedBounds;
 
-  /// Posted places are fetched once; camera moves never hit the catalog.
-  Future<void> load({bool force = false}) async {
+  void resetForAccount() {
+    _cancelRequest();
+    _posted = null;
+    _request++;
+    model.update(() {
+      model.places = [];
+      model.walkingTo = null;
+      model.loading = false;
+      model.error = null;
+    });
+  }
+
+  /// Reuse pins for the same visible bounds until published data changes.
+  Future<void> load({bool force = false, MapBounds? bounds}) async {
     _searchQuery = null;
     final cached = _posted;
-    if (!force && cached != null) {
+    if (!force &&
+        cached != null &&
+        _postedRevision == dataRevision &&
+        bounds == _postedBounds) {
+      _cancelRequest();
       _request++;
       model.update(() {
         model.places = cached;
@@ -103,9 +143,17 @@ class ExploreController {
       });
       return;
     }
-    await _run(
-      () async => PlaceSearchResult(_posted = await repository.posted()),
-    );
+    final request = _request + 1;
+    await _run(() async {
+      final revision = dataRevision;
+      final places = await repository.posted(bounds: bounds);
+      if (!_disposed && request == _request) {
+        _posted = places;
+        _postedRevision = revision;
+        _postedBounds = bounds;
+      }
+      return PlaceSearchResult(places);
+    }, preservePlaces: bounds != null);
   }
 
   Future<void> search(String query) async {
@@ -123,20 +171,31 @@ class ExploreController {
 
   Future<void> showPublishedPlace(int placeId) async {
     _searchQuery = null;
+    final request = _request + 1;
     await _run(() async {
       final data = await repository.invoke({
         'action': 'catalog_detail',
         'internalPlaceId': placeId,
       });
-      if (_disposed) return const PlaceSearchResult([]);
+      if (_disposed || request != _request) return const PlaceSearchResult([]);
       final place = Place.fromJson(
         Map<String, dynamic>.from(data['place'] as Map),
       );
       _viewport = MapViewport(place.latitude, place.longitude);
-      final places = _posted = await repository.posted();
+      final bounds = MapBounds(
+        place.latitude - .03,
+        place.longitude - .03,
+        place.latitude + .03,
+        place.longitude + .03,
+      );
+      final places = await repository.posted(bounds: bounds);
+      if (_disposed || request != _request) return const PlaceSearchResult([]);
+      _posted = places;
+      _postedBounds = bounds;
+      _postedRevision = dataRevision;
       publishedRevision++;
       return PlaceSearchResult(places);
-    });
+    }, preservePlaces: true);
   }
 
   Future<void> searchGoogle() async {
@@ -163,6 +222,8 @@ class ExploreController {
     Future<PlaceSearchResult> Function() action, {
     bool preservePlaces = false,
   }) async {
+    _cancelRequest();
+    final abort = _abort = Completer<void>();
     final request = ++_request;
     model.update(() {
       model.loading = true;
@@ -171,7 +232,7 @@ class ExploreController {
       if (!preservePlaces) model.places = [];
     });
     try {
-      final result = await action();
+      final result = await withRequestCancellation(abort.future, action);
       if (_disposed || request != _request) return;
       model.places = result.places;
       model.notice = result.notice;
@@ -190,6 +251,8 @@ class ExploreController {
 
   void dispose() {
     _disposed = true;
+    _cancelRequest();
+    _deletions.cancel();
     _request++;
     model.dispose();
   }

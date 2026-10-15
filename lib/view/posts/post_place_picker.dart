@@ -87,7 +87,10 @@ class _PostPlacePickerState extends State<PostPlacePicker> {
       error = null;
     });
     try {
-      final places = await controller.searchPlaces(text);
+      final places = await controller.searchPlaces(
+        text,
+        near: filter == PlaceFilter.nearby ? here : null,
+      );
       if (mounted && generation == request) setState(() => results = places);
     } catch (caught) {
       if (mounted && generation == request) {
@@ -108,13 +111,19 @@ class _PostPlacePickerState extends State<PostPlacePicker> {
       filter = next;
       error = null;
     });
-    if (next != PlaceFilter.nearby || here != null) return;
-    final p = await controller.currentPosition(request: true);
-    if (!mounted || filter != PlaceFilter.nearby) return;
-    setState(() {
-      here = p;
-      if (p == null) error = l10n.errLocationCheckPermission;
-    });
+    if (next == PlaceFilter.nearby && here == null) {
+      final p = await controller.currentPosition(request: true);
+      if (!mounted || filter != next) return;
+      setState(() {
+        here = p;
+        if (p == null) error = l10n.errLocationCheckPermission;
+      });
+      if (p == null) return;
+    }
+    if ((next == null || next == PlaceFilter.nearby) &&
+        query.text.trim().length >= 2) {
+      await search();
+    }
   }
 
   double? distance(Place p) =>

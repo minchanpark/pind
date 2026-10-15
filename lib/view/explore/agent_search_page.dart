@@ -1,6 +1,12 @@
 import 'package:flutter/material.dart';
+
+import 'dart:async';
+
+import '../../services/request_client.dart';
+
 import 'package:flutter/services.dart';
 
+import '../../model/taste_profile.dart';
 import '../../model/nearby_ranking.dart';
 import '../../model/place_context.dart';
 import '../../model/place_search_result.dart';
@@ -51,7 +57,7 @@ class AgentSearchPage extends StatefulWidget {
   /// Bookmark toggle; null hides it.
   final Future<void> Function(int placeId, bool saved)? onSetSaved;
 
-  /// Between progress lines. Every line shows before the answer does.
+  /// Between progress lines. Only advances while the request is pending.
   final Duration stepDelay;
 
   /// Progress lines while the server reads the sentence and searches.
@@ -66,10 +72,23 @@ class AgentSearchPage extends StatefulWidget {
 }
 
 class _AgentSearchPageState extends State<AgentSearchPage> {
+  /// My taste % reads [myTaste], which loads after this screen may open.
+  void _tasteChanged() {
+    if (mounted) setState(() {});
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    myTaste.addListener(_tasteChanged);
+  }
+
   final query = TextEditingController();
   final scroll = ScrollController();
 
   final turns = <AgentTurn>[];
+  Timer? narration;
+  final abort = Completer<void>();
 
   /// Built from my taste once per visit.
   late final suggestions = suggestionsFor(widget.preferences);
@@ -88,6 +107,9 @@ class _AgentSearchPageState extends State<AgentSearchPage> {
 
   @override
   void dispose() {
+    myTaste.removeListener(_tasteChanged);
+    narration?.cancel();
+    if (!abort.isCompleted) abort.complete();
     query.dispose();
     scroll.dispose();
     super.dispose();
@@ -99,7 +121,10 @@ class _AgentSearchPageState extends State<AgentSearchPage> {
     if (q.isEmpty || busy) return;
     FocusScope.of(context).unfocus();
     query.clear();
-    final turn = AgentTurn(q, widget.search(q));
+    final turn = AgentTurn(
+      q,
+      withRequestCancellation(abort.future, () => widget.search(q)),
+    );
     setState(() {
       for (final t in turns) {
         t.open = false;
@@ -107,24 +132,23 @@ class _AgentSearchPageState extends State<AgentSearchPage> {
       turns.add(turn);
     });
     follow();
-    Future<void> narrate() async {
-      while (turn.steps < AgentSearchPage.steps.length) {
-        await Future<void>.delayed(widget.stepDelay);
-        turn.steps++;
-        if (!mounted) return;
-        setState(() {});
-        follow();
+    narration = Timer.periodic(widget.stepDelay, (timer) {
+      if (!mounted || turn.done || turn.steps >= AgentSearchPage.steps.length) {
+        timer.cancel();
+        return;
       }
-    }
-
-    await Future.wait([settle(turn), narrate()]);
+      setState(() => turn.steps++);
+      follow();
+    });
+    await settle(turn);
+    narration?.cancel();
     if (!mounted) return;
-    // Every line shows before the answer does.
+    // Only advances while the request is pending.
     setState(() {});
     follow();
   }
 
-  /// Records [turn]'s answer; shown once its last line is.
+  /// Records [turn]'s answer; shown as soon as the request settles.
   Future<void> settle(AgentTurn turn) async {
     try {
       turn.answer = await turn.result;
@@ -133,7 +157,7 @@ class _AgentSearchPageState extends State<AgentSearchPage> {
           ? error.message
           : l10n.errSearchRetry;
     }
-    if (mounted && turn.steps == AgentSearchPage.steps.length) {
+    if (mounted) {
       setState(() {});
       follow();
     }
@@ -141,7 +165,7 @@ class _AgentSearchPageState extends State<AgentSearchPage> {
 
   /// Keeps the newest chat line in view.
   void follow() => WidgetsBinding.instance.addPostFrameCallback((_) {
-    if (!scroll.hasClients) return;
+    if (!mounted || !scroll.hasClients) return;
     scroll.animateTo(
       scroll.position.maxScrollExtent,
       duration: const Duration(milliseconds: 300),
@@ -293,14 +317,9 @@ class _AgentSearchPageState extends State<AgentSearchPage> {
     ),
     const SizedBox(height: 12),
     for (var i = 0; i < t.steps; i++)
-      agentLine(
-        AgentSearchPage.steps[i],
-        working:
-            i == t.steps - 1 &&
-            (!t.done || t.steps < AgentSearchPage.steps.length),
-      ),
-    // The answer waits for the last line.
-    if (t.steps == AgentSearchPage.steps.length) ...[
+      agentLine(AgentSearchPage.steps[i], working: i == t.steps - 1 && !t.done),
+    // Render completed results immediately.
+    if (t.done) ...[
       if (t.failure case final message?)
         agentLine(message, icon: Icons.error_outline),
       if (t.answer case final a?) ...[

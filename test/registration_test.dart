@@ -117,13 +117,18 @@ void main() {
     },
   );
 
-  test('restored social session skips registration', () async {
+  test('restored social session resumes an incomplete registration', () async {
+    await RegistrationService(storage).save(
+      'user-a',
+      validDraft.copyWith(step: RegistrationStep.handle, completed: false),
+    );
     auth = FakeAuthService(initial: const AuthIdentity('user-a'));
     final controller = create();
     addTearDown(controller.dispose);
-    expect(controller.model.completed, true);
+    expect(controller.model.completed, false);
+    expect(controller.model.step, RegistrationStep.handle);
     auth.emit(const AuthIdentity('user-a'));
-    expect(controller.model.completed, true);
+    expect(controller.model.completed, false);
   });
 
   test('anonymous session is not accepted as a social login', () async {
@@ -457,7 +462,10 @@ void main() {
       expect(service.load('user-a')!.completed, true);
       expect(service.load('user-a')!.country, OnboardingCountry.usa);
       expect(service.load('user-a')!.recommendationConsent, false);
-      expect(PreferenceService(storage).load()!.isComplete, true);
+      expect(
+        PreferenceService(storage).forUser('user-a').load()!.isComplete,
+        true,
+      );
       final restored = AppController(
         PreferenceService(storage),
         auth: auth,
@@ -518,16 +526,20 @@ void main() {
     addTearDown(tester.view.resetDevicePixelRatio);
     // Already signed in, set up and with a taste: the app opens on the map.
     auth = FakeAuthService(initial: const AuthIdentity('user-a'));
-    await PreferenceService(storage).save(
-      TastePreferences(
-        priorities: [
-          PreferenceCriterion.taste,
-          PreferenceCriterion.portion,
-          PreferenceCriterion.ambience,
-        ],
-        cuisines: Cuisine.values.take(3),
-      ),
-    );
+    await RegistrationService(storage)
+        .save('user-a', validDraft.copyWith(completed: true));
+    await PreferenceService(storage)
+        .forUser('user-a')
+        .save(
+          TastePreferences(
+            priorities: [
+              PreferenceCriterion.taste,
+              PreferenceCriterion.portion,
+              PreferenceCriterion.ambience,
+            ],
+            cuisines: Cuisine.values.take(3),
+          ),
+        );
     final app = AppController(
       PreferenceService(storage),
       auth: auth,

@@ -90,6 +90,8 @@ class DiscoverController {
     final request = ++_request;
     model.update(() {
       model.loading = true;
+      model.loadingMore = false;
+      model.moreError = null;
       model.error = null;
       model.posts = const [];
       model.hasMore = true;
@@ -119,7 +121,10 @@ class DiscoverController {
       return;
     }
     final request = ++_request;
-    model.update(() => model.loadingMore = true);
+    model.update(() {
+      model.loadingMore = true;
+      model.moreError = null;
+    });
     try {
       final page = await _service.feed(after: model.posts.last);
       if (_disposed || request != _request) return;
@@ -137,13 +142,13 @@ class DiscoverController {
       if (_disposed || request != _request) return;
       model.update(() {
         model.loadingMore = false;
-        model.error = _message(caught);
+        model.moreError = _message(caught);
       });
     }
   }
 
-  Future<void> toggleLike(FeedPost post) async {
-    if (_disposed || !_liking.add(post.post.id)) return;
+  Future<String?> toggleLike(FeedPost post) async {
+    if (_disposed || !_liking.add(post.post.id)) return null;
     final target = !post.liked;
     model.update(() {
       model.posts = [
@@ -162,10 +167,12 @@ class DiscoverController {
           ];
           model.error = _message(caught);
         });
+        return caught is PlaceFailure ? caught.message : l10n.errLikeRetry;
       }
     } finally {
       _liking.remove(post.post.id);
     }
+    return null;
   }
 
   String _message(Object caught) =>

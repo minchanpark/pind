@@ -1,3 +1,4 @@
+import 'package:pind_flutter/model/explore_model.dart';
 import 'package:pind_flutter/controllers/app_controller.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -14,6 +15,7 @@ import 'package:pind_flutter/view/navigation/pind_navigation_bar.dart';
 import 'package:pind_flutter/view/profile/saved_places_page.dart';
 
 import 'support/map_search.dart';
+import 'support/taste.dart';
 
 class _Context implements PlaceContextService {
   int? requestedId;
@@ -31,9 +33,18 @@ class _Context implements PlaceContextService {
 
   @override
   Future<void> setSaved(int placeId, bool saved) async {}
+  @override
+  Future<Set<int>> scopePlaces(MapScope scope) async => {};
 }
 
 void main() {
+  setUp(
+    () => useStartTaste(const [
+      PreferenceCriterion.taste,
+      PreferenceCriterion.portion,
+      PreferenceCriterion.ambience,
+    ]),
+  );
   for (final provider in ['google_places', 'sbiz']) {
     testWidgets(
       '$provider normal app map result opens connected glass detail and returns to map',
@@ -118,7 +129,7 @@ void main() {
           ),
           findsOneWidget,
         );
-        expect(find.text('내 취향 93%'), findsOneWidget);
+        expect(find.text('내 취향 98%'), findsOneWidget);
         expect(
           find.text(provider == 'sbiz' ? 'Pind 게시물 3개' : '리뷰 12개'),
           findsOneWidget,

@@ -1,9 +1,11 @@
 import 'dart:async';
 import 'dart:io';
+import 'dart:ui' as ui;
 
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:pind_flutter/controllers/post_controller.dart';
+import 'package:pind_flutter/l10n/l10n.dart';
 import 'package:pind_flutter/model/post_model.dart';
 import 'package:pind_flutter/model/preferences.dart';
 import 'package:pind_flutter/model/places.dart';
@@ -148,6 +150,28 @@ void main() {
     await controller.publish();
     expect(service.drafts.single.isPublic, false);
   });
+  test('a camera shot publishes as an uploadable JPEG', () async {
+    TestWidgetsFlutterBinding.ensureInitialized();
+    final recorder = ui.PictureRecorder();
+    Canvas(recorder).drawPaint(Paint()..color = Colors.red);
+    final image = await recorder.endRecording().toImage(30, 40);
+    final shot = await composeCameraShot(CameraLayout.split, Offset.zero, [
+      (image, false),
+      (image, true),
+    ]);
+    final service = TestPosts();
+    final controller = make(service);
+    addTearDown(controller.dispose);
+    await ready(controller);
+    controller.addPhoto(shot);
+    await controller.publish();
+    final photo = service.drafts.single.photos.last;
+    // What post-media-v2 and publish_post_v3 accept.
+    expect((photo.mimeType, photo.extension), ('image/jpeg', 'jpg'));
+    expect(photo.bytes.length, inInclusiveRange(1, 10485760));
+    expect(service.drafts.single.photos, hasLength(3));
+  });
+
   test('ratings follow the author onboarding priorities', () async {
     final service = TestPosts();
     final controller = PostController(
@@ -301,5 +325,49 @@ void main() {
     );
     await tester.pumpAndSettle();
     expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('add photo opens 앨범 · 듀얼 · 2분할 as one row of tiles', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(320, 568);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+    final controller = make(TestPosts());
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: PindTheme.data,
+        home: PostComposer(controller: controller),
+      ),
+    );
+    // The add tile, not the 사진 추가 section title above it.
+    await tester.tap(
+      find.byWidgetPredicate(
+        (w) =>
+            w is Semantics &&
+            w.properties.button == true &&
+            w.properties.label == l10n.addPhotos,
+      ),
+    );
+    await tester.pumpAndSettle();
+    final tiles = [
+      for (final label in [
+        l10n.photoFromAlbum,
+        l10n.cameraDual,
+        l10n.cameraSplit,
+      ])
+        tester.getRect(find.text(label)),
+    ];
+    expect(tester.takeException(), isNull);
+    expect(tiles.map((r) => r.center.dy).toSet(), hasLength(1));
+    expect(tiles[0].left, lessThan(tiles[1].left));
+    expect(tiles[1].left, lessThan(tiles[2].left));
+    for (final emoji in ['🖼️', '🤳', '🌓']) {
+      expect(find.text(emoji), findsOneWidget);
+    }
+    await tester.tap(find.text(l10n.photoFromAlbum));
+    await tester.pumpAndSettle();
+    expect(controller.model.photos, hasLength(2));
   });
 }

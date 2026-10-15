@@ -7,7 +7,7 @@ class AppModel extends ChangeNotifier {
 
   TastePreferences? preferences;
 
-  void setPreferences(TastePreferences value) {
+  void setPreferences(TastePreferences? value) {
     preferences = value;
     notifyListeners();
   }

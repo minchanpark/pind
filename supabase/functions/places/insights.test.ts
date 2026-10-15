@@ -17,6 +17,12 @@ test('every rated criterion gets a line; rating-only ones cite the stars',()=>{
   assert.doesNotMatch(INSIGHT_SYSTEM,/해당 항목을 빼세요/);
 });
 
+test('one post is enough for an intro, and short text still grounds the lines',()=>{
+  assert.match(INSIGHT_SYSTEM,/게시물이 하나라도 있으면 반드시/);
+  assert.match(INSIGHT_SYSTEM,/빈 문자열로 두지 않습니다/);
+  assert.match(INSIGHT_SYSTEM,/짧게라도 있으면/);
+});
+
 test('withFallback moves to the next model only on 429/503',async()=>{
   const fail=(status:number)=>Object.assign(new Error(`e${status}`),{status});
   let tried:string[]=[];

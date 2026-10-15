@@ -898,6 +898,11 @@ class AppLocalizationsKo extends AppLocalizations {
   }
 
   @override
+  String tasteEvidence(int count) {
+    return '기록 $count곳을 반영한 취향이에요.';
+  }
+
+  @override
   String agoYears(int n) {
     return '$n년 전';
   }
@@ -984,6 +989,9 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get categoryAll => '전체';
+
+  @override
+  String get mapScopeFriends => '친구';
 
   @override
   String get categoryCafe => '카페';
@@ -1222,7 +1230,7 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get tasteMatchHelp =>
-      '전체 공개 평균을 1·2·3순위 50·30·20%로 반영해요. 1점은 해당 기준의 0%, 5점은 100%를 받아요.';
+      '내가 바라는 기준별 별점에 식당이 못 미친 만큼만 빼요. 중요한 기준일수록 크게 반영하고, 별점은 Pind 평균과 비교해 읽어요.';
 
   @override
   String get tasteMatchUnrated => '내 취향 평가 부족';
@@ -1366,6 +1374,27 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get addPhotos => '사진 추가';
+
+  @override
+  String get photoFromAlbum => '앨범';
+
+  @override
+  String get cameraDual => '듀얼';
+
+  @override
+  String get cameraSplit => '2분할';
+
+  @override
+  String get cameraRetake => '다시 찍기';
+
+  @override
+  String get cameraUse => '사용하기';
+
+  @override
+  String get cameraFlip => '카메라 전환';
+
+  @override
+  String get cameraShutter => '촬영';
 
   @override
   String get visitedRestaurant => '방문한 식당';
@@ -1765,4 +1794,16 @@ class AppLocalizationsKo extends AppLocalizations {
   String agentNoticeTasteFoods(String foods) {
     return '내 취향 · $foods 기준으로 찾았어요.';
   }
+
+  @override
+  String get errPhotosTotalSize => '사진 전체 용량은 20MB 이하로 선택해 주세요.';
+
+  @override
+  String get errRequestLimited => '요청이 많아요. 잠시 후 다시 시도해 주세요.';
+
+  @override
+  String get errAreaUnavailable => '요청한 지역을 찾지 못했어요. 다시 시도해 주세요.';
+
+  @override
+  String get uploadProgress => '사진 업로드 중';
 }

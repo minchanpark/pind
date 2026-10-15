@@ -468,6 +468,14 @@
       }
     }
   },
+  "tasteEvidence": "기록 {count}곳을 반영한 취향이에요.",
+  "@tasteEvidence": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "agoYears": "{n}년 전",
   "@agoYears": {
     "placeholders": {
@@ -548,6 +556,8 @@
   "filterRecent": "최근 방문",
   "filterSaved": "저장한 곳",
   "categoryAll": "전체",
+  "mapScopeFriends": "친구",
+  "@mapScopeFriends": {"description": "Map chip: only places people I follow posted at"},
   "categoryCafe": "카페",
   "categoryBar": "술집",
   "categoryMeat": "고기",
@@ -684,7 +694,7 @@
       }
     }
   },
-  "tasteMatchHelp": "전체 공개 평균을 1·2·3순위 50·30·20%로 반영해요. 1점은 해당 기준의 0%, 5점은 100%를 받아요.",
+  "tasteMatchHelp": "내가 바라는 기준별 별점에 식당이 못 미친 만큼만 빼요. 중요한 기준일수록 크게 반영하고, 별점은 Pind 평균과 비교해 읽어요.",
   "tasteMatchUnrated": "내 취향 평가 부족",
   "tasteMatchMine": "내 취향 {percent}%",
   "@tasteMatchMine": {
@@ -828,6 +838,13 @@
   "myLocation": "현재 위치",
   "newPost": "게시물 작성",
   "addPhotos": "사진 추가",
+  "photoFromAlbum": "앨범",
+  "cameraDual": "듀얼",
+  "cameraSplit": "2분할",
+  "cameraRetake": "다시 찍기",
+  "cameraUse": "사용하기",
+  "cameraFlip": "카메라 전환",
+  "cameraShutter": "촬영",
   "visitedRestaurant": "방문한 식당",
   "ratings": "평점",
   "ratingsRequired": "맛 · 양 · 분위기 (필수)",
@@ -1004,5 +1021,9 @@
         "type": "String"
       }
     }
-  }
+  },
+  "errPhotosTotalSize": "사진 전체 용량은 20MB 이하로 선택해 주세요.",
+  "errRequestLimited": "요청이 많아요. 잠시 후 다시 시도해 주세요.",
+  "errAreaUnavailable": "요청한 지역을 찾지 못했어요. 다시 시도해 주세요.",
+  "uploadProgress": "사진 업로드 중"
 }

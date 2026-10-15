@@ -62,6 +62,31 @@ void main() {
     ];
   }
 
+  test('a single photo frame fits the photo uncropped in 214×262', () {
+    const box = Size(214, 262);
+    expect(fitPhoto(box, 2 / 3), Size(262 * 2 / 3, 262));
+    expect(fitPhoto(box, 4 / 3), Size(214, 214 * 3 / 4));
+  });
+
+  testWidgets('PhotoRatio reads the decoded photo shape', (tester) async {
+    await tester.pumpWidget(
+      PhotoRatio(
+        'assets/preview/post_photo_2.png',
+        fallback: 1,
+        builder: (_, ratio) =>
+            Text(ratio.toStringAsFixed(3), textDirection: TextDirection.ltr),
+      ),
+    );
+    expect(find.text('1.000'), findsOneWidget);
+    for (var i = 0; i < 20 && find.text('1.000').evaluate().isNotEmpty; i++) {
+      await tester.runAsync(
+        () => Future.delayed(const Duration(milliseconds: 20)),
+      );
+      await tester.pump();
+    }
+    expect(find.text((736 / 981).toStringAsFixed(3)), findsOneWidget);
+  });
+
   testWidgets('one large, two fanned and centered, three as before', (
     tester,
   ) async {
@@ -83,7 +108,13 @@ void main() {
           .ancestor(
             of: find.byWidgetPredicate(
               (w) =>
-                  w is Image && (w.image as PindImage).url == 'https://x/0.jpg',
+                  w is Image &&
+                  (w.image is ResizeImage
+                              ? (w.image as ResizeImage).imageProvider
+                                    as PindImage
+                              : w.image as PindImage)
+                          .url ==
+                      'https://x/0.jpg',
             ),
             matching: find.byType(Container),
           )
@@ -102,7 +133,13 @@ void main() {
     // A fanned pair: tilted opposite ways, the first photo in front and purple.
     double angle(int i) {
       final image = find.byWidgetPredicate(
-        (w) => w is Image && (w.image as PindImage).url == 'https://x/$i.jpg',
+        (w) =>
+            w is Image &&
+            (w.image is ResizeImage
+                        ? (w.image as ResizeImage).imageProvider as PindImage
+                        : w.image as PindImage)
+                    .url ==
+                'https://x/$i.jpg',
       );
       final m = tester
           .widget<Transform>(
